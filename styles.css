@@ -45,27 +45,29 @@ button {
   color: inherit;
 }
 
-/* === Ruby (注音) === */
+/* === Ruby (注音) — 直書放在每個中文字右邊（台灣教科書習慣） === */
 ruby {
-  ruby-position: over;
-  -webkit-ruby-position: before;
   display: inline-flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   align-items: center;
-  vertical-align: bottom;
-  line-height: 1;
-  margin: 0 1px;
+  vertical-align: middle;
+  line-height: 1.2;
+  margin-right: 2px;
 }
 rt {
-  font-size: 0.55em;
-  line-height: 1.1;
+  font-size: 0.5em;
+  line-height: 0.95;
+  writing-mode: vertical-rl;
+  -webkit-writing-mode: vertical-rl;
+  text-orientation: upright;
+  -webkit-text-orientation: upright;
   color: var(--ink-soft);
-  letter-spacing: 0;
-  font-weight: 600;
   font-family: "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
-  margin-bottom: 2px;
+  font-weight: 600;
+  margin-left: 2px;
   user-select: none;
-  display: block;
+  display: inline-block;
+  letter-spacing: 0;
 }
 
 /* === Header === */
