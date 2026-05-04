@@ -28,7 +28,7 @@ const STORE_KEY = "partygo:store:v1";
 const DEFAULT_STORE = {
   active: null,
   profiles: {},
-  settings: { fontScale: 1.0, bopomofo: true, sound: true, focus: false }
+  settings: { fontScale: 1.0, bopomofo: true, sound: true, focus: false, parentPin: "" }
 };
 function loadStore() {
   try {
@@ -50,7 +50,25 @@ function ensureProfileFields(p) {
   p.progress = p.progress || {};
   p.stars = p.stars || 0;
   p.lastVisit = p.lastVisit || null;
+  p.sessions = p.sessions || [];
   return p;
+}
+function recordSession(mode, setKey, score, total) {
+  const p = getProfile(); if (!p) return;
+  p.sessions = p.sessions || [];
+  p.sessions.push({
+    date: new Date().toISOString(),
+    mode, setKey,
+    score: score || 0,
+    total: total || 0,
+  });
+  if (p.sessions.length > 50) p.sessions = p.sessions.slice(-50);
+  saveStore();
+}
+function touchProfileVisit() {
+  const p = getProfile(); if (!p) return;
+  p.lastVisit = new Date().toISOString();
+  saveStore();
 }
 function createProfile(name) {
   if (!name) return;
@@ -93,21 +111,25 @@ function applySettings() {
 }
 
 // === 注音 ruby helper ===
+// rubyEl(text, bopo?, tag?, attrs?) — 把中文字串包成帶 <ruby><rt> 的 DOM 節點
+// - 有 bopo（空白分隔每個漢字一段）→ 使用人工標注（精準，處理多音字）
+// - 沒給 bopo → 自動逐字查 CHAR_BOPO
+// - STORE.settings.bopomofo = false → 不顯示注音，僅純文字
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
-  if (!bopo || !STORE.settings.bopomofo) {
+  if (!STORE.settings.bopomofo) {
     node.textContent = text;
     return node;
   }
-  const bopos = bopo.split(/\s+/).filter(Boolean);
+  const explicit = bopo ? bopo.split(/\s+/).filter(Boolean) : null;
   let bi = 0;
   for (const ch of text) {
     if (/[一-鿿]/.test(ch)) {
-      const b = bopos[bi++] || "";
+      const reading = explicit ? (explicit[bi++] || "") : ((typeof CHAR_BOPO !== "undefined" ? CHAR_BOPO[ch] : "") || "");
       const ruby = document.createElement("ruby");
       ruby.appendChild(document.createTextNode(ch));
       const rt = document.createElement("rt");
-      rt.textContent = b;
+      rt.textContent = reading;
       ruby.appendChild(rt);
       node.appendChild(ruby);
     } else {
@@ -120,6 +142,8 @@ const wordZhEl = (w, tag = "span", attrs = {}) => {
   const info = WORDS[w] || {};
   return rubyEl(info.zh || "", info.bopo || "", tag, attrs);
 };
+// 介面文字快捷：自動逐字注音
+const t = (text, attrs = {}) => rubyEl(text, null, "span", attrs);
 
 // === 語音 speech ===
 let voicesCache = [];
@@ -264,7 +288,8 @@ const renderHeader = (title, { back = "#/", progress = "", streak = null } = {})
     el("button", { class: "tool-btn", title: "放大字", onclick: () => { STORE.settings.fontScale = Math.min(1.6, +(STORE.settings.fontScale + 0.1).toFixed(2)); saveStore(); applySettings(); } }, "A+"),
     el("button", { class: `tool-btn ${STORE.settings.bopomofo ? "tool-btn--on" : ""}`, title: "注音", onclick: () => { STORE.settings.bopomofo = !STORE.settings.bopomofo; saveStore(); route(); } }, "ㄅ"),
     el("button", { class: `tool-btn ${STORE.settings.sound ? "tool-btn--on" : ""}`, title: "音效", onclick: () => { STORE.settings.sound = !STORE.settings.sound; saveStore(); route(); } }, "🔊"),
-    el("button", { class: `tool-btn ${STORE.settings.focus ? "tool-btn--on" : ""}`, title: "專注模式", onclick: () => { STORE.settings.focus = !STORE.settings.focus; saveStore(); applySettings(); } }, "🎯")
+    el("button", { class: `tool-btn ${STORE.settings.focus ? "tool-btn--on" : ""}`, title: "專注模式", onclick: () => { STORE.settings.focus = !STORE.settings.focus; saveStore(); applySettings(); } }, "🎯"),
+    el("button", { class: "tool-btn", title: "家長模式", style: "background: var(--candy-5);", onclick: () => navigate("#/parent") }, "👪")
   );
   const left = back
     ? el("button", { class: "header__back", onclick: () => navigate(back), "aria-label": "回上一頁" }, "←")
@@ -381,27 +406,27 @@ function renderHome() {
   }
   const buttons = el("div", { class: "hero__buttons" });
   if (cw.words.length) {
-    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/week/${cw.num}`) }, "📖 練習本週"));
+    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/week/${cw.num}`) }, t("📖 練習本週")));
   } else {
-    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/flashcard?set=all`) }, "📖 全部複習"));
+    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/flashcard?set=all`) }, t("📖 全部複習")));
   }
-  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, "📝 自選考試"));
+  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("📝 自選考試")));
   hero.appendChild(buttons);
   app.appendChild(hero);
 
   // Mastered progress bar
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, "🌟 學習進度"),
+    el("div", { class: "section__title" }, t("🌟 學習進度")),
     el("div", { class: "progress-bar" },
       el("div", { class: "progress-bar__fill", style: `width: ${pct}%;` })
     ),
     el("div", { style: "text-align: right; margin-top: 6px; font-weight: 700; color: var(--ink-soft);" },
-      `已學會 ${masteredCount} / ${totalWords} 個字（${pct}%）`)
+      t(`已學會 ${masteredCount} / ${totalWords} 個字（${pct}%）`))
   ));
 
   // Categories
   const catSection = el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, "🎨 依主題複習")
+    el("div", { class: "section__title" }, t("🎨 依主題複習"))
   );
   const catGrid = el("div", { class: "categories" });
   CATEGORIES.forEach(c => {
@@ -421,7 +446,7 @@ function renderHome() {
 
   // Weeks
   const weekSection = el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, "📅 依週次複習")
+    el("div", { class: "section__title" }, t("📅 依週次複習"))
   );
   const weekGrid = el("div", { class: "weeks" });
   WEEKS.forEach(w => {
@@ -443,7 +468,7 @@ function renderHome() {
   // Sentences shortcut
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
     el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
-      "💬 每週一句 Sentence of the Week")
+      t("💬 每週一句 Sentence of the Week"))
   ));
 
   return root;
@@ -508,18 +533,18 @@ function renderListPage(setKey) {
 
   if (words.length) {
     app.appendChild(el("section", { class: "section" },
-      el("div", { class: "section__title" }, "🎮 練習方式"),
+      el("div", { class: "section__title" }, t("🎮 練習方式")),
       el("div", { class: "modes" },
-        el("button", { class: "btn", onclick: () => navigate(`#/play/flashcard?set=${setKey}`) }, "🃏 單字卡"),
-        el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/quiz?set=${setKey}`) }, "📝 選擇題"),
-        el("button", { class: "btn btn--success", onclick: () => navigate(`#/play/listening?set=${setKey}`) }, "👂 聽力"),
-        el("button", { class: "btn btn--warn", onclick: () => navigate(`#/play/spelling?set=${setKey}`) }, "✏️ 拼字"),
-        el("button", { class: "btn btn--danger", onclick: () => navigate(`#/play/handwrite?set=${setKey}`) }, "✍️ 手寫")
+        el("button", { class: "btn", onclick: () => navigate(`#/play/flashcard?set=${setKey}`) }, t("🃏 單字卡")),
+        el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/quiz?set=${setKey}`) }, t("📝 選擇題")),
+        el("button", { class: "btn btn--success", onclick: () => navigate(`#/play/listening?set=${setKey}`) }, t("👂 聽力")),
+        el("button", { class: "btn btn--warn", onclick: () => navigate(`#/play/spelling?set=${setKey}`) }, t("✏️ 拼字")),
+        el("button", { class: "btn btn--danger", onclick: () => navigate(`#/play/handwrite?set=${setKey}`) }, t("✍️ 手寫"))
       )
     ));
 
     const wordSection = el("section", { class: "section" },
-      el("div", { class: "section__title" }, `📖 單字（共 ${words.length}）`)
+      el("div", { class: "section__title" }, t(`📖 單字（共 ${words.length}）`))
     );
     const list = el("div", { class: "word-list" });
     words.forEach(w => {
@@ -566,800 +591,3 @@ function renderListPage(setKey) {
   root.appendChild(app);
   return root;
 }
-
-// === Custom exam page ===
-function renderExam() {
-  const root = el("div", {});
-  root.appendChild(renderHeader("📝 自選考試 Custom Exam", { back: "#/" }));
-  const app = el("main", { class: "app" });
-
-  app.appendChild(el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" },
-    "勾選想考的單元（可以多選），然後選練習方式。"));
-
-  const selected = new Set();
-  const grid = el("div", { class: "unit-pick" });
-  UNITS.forEach(u => {
-    const item = el("button", { class: "unit-pick__item", style: `background: ${u.color};` });
-    const name = el("div", { class: "unit-pick__name" });
-    name.appendChild(el("span", { class: "unit-pick__emoji" }, u.emoji));
-    name.appendChild(document.createTextNode(u.name));
-    item.appendChild(name);
-    item.appendChild(el("div", { class: "unit-pick__count" }, `${u.words.length} 個字`));
-    item.addEventListener("click", () => {
-      if (selected.has(u.id)) { selected.delete(u.id); item.classList.remove("checked"); }
-      else { selected.add(u.id); item.classList.add("checked"); }
-      updateBar();
-    });
-    grid.appendChild(item);
-  });
-  app.appendChild(grid);
-
-  const bar = el("div", { class: "section", style: "position: sticky; bottom: 8px; background: var(--bg); padding: 12px; border-radius: var(--radius-lg); box-shadow: var(--shadow);" });
-  const status = el("div", { style: "font-weight: 800; margin-bottom: 8px;" });
-  bar.appendChild(status);
-  const modeRow = el("div", { class: "exam-options", style: "margin-bottom: 8px;" });
-  ["📝 選擇題", "👂 聽力", "✏️ 拼字", "✍️ 手寫"].forEach((label, i) => {
-    const btn = el("button", { onclick: () => start(["quiz","listening","spelling","handwrite"][i]) }, label);
-    modeRow.appendChild(btn);
-  });
-  bar.appendChild(modeRow);
-
-  const updateBar = () => {
-    const total = [...selected].reduce((s, id) => s + (UNITS.find(u => u.id === id)?.words.length || 0), 0);
-    const dedupe = new Set();
-    [...selected].forEach(id => UNITS.find(u => u.id === id)?.words.forEach(w => dedupe.add(w)));
-    status.textContent = selected.size
-      ? `選了 ${selected.size} 個單元・${dedupe.size} 個不同的字`
-      : "請至少選 1 個單元";
-  };
-  const start = (mode) => {
-    if (!selected.size) { alert("請先選至少 1 個單元"); return; }
-    const setKey = "units-" + [...selected].join(",");
-    navigate(`#/play/${mode}?set=${setKey}`);
-  };
-  updateBar();
-  app.appendChild(bar);
-
-  root.appendChild(app);
-  return root;
-}
-
-// === Movement break overlay ===
-function showMovementBreak(onClose) {
-  const item = MOVEMENT_BREAKS[Math.floor(Math.random() * MOVEMENT_BREAKS.length)];
-  let secs = 5;
-  const overlay = el("div", { class: "overlay" });
-  const card = el("div", { class: "overlay__card pop" },
-    el("div", { class: "overlay__emoji" }, item.emoji),
-    el("div", { class: "overlay__text" }, item.text),
-    el("div", { class: "overlay__count" }, `${secs} 秒後繼續`),
-    el("button", { class: "btn btn--accent btn--full", onclick: () => { clearInterval(timer); document.body.removeChild(overlay); onClose && onClose(); } }, "好了，繼續 →")
-  );
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
-  const timer = setInterval(() => {
-    secs--;
-    card.children[2].textContent = secs > 0 ? `${secs} 秒後繼續` : "繼續～";
-    if (secs <= 0) { clearInterval(timer); if (overlay.parentNode) document.body.removeChild(overlay); onClose && onClose(); }
-  }, 1000);
-}
-
-// === Flashcard mode ===
-function renderFlashcard(setKey) {
-  const words = resolveSet(setKey);
-  if (!words.length) return renderEmpty(`#/`, "沒有單字");
-  let i = 0;
-  let flipped = false;
-
-  const root = el("div", {});
-  const header = renderHeader(`🃏 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-
-  const app = el("main", { class: "app" });
-  const wrap = el("div", { class: "flashcard-wrap" });
-  const card = el("div", { class: "flashcard" });
-  const front = el("div", { class: "flashcard__face" });
-  const back = el("div", { class: "flashcard__face flashcard__face--back" });
-  card.append(front, back);
-  card.addEventListener("click", () => { flipped = !flipped; card.classList.toggle("flipped", flipped); });
-  wrap.appendChild(card);
-  app.appendChild(wrap);
-
-  const controls = el("div", { class: "flash-controls" },
-    el("button", { class: "icon-btn", "aria-label": "上一張" }, "←"),
-    el("div", { style: "display: grid; place-items: center;" },
-      el("button", { class: "icon-btn icon-btn--big icon-btn--accent", "aria-label": "念出單字" }, "🔊")
-    ),
-    el("button", { class: "icon-btn", "aria-label": "下一張" }, "→")
-  );
-  const [prevBtn, , nextBtn] = controls.children;
-  const speakBtn = controls.querySelector(".icon-btn--big");
-  prevBtn.addEventListener("click", e => { e.stopPropagation(); if (i > 0) { i--; render(); } });
-  nextBtn.addEventListener("click", e => { e.stopPropagation(); if (i < words.length - 1) { i++; render(); } });
-  speakBtn.addEventListener("click", e => { e.stopPropagation(); speakWord(words[i]); });
-  app.appendChild(controls);
-
-  const actions = el("div", { class: "flash-actions" },
-    el("button", { class: "btn btn--success" }, "✅ 我會了"),
-    el("button", { class: "btn btn--ghost" }, "🔁 再練習")
-  );
-  actions.children[0].addEventListener("click", () => { setMastered(words[i], true); dingCorrect(); next(); });
-  actions.children[1].addEventListener("click", () => { setMastered(words[i], false); next(); });
-  app.appendChild(actions);
-
-  function next() {
-    if (i < words.length - 1) { i++; render(); }
-    else {
-      app.replaceChildren(renderResultBlock("做完一輪了！", "🎉", "重新開始", () => { i = 0; render(); }));
-    }
-  }
-
-  function render() {
-    flipped = false;
-    card.classList.remove("flipped");
-    const w = words[i];
-    const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
-    front.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, info.emoji),
-      el("div", { class: "flashcard__en" }, w),
-      el("div", { class: "flashcard__hint" }, "點卡片看中文")
-    );
-    back.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, info.emoji),
-      rubyEl(info.zh || "", info.bopo || "", "div", { class: "flashcard__zh" }),
-      el("div", { class: "flashcard__hint" }, w)
-    );
-    progressLabel.textContent = `${i + 1}/${words.length}`;
-    prevBtn.disabled = i === 0;
-    nextBtn.disabled = i === words.length - 1;
-    setTimeout(() => speakWord(w), 200);
-  }
-  render();
-
-  root.appendChild(app);
-  return root;
-}
-
-// === Quiz / Listening / Spelling shared engine with spaced repetition ===
-function withSpacedRepetition(originalWords) {
-  return shuffle(originalWords);
-}
-function pushWrongBack(queue, currentIdx, word, depth = 3) {
-  const insertAt = Math.min(currentIdx + 1 + depth, queue.length);
-  queue.splice(insertAt, 0, word);
-}
-function maybeMovementBreak(streak, onResume) {
-  if (streak > 0 && streak % 5 === 0) {
-    setTimeout(() => showMovementBreak(onResume), 200);
-  } else { onResume(); }
-}
-
-function distractors(correct) {
-  const sameCat = Object.entries(WORDS)
-    .filter(([w, info]) => w !== correct && info.category === WORDS[correct]?.category)
-    .map(([w]) => w);
-  const pool = sameCat.length >= 3 ? sameCat : Object.keys(WORDS).filter(w => w !== correct);
-  return shuffle(pool).slice(0, 3);
-}
-
-// === Quiz mode (zh→en) ===
-function renderQuiz(setKey) {
-  const words = resolveSet(setKey);
-  if (words.length < 2) return renderEmpty(`#/`, "單字太少，無法做選擇題");
-  const queue = withSpacedRepetition(words);
-  const total = words.length;
-  let i = 0;
-  let score = 0;
-  let streak = 0;
-  let locked = false;
-
-  const root = el("div", {});
-  const header = renderHeader(`📝 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  function render() {
-    if (i >= queue.length) {
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : score >= total * 0.7 ? "🎉" : "💪", "再來一次", () => navigate(`#/play/quiz?set=${setKey}`)));
-      return;
-    }
-    locked = false;
-    const w = queue[i];
-    const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
-    progressLabel.textContent = `${i + 1}/${queue.length}・${score}分`;
-    if (streak >= 2) {
-      progressLabel.appendChild(document.createTextNode(" "));
-      progressLabel.appendChild(el("span", { class: "streak" }, `🔥${streak}`));
-    }
-
-    const opts = shuffle([w, ...distractors(w)]);
-    const feedback = el("div", { class: "quiz-feedback" }, "");
-
-    const optionsWrap = el("div", { class: "quiz-options" });
-    opts.forEach(opt => {
-      const btn = el("button", { class: "quiz-option" }, opt);
-      btn.addEventListener("click", () => {
-        if (locked) return;
-        locked = true;
-        if (opt === w) {
-          btn.classList.add("quiz-option--correct");
-          feedback.textContent = "答對了！🎉";
-          feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          score++;
-          streak++;
-          recordWord(w, true);
-          dingCorrect();
-          speakWord(w);
-        } else {
-          btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === w) b.classList.add("quiz-option--correct"); });
-          feedback.textContent = `正確答案：${w}`;
-          feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-          streak = 0;
-          recordWord(w, false);
-          buzzWrong();
-          speakWord(w);
-          pushWrongBack(queue, i, w);
-        }
-        setTimeout(() => {
-          maybeMovementBreak(streak, () => { i++; render(); });
-        }, 1300);
-      });
-      optionsWrap.appendChild(btn);
-    });
-
-    const promptBox = el("div", { class: "quiz-prompt" });
-    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, info.emoji));
-    promptBox.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" }));
-    promptBox.appendChild(el("div", { class: "quiz-prompt__hint" }, "選出正確的英文"));
-    app.replaceChildren(promptBox, optionsWrap, feedback);
-  }
-  render();
-  return root;
-}
-
-// === Listening mode ===
-function renderListening(setKey) {
-  const words = resolveSet(setKey);
-  if (words.length < 2) return renderEmpty(`#/`, "單字太少，無法做聽力題");
-  const queue = withSpacedRepetition(words);
-  const total = words.length;
-  let i = 0, score = 0, streak = 0, locked = false;
-
-  const root = el("div", {});
-  const header = renderHeader(`👂 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  function render() {
-    if (i >= queue.length) {
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/listening?set=${setKey}`)));
-      return;
-    }
-    locked = false;
-    const w = queue[i];
-    progressLabel.textContent = `${i + 1}/${queue.length}・${score}分`;
-
-    const opts = shuffle([w, ...distractors(w)]);
-    const feedback = el("div", { class: "quiz-feedback" }, "");
-    const optionsWrap = el("div", { class: "quiz-options" });
-    opts.forEach(opt => {
-      const btn = el("button", { class: "quiz-option" }, opt);
-      btn.addEventListener("click", () => {
-        if (locked) return;
-        locked = true;
-        if (opt === w) {
-          btn.classList.add("quiz-option--correct");
-          feedback.textContent = "答對了！🎉";
-          feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          score++; streak++;
-          recordWord(w, true);
-          dingCorrect();
-        } else {
-          btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === w) b.classList.add("quiz-option--correct"); });
-          feedback.textContent = `正確答案：${w}`;
-          feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-          streak = 0;
-          recordWord(w, false);
-          buzzWrong();
-          pushWrongBack(queue, i, w);
-        }
-        setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 1300);
-      });
-      optionsWrap.appendChild(btn);
-    });
-
-    app.replaceChildren(
-      el("div", { class: "quiz-prompt" },
-        el("div", { class: "quiz-prompt__emoji" }, "🎧"),
-        el("div", { class: "quiz-prompt__zh", style: "font-size: calc(24px * var(--font-scale));" }, "聽聽看，選出正確的英文"),
-        el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 12px;", onclick: () => speakWord(w), "aria-label": "重聽" }, "🔊"),
-        el("div", { class: "quiz-prompt__hint" }, "點喇叭可重聽")
-      ),
-      optionsWrap,
-      feedback
-    );
-    setTimeout(() => speakWord(w), 300);
-  }
-  render();
-  return root;
-}
-
-// === Spelling mode ===
-function renderSpelling(setKey) {
-  const words = resolveSet(setKey);
-  if (!words.length) return renderEmpty(`#/`, "沒有單字");
-  const queue = withSpacedRepetition(words);
-  const total = words.length;
-  let i = 0, score = 0, streak = 0;
-
-  const root = el("div", {});
-  const header = renderHeader(`✏️ ${setLabel(setKey)}`, { back: backHashFor(setKey) });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  function render() {
-    if (i >= queue.length) {
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/spelling?set=${setKey}`)));
-      return;
-    }
-    const w = queue[i];
-    const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
-    progressLabel.textContent = `${i + 1}/${queue.length}・${score}分`;
-
-    const input = el("input", { class: "spell-input", type: "text", autocomplete: "off", autocapitalize: "none", spellcheck: "false", placeholder: "在這裡輸入英文" });
-    const hint = el("div", { class: "spell-hint" }, w.replace(/[a-zA-Z]/g, "_").split("").join(" "));
-    let revealed = false;
-
-    const submit = () => {
-      const v = input.value.trim().toLowerCase().replace(/\s+/g, " ");
-      const correct = w.toLowerCase().replace(/\s+/g, " ");
-      if (v === correct) {
-        feedback.textContent = "答對了！🎉";
-        feedback.className = "quiz-feedback quiz-feedback--correct pop";
-        score++; streak++;
-        recordWord(w, true);
-        dingCorrect();
-        speakWord(w);
-        setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 1100);
-      } else if (revealed) {
-        feedback.textContent = `正確：${w}`;
-        feedback.className = "quiz-feedback quiz-feedback--wrong";
-        streak = 0;
-        recordWord(w, false);
-        pushWrongBack(queue, i, w);
-        setTimeout(() => { i++; render(); }, 1500);
-      } else {
-        feedback.textContent = "再試一次！";
-        feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-        input.classList.add("shake");
-        setTimeout(() => input.classList.remove("shake"), 400);
-        buzzWrong();
-      }
-    };
-    const reveal = () => {
-      revealed = true;
-      input.value = w;
-      hint.textContent = w.split("").join(" ");
-      speakWord(w);
-    };
-    const showHint = () => {
-      hint.textContent = w[0] + " " + w.slice(1).replace(/[a-zA-Z]/g, "_").split("").join(" ");
-    };
-
-    input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
-    const feedback = el("div", { class: "quiz-feedback" }, "");
-
-    const promptBox = el("div", { class: "quiz-prompt" });
-    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, info.emoji));
-    promptBox.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" }));
-    promptBox.appendChild(el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 8px;", onclick: () => speakWord(w), "aria-label": "重聽" }, "🔊"));
-    promptBox.appendChild(el("div", { class: "quiz-prompt__hint" }, `共 ${w.length} 個字元（含空白）`));
-
-    app.replaceChildren(
-      promptBox,
-      input,
-      hint,
-      el("div", { class: "spell-actions" },
-        el("button", { class: "btn btn--ghost", onclick: showHint }, "💡 提示首字"),
-        el("button", { class: "btn btn--ghost", onclick: reveal }, "👀 看答案")
-      ),
-      el("button", { class: "btn btn--full", style: "margin-top: 12px;", onclick: submit }, "送出"),
-      feedback
-    );
-    setTimeout(() => { input.focus(); speakWord(w); }, 100);
-  }
-  render();
-  return root;
-}
-
-// === Handwriting mode (canvas trace) ===
-function setupCanvas(canvas) {
-  const ctx = canvas.getContext("2d");
-  const dpr = window.devicePixelRatio || 1;
-  const resize = () => {
-    const r = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(r.width * dpr);
-    canvas.height = Math.floor(r.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineWidth = 6;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#3b3a4a";
-  };
-  resize();
-  let drawing = false, lastX = 0, lastY = 0;
-  const point = e => {
-    const r = canvas.getBoundingClientRect();
-    const t = e.touches?.[0] || e;
-    return { x: t.clientX - r.left, y: t.clientY - r.top };
-  };
-  const down = e => { e.preventDefault(); drawing = true; const p = point(e); lastX = p.x; lastY = p.y; };
-  const move = e => {
-    if (!drawing) return;
-    e.preventDefault();
-    const p = point(e);
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    lastX = p.x; lastY = p.y;
-  };
-  const up = () => { drawing = false; };
-  canvas.addEventListener("mousedown", down);
-  canvas.addEventListener("mousemove", move);
-  window.addEventListener("mouseup", up);
-  canvas.addEventListener("touchstart", down, { passive: false });
-  canvas.addEventListener("touchmove", move, { passive: false });
-  canvas.addEventListener("touchend", up);
-  return {
-    clear: () => { const r = canvas.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height); },
-    resize
-  };
-}
-
-function renderHandwrite(setKey) {
-  const words = resolveSet(setKey);
-  if (!words.length) return renderEmpty(`#/`, "沒有單字");
-  const queue = withSpacedRepetition(words);
-  const total = words.length;
-  let i = 0, doneCount = 0, streak = 0;
-
-  const root = el("div", {});
-  const header = renderHeader(`✍️ ${setLabel(setKey)}`, { back: backHashFor(setKey) });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  function render() {
-    if (i >= queue.length) {
-      app.replaceChildren(renderResultBlock(`寫完 ${doneCount} / ${total} 個字！`, "🌟", "再寫一次", () => navigate(`#/play/handwrite?set=${setKey}`)));
-      return;
-    }
-    const w = queue[i];
-    const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
-    progressLabel.textContent = `${i + 1}/${queue.length}`;
-
-    const promptCard = el("div", { class: "write-card" });
-    const promptRow = el("div", { class: "write-prompt" });
-    promptRow.appendChild(document.createTextNode(`${info.emoji} `));
-    promptRow.appendChild(rubyEl(info.zh || "", info.bopo || "", "span"));
-    promptCard.appendChild(promptRow);
-    promptCard.appendChild(el("div", { style: "color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); margin-bottom: 8px;" }, "用手指描寫底下的字 ✍️"));
-    promptCard.appendChild(el("button", { class: "icon-btn icon-btn--big icon-btn--accent", onclick: () => speakWord(w), "aria-label": "念出" }, "🔊"));
-
-    const wrap = el("div", { class: "write-canvas-wrap" });
-    const canvas = el("canvas", { class: "write-canvas" });
-    const guideClass = w.length > 7 ? "write-guide write-guide--small" : "write-guide";
-    const guide = el("div", { class: guideClass }, w);
-    wrap.appendChild(guide);
-    wrap.appendChild(canvas);
-    promptCard.appendChild(wrap);
-
-    const actions = el("div", { class: "write-actions" });
-    const clearBtn = el("button", { class: "btn btn--ghost" }, "🧹 清除重寫");
-    const doneBtn = el("button", { class: "btn btn--success" }, "✅ 寫好了！");
-    actions.appendChild(clearBtn);
-    actions.appendChild(doneBtn);
-    promptCard.appendChild(actions);
-
-    app.replaceChildren(promptCard);
-    const pen = setupCanvas(canvas);
-    clearBtn.addEventListener("click", () => pen.clear());
-    doneBtn.addEventListener("click", () => {
-      doneCount++; streak++;
-      setMastered(w, true);
-      dingCorrect();
-      speakWord(w);
-      setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 800);
-    });
-    setTimeout(() => { pen.resize(); speakWord(w); }, 100);
-  }
-  render();
-  return root;
-}
-
-// === Sentences overview ===
-function renderSentences() {
-  const cw = getCurrentWeek();
-  const root = el("div", {});
-  root.appendChild(renderHeader("💬 每週一句", { back: "#/" }));
-  const app = el("main", { class: "app" });
-
-  const list = el("div", { class: "sentence-list" });
-  SENTENCES.forEach(s => {
-    const isCurrent = s.week === cw.num;
-    const dr = weekDateRange(s.week);
-    const wp = weekProgress(s.week);
-    const row = el("div", { class: `sentence-row ${isCurrent ? "sentence-row--current" : ""}` });
-    row.appendChild(el("div", { class: "sentence-row__week" },
-      `第 ${s.week} 週・${dr}${wp ? "・" + wp : ""}${isCurrent ? " 👈 本週" : ""}`));
-    row.appendChild(el("div", { class: "sentence-row__en" }, s.en));
-    row.appendChild(rubyEl(s.zh, s.bopo, "div", { class: "sentence-row__zh" }));
-    row.appendChild(el("div", { style: "display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;" },
-      el("button", { class: "icon-btn", style: "width: 44px; height: 44px; font-size: 20px;", onclick: () => speak(s.en.replace(/_+/g, "blank")), "aria-label": "念句子" }, "🔊"),
-      el("button", { class: "btn btn--ghost", style: "min-height: 44px; font-size: calc(16px * var(--font-scale));", onclick: () => navigate(`#/play/sentence-card?week=${s.week}`) }, "🃏 句卡"),
-      s.blank
-        ? el("button", { class: "btn btn--ghost", style: "min-height: 44px; font-size: calc(16px * var(--font-scale));", onclick: () => navigate(`#/play/sentence-blank?week=${s.week}`) }, "✏️ 填空")
-        : null
-    ));
-    list.appendChild(row);
-  });
-  app.appendChild(list);
-
-  app.appendChild(el("div", { style: "margin-top: 16px;" },
-    el("button", { class: "btn btn--full btn--xl btn--success", onclick: () => navigate("#/play/sentence-listen?week=all") },
-      "👂 全部句子聽力測驗")
-  ));
-
-  root.appendChild(app);
-  return root;
-}
-
-// === Sentence card mode ===
-function renderSentenceCard(weekNum) {
-  const list = weekNum === "all" ? SENTENCES : SENTENCES.filter(s => s.week === +weekNum);
-  if (!list.length) return renderEmpty("#/sentences", "沒有句子");
-  let i = 0, flipped = false;
-
-  const root = el("div", {});
-  const header = renderHeader("🃏 句卡", { back: "#/sentences" });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  const wrap = el("div", { class: "flashcard-wrap" });
-  const card = el("div", { class: "flashcard" });
-  const front = el("div", { class: "flashcard__face" });
-  const back = el("div", { class: "flashcard__face flashcard__face--back" });
-  card.append(front, back);
-  card.addEventListener("click", () => { flipped = !flipped; card.classList.toggle("flipped", flipped); });
-  wrap.appendChild(card);
-  app.appendChild(wrap);
-
-  const controls = el("div", { class: "flash-controls" },
-    el("button", { class: "icon-btn", "aria-label": "上一張" }, "←"),
-    el("button", { class: "icon-btn icon-btn--big icon-btn--accent", "aria-label": "念出句子" }, "🔊"),
-    el("button", { class: "icon-btn", "aria-label": "下一張" }, "→")
-  );
-  controls.children[0].addEventListener("click", e => { e.stopPropagation(); if (i > 0) { i--; render(); } });
-  controls.children[1].addEventListener("click", e => { e.stopPropagation(); speak(list[i].en.replace(/_+/g, "blank")); });
-  controls.children[2].addEventListener("click", e => { e.stopPropagation(); if (i < list.length - 1) { i++; render(); } });
-  app.appendChild(controls);
-
-  function render() {
-    flipped = false;
-    card.classList.remove("flipped");
-    const s = list[i];
-    front.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, "💬"),
-      el("div", { class: "flashcard__en", style: "font-size: calc(28px * var(--font-scale)); line-height: 1.4;" }, s.en),
-      el("div", { class: "flashcard__hint" }, "點卡片看中文")
-    );
-    back.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, "💬"),
-      rubyEl(s.zh, s.bopo, "div", { class: "flashcard__zh", style: "font-size: calc(26px * var(--font-scale)); line-height: 1.4;" }),
-      el("div", { class: "flashcard__hint" }, `第 ${s.week} 週・${weekDateRange(s.week)}`)
-    );
-    progressLabel.textContent = `${i + 1}/${list.length}`;
-    controls.children[0].disabled = i === 0;
-    controls.children[2].disabled = i === list.length - 1;
-    setTimeout(() => speak(s.en.replace(/_+/g, "blank")), 200);
-  }
-  render();
-  return root;
-}
-
-// === Sentence listening mode ===
-function renderSentenceListen(weekArg) {
-  const pool = weekArg === "all" ? SENTENCES : SENTENCES.filter(s => s.week === +weekArg);
-  if (pool.length < 3) return renderEmpty("#/sentences", "句子太少，無法做聽力題");
-  const order = shuffle(pool);
-  let i = 0, score = 0, streak = 0, locked = false;
-
-  const root = el("div", {});
-  const header = renderHeader("👂 句子聽力", { back: "#/sentences" });
-  root.appendChild(header);
-  const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  function render() {
-    if (i >= order.length) {
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${order.length}`, score === order.length ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/sentence-listen?week=${weekArg}`)));
-      return;
-    }
-    locked = false;
-    const s = order[i];
-    progressLabel.textContent = `${i + 1}/${order.length}・${score}分`;
-
-    const distractorsZ = shuffle(SENTENCES.filter(x => x.zh !== s.zh)).slice(0, 2);
-    const opts = shuffle([s, ...distractorsZ]);
-    const feedback = el("div", { class: "quiz-feedback" }, "");
-    const optionsWrap = el("div", { class: "quiz-options", style: "grid-template-columns: 1fr;" });
-    opts.forEach(opt => {
-      const btn = el("button", { class: "quiz-option", style: "font-size: calc(20px * var(--font-scale)); min-height: 64px; text-align: left; padding-left: 18px;" });
-      btn.appendChild(rubyEl(opt.zh, opt.bopo, "span"));
-      btn.addEventListener("click", () => {
-        if (locked) return;
-        locked = true;
-        if (opt.zh === s.zh) {
-          btn.classList.add("quiz-option--correct");
-          feedback.textContent = "答對了！🎉";
-          feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          score++; streak++;
-          dingCorrect();
-        } else {
-          btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === s.zh) b.classList.add("quiz-option--correct"); });
-          feedback.textContent = `正確：${s.en}`;
-          feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-          streak = 0;
-          buzzWrong();
-        }
-        setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 1500);
-      });
-      optionsWrap.appendChild(btn);
-    });
-
-    app.replaceChildren(
-      el("div", { class: "quiz-prompt" },
-        el("div", { class: "quiz-prompt__emoji" }, "🎧"),
-        el("div", { class: "quiz-prompt__zh", style: "font-size: calc(24px * var(--font-scale));" }, "聽聽看，選出正確的中文"),
-        el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 12px;", onclick: () => speak(s.en.replace(/_+/g, "blank")), "aria-label": "重聽" }, "🔊")
-      ),
-      optionsWrap,
-      feedback
-    );
-    setTimeout(() => speak(s.en.replace(/_+/g, "blank")), 300);
-  }
-  render();
-  return root;
-}
-
-// === Sentence blank fill ===
-function renderSentenceBlank(weekNum) {
-  const s = SENTENCES.find(x => x.week === +weekNum && x.blank);
-  if (!s) return renderEmpty("#/sentences", "這句沒有填空");
-
-  const root = el("div", {});
-  root.appendChild(renderHeader("✏️ 填空練習", { back: "#/sentences" }));
-  const app = el("main", { class: "app" });
-  root.appendChild(app);
-
-  let chosen = null;
-  const display = el("div", { class: "sentence-card__en" });
-  const renderDisplay = () => {
-    display.innerHTML = "";
-    const parts = s.en.split(/(_+)/);
-    parts.forEach(p => {
-      if (/^_+$/.test(p)) {
-        display.appendChild(el("span", {
-          style: "display: inline-block; min-width: 90px; padding: 2px 10px; margin: 0 4px; background: var(--candy-4); border-radius: 8px; border-bottom: 3px solid var(--warn);"
-        }, chosen || "____"));
-      } else {
-        display.appendChild(document.createTextNode(p));
-      }
-    });
-  };
-  renderDisplay();
-
-  const suggest = el("div", { class: "blank-suggest" });
-  s.blank.suggest.forEach(word => {
-    const b = el("button", {}, word);
-    b.addEventListener("click", () => {
-      chosen = word;
-      [...suggest.children].forEach(x => x.classList.remove("picked"));
-      b.classList.add("picked");
-      renderDisplay();
-      dingCorrect();
-      speak(s.en.replace(/_+/g, word));
-    });
-    suggest.appendChild(b);
-  });
-
-  const sCard = el("div", { class: "sentence-card" });
-  sCard.appendChild(display);
-  sCard.appendChild(rubyEl(s.zh, s.bopo, "div", { class: "sentence-card__zh" }));
-  sCard.appendChild(el("div", { style: "margin-top: 8px; font-size: calc(14px * var(--font-scale)); color: var(--ink-soft);" }, `提示：${s.blank.hint}`));
-  sCard.appendChild(el("div", { style: "margin-top: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;" },
-    el("button", { class: "icon-btn icon-btn--big icon-btn--accent", onclick: () => speak((chosen ? s.en.replace(/_+/g, chosen) : s.en.replace(/_+/g, "blank"))), "aria-label": "念句子" }, "🔊")
-  ));
-  app.appendChild(sCard);
-  app.appendChild(el("div", { class: "section__title" }, "👇 點選一個詞填入"));
-  app.appendChild(suggest);
-
-  return root;
-}
-
-// === Generic empty / result blocks ===
-function renderEmpty(back, msg) {
-  const root = el("div", {});
-  root.appendChild(renderHeader("沒有資料", { back }));
-  root.appendChild(el("main", { class: "app" },
-    el("div", { class: "empty" }, msg),
-    el("button", { class: "btn btn--full", onclick: () => navigate(back) }, "回上一頁")
-  ));
-  return root;
-}
-function renderResultBlock(score, emoji, btnText, onClick) {
-  return el("div", { class: "result pop" },
-    el("div", { class: "result__emoji" }, emoji),
-    el("div", { class: "result__score" }, score),
-    el("div", { class: "result__msg" }, "你好棒！繼續加油 💪"),
-    el("div", { style: "display: grid; gap: 10px; max-width: 320px; margin: 0 auto;" },
-      el("button", { class: "btn btn--accent", onclick: onClick }, btnText),
-      el("button", { class: "btn btn--ghost", onclick: () => navigate("#/") }, "🏠 回首頁")
-    )
-  );
-}
-
-// === Router ===
-function route() {
-  applySettings();
-  // Profile gate first
-  if (!STORE.active && location.hash !== "#/profile") {
-    const root = $("#app");
-    root.replaceChildren(renderProfileGate());
-    return;
-  }
-  const { path, query } = parseHash();
-  let view;
-  if (path.length === 0) view = renderHome();
-  else if (path[0] === "profile") view = renderProfilePage();
-  else if (path[0] === "exam") view = renderExam();
-  else if (path[0] === "week" && path[1]) view = renderListPage(`week-${path[1]}`);
-  else if (path[0] === "category" && path[1]) view = renderListPage(`category-${path[1]}`);
-  else if (path[0] === "sentences") view = renderSentences();
-  else if (path[0] === "play") {
-    const setKey = query.set;
-    const week = query.week;
-    if (path[1] === "flashcard") view = renderFlashcard(setKey);
-    else if (path[1] === "quiz") view = renderQuiz(setKey);
-    else if (path[1] === "listening") view = renderListening(setKey);
-    else if (path[1] === "spelling") view = renderSpelling(setKey);
-    else if (path[1] === "handwrite") view = renderHandwrite(setKey);
-    else if (path[1] === "sentence-card") view = renderSentenceCard(week);
-    else if (path[1] === "sentence-listen") view = renderSentenceListen(week);
-    else if (path[1] === "sentence-blank") view = renderSentenceBlank(week);
-    else view = renderHome();
-  } else view = renderHome();
-
-  const root = $("#app");
-  root.replaceChildren(view);
-  window.scrollTo({ top: 0, behavior: "instant" });
-}
-
-window.addEventListener("hashchange", route);
-window.addEventListener("DOMContentLoaded", route);
-if (document.readyState !== "loading") route();
