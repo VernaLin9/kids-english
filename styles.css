@@ -34,7 +34,13 @@ body {
   color: var(--ink);
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
-  font-size: calc(16px * var(--font-scale));
+  font-size: calc(15px * var(--font-scale));
+}
+@media (min-width: 768px) {
+  body { font-size: calc(16px * var(--font-scale)); }
+}
+@media (min-width: 1024px) {
+  body { font-size: calc(17px * var(--font-scale)); }
 }
 
 button {
@@ -52,17 +58,16 @@ ruby {
   align-items: center;
   vertical-align: middle;
   line-height: 1;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 rt {
-  position: relative;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
-  font-size: 0.6em;
+  align-items: flex-start;
+  font-size: 0.5em;
   line-height: 1;
-  margin-left: 3px;
-  padding-right: 0.55em;
+  margin-left: 2px;
   color: var(--ink-soft);
   font-family: "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
   font-weight: 700;
@@ -74,13 +79,22 @@ rt {
   line-height: 1;
 }
 .bopo-tone {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  font-size: 0.95em;
+  display: block;
   line-height: 1;
+  font-size: 0.95em;
   font-weight: 800;
+  align-self: flex-end;
+  margin-top: -1px;
+}
+/* Mobile: smaller bopomofo */
+@media (max-width: 480px) {
+  rt { font-size: 0.45em; margin-left: 1px; }
+  ruby { margin-right: 1px; }
+}
+/* Tablet+: bigger bopomofo */
+@media (min-width: 768px) {
+  rt { font-size: 0.55em; margin-left: 3px; }
+  ruby { margin-right: 3px; }
 }
 
 /* === Header === */
@@ -830,16 +844,48 @@ body.focus .section--hide-on-focus { display: none !important; }
 body.focus .app { padding-top: 8px; }
 
 /* === Responsive === */
+/* Mobile (< 480px) */
 @media (max-width: 480px) {
-  .header__title { font-size: calc(16px * var(--font-scale)); }
-  .hero__title { font-size: calc(24px * var(--font-scale)); }
-  .flashcard__en, .flashcard__zh { font-size: calc(30px * var(--font-scale)); }
-  .flashcard__emoji { font-size: 72px; }
+  .app { padding: 14px 12px 60px; }
+  .header__title { font-size: calc(15px * var(--font-scale)); }
+  .header { padding: 8px 10px; gap: 4px; }
+  .header__back { min-width: 40px; min-height: 40px; font-size: 20px; }
+  .tool-btn { width: 30px; height: 30px; font-size: 12px; border-radius: 8px; }
+  .hero { padding: 16px; }
+  .hero__title { font-size: calc(20px * var(--font-scale)); }
+  .hero__chip { font-size: calc(14px * var(--font-scale)); padding: 6px 10px; }
+  .hero__sentence { font-size: calc(15px * var(--font-scale)); padding: 10px 12px; }
+  .section__title { font-size: calc(18px * var(--font-scale)); }
+  .btn { font-size: calc(15px * var(--font-scale)); min-height: 48px; padding: 10px 14px; }
+  .btn--xl { font-size: calc(18px * var(--font-scale)); min-height: 60px; }
+  .flashcard__en, .flashcard__zh { font-size: calc(28px * var(--font-scale)); }
+  .flashcard__emoji { font-size: 64px; }
   .quiz-options { grid-template-columns: 1fr; }
-  .quiz-prompt__zh { font-size: calc(28px * var(--font-scale)); }
-  .sentence-card__en { font-size: calc(22px * var(--font-scale)); }
-  .write-guide { font-size: 70px; }
-  .write-guide--small { font-size: 44px; }
+  .quiz-prompt { padding: 18px 14px; }
+  .quiz-prompt__emoji { font-size: 60px; }
+  .quiz-prompt__zh { font-size: calc(24px * var(--font-scale)); }
+  .quiz-option { font-size: calc(20px * var(--font-scale)); min-height: 60px; padding: 14px 10px; }
+  .sentence-card__en { font-size: calc(20px * var(--font-scale)); }
+  .sentence-card__zh { font-size: calc(18px * var(--font-scale)); }
+  .write-guide { font-size: 60px; }
+  .write-guide--small { font-size: 36px; }
+  .cat-card__emoji { font-size: 36px; }
+  .cat-card__name { font-size: calc(16px * var(--font-scale)); }
+  .star-jar { padding: 10px 14px; }
+  .star-jar__icon { font-size: 24px; }
+  .star-jar__count { font-size: calc(16px * var(--font-scale)); }
+  .profile-card { padding: 20px 16px; }
+  .profile-card h1 { font-size: 22px; }
+}
+/* Tablet (481-1023px) */
+@media (min-width: 481px) and (max-width: 1023px) {
+  .app { max-width: 720px; }
+}
+/* Desktop (>= 1024px) */
+@media (min-width: 1024px) {
+  .app { max-width: 880px; padding: 28px 24px 100px; }
+  .hero__title { font-size: calc(32px * var(--font-scale)); }
+  .section__title { font-size: calc(24px * var(--font-scale)); }
 }
 
 /* === Parent dashboard === */
