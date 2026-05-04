@@ -51,28 +51,37 @@ button {
   color: inherit;
 }
 
-/* === Ruby (注音) — 直書放在每個中文字右邊（台灣教科書習慣） === */
+/* === Ruby (注音) — 直書放在每個中文字右邊（台灣教科書習慣） ===
+   Strategy: ruby is inline-block on baseline (so Chinese chars sit on
+   the same baseline as English/emoji text); rt is absolutely positioned
+   into a reserved padding-right gap, so different bopomofo lengths
+   never shift the Chinese char's vertical position. */
 ruby {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  vertical-align: middle;
-  line-height: 1;
-  margin-right: 2px;
+  display: inline-block;
+  position: relative;
+  vertical-align: baseline;
+  padding-right: 0.6em;
+  line-height: inherit;
+  font-style: normal;
+  ruby-align: start;
 }
 rt {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   font-size: 0.5em;
   line-height: 1;
-  margin-left: 2px;
   color: var(--ink-soft);
   font-family: "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
   font-weight: 700;
   user-select: none;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 .bopo-char {
   display: block;
@@ -86,15 +95,21 @@ rt {
   align-self: flex-end;
   margin-top: -1px;
 }
-/* Mobile: smaller bopomofo */
+/* Mobile: smaller bopomofo + tighter gap */
 @media (max-width: 480px) {
-  rt { font-size: 0.45em; margin-left: 1px; }
-  ruby { margin-right: 1px; }
+  ruby { padding-right: 0.5em; }
+  rt { font-size: 0.45em; }
 }
-/* Tablet+: bigger bopomofo */
+/* Tablet+: bigger bopomofo + larger gap */
 @media (min-width: 768px) {
-  rt { font-size: 0.55em; margin-left: 3px; }
-  ruby { margin-right: 3px; }
+  ruby { padding-right: 0.65em; }
+  rt { font-size: 0.55em; }
+}
+/* Give rows containing ruby enough vertical room so 3-bopo + tone
+   never bumps into the next line. */
+.hero, .section, .word-row, .sentence-card, .btn, .cat-card,
+.profile-pill, .session-row, .struggle-row, .unit-bar, .kid-stats {
+  line-height: 1.5;
 }
 
 /* === Header === */
