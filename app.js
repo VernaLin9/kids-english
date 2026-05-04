@@ -413,6 +413,21 @@ function renderProfileGate() {
   // 預設顯示兒童模式（多數情境用兒童居多）
   childPanel.style.display = "";
 
+  // QR code — 給其他手機也能掃進來
+  const qrSection = el("div", { style: "margin-top: 22px; padding-top: 16px; border-top: 2px dashed var(--primary-soft); text-align: center;" });
+  qrSection.appendChild(rubyEl("用其他手機掃這個就能進", null, "div", { style: "font-size: 13px; color: var(--ink-soft); margin-bottom: 8px;" }));
+  const qrUrl = location.origin + location.pathname;
+  const qrImg = el("img", {
+    src: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(qrUrl)}`,
+    alt: "QR code",
+    width: 180,
+    height: 180,
+    style: "border-radius: 12px; box-shadow: 0 2px 0 rgba(0,0,0,0.08);"
+  });
+  qrSection.appendChild(qrImg);
+  qrSection.appendChild(el("div", { style: "font-size: 11px; color: var(--ink-soft); margin-top: 6px; word-break: break-all;" }, qrUrl));
+  card.appendChild(qrSection);
+
   root.appendChild(card);
   return root;
 }
