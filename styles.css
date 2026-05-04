@@ -51,25 +51,31 @@ button {
   color: inherit;
 }
 
-/* === Ruby (注音) — 直書放在每個中文字右邊（台灣教科書習慣） ===
-   Strategy: ruby is inline-block on baseline (so Chinese chars sit on
-   the same baseline as English/emoji text); rt is absolutely positioned
-   into a reserved padding-right gap, so different bopomofo lengths
-   never shift the Chinese char's vertical position. */
-ruby {
-  display: inline-block;
-  position: relative;
-  vertical-align: baseline;
-  padding-right: 0.6em;
-  line-height: inherit;
-  font-style: normal;
-  ruby-align: start;
+/* === 注音 — 漢字 + 注音欄並排，垂直置中（台灣課本習慣） ===
+   結構：<span.zh-pair>
+            <span.zh-base>漢字</span>
+            <span.zh-bopo>
+              <span.bopo-tone>聲調</span>  // 在頂端
+              <span.bopo-char>注音字</span>
+              <span.bopo-char>注音字</span>
+            </span>
+         </span>
+   - .zh-pair: inline-flex，將漢字和注音欄並排，align-items: center → 垂直至中
+   - vertical-align: middle 讓整組與旁邊文字（emoji/英文）的中心對齊
+   - line-height: 1 避免行高擠壓注音 */
+.zh-pair {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+  margin-right: 1px;
 }
-rt {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
+.zh-base {
+  display: inline-block;
+  line-height: 1;
+}
+.zh-bopo {
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -82,36 +88,33 @@ rt {
   user-select: none;
   letter-spacing: 0;
   white-space: nowrap;
+  margin-left: 2px;
 }
 .bopo-char {
   display: block;
   line-height: 1;
 }
-/* 聲調 ˊ ˇ ˋ：直書欄的「右上角」（台灣課本習慣） */
+/* 聲調 ˊ ˇ ˋ：直書欄的「右上角」（先 render → 跑到 column 頂端） */
 .bopo-tone {
   display: block;
   line-height: 1;
   font-size: 1em;
   font-weight: 800;
   align-self: flex-end;
-  margin-bottom: -0.1em;
 }
-/* 輕聲 ˙：頂端置中（不在右側） */
+/* 輕聲 ˙：頂端置中 */
 .bopo-tone--neutral {
   align-self: center;
-  margin-bottom: 0;
 }
-/* Mobile: smaller bopomofo + tighter gap */
+/* Mobile: smaller bopomofo */
 @media (max-width: 480px) {
-  ruby { padding-right: 0.5em; }
-  rt { font-size: 0.45em; }
+  .zh-bopo { font-size: 0.45em; margin-left: 1px; }
 }
-/* Tablet+: bigger bopomofo + larger gap */
+/* Tablet+: bigger bopomofo */
 @media (min-width: 768px) {
-  ruby { padding-right: 0.65em; }
-  rt { font-size: 0.55em; }
+  .zh-bopo { font-size: 0.55em; margin-left: 3px; }
 }
-/* Give rows containing ruby enough vertical room so 3-bopo + tone
+/* Give rows containing bopomofo enough vertical room so 3-bopo + tone
    never bumps into the next line. */
 .hero, .section, .word-row, .sentence-card, .btn, .cat-card,
 .profile-pill, .session-row, .struggle-row, .unit-bar, .kid-stats {
