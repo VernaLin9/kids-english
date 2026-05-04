@@ -382,8 +382,8 @@ function renderParentKidDetail(name) {
 // === Router ===
 function route() {
   applySettings();
-  // Profile gate first
-  if (!STORE.active && location.hash !== "#/profile") {
+  // Profile gate first — except for parent mode (PIN gate) which works without active child
+  if (!STORE.active && location.hash !== "#/profile" && !location.hash.startsWith("#/parent")) {
     const root = $("#app");
     root.replaceChildren(renderProfileGate());
     return;
