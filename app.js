@@ -273,6 +273,15 @@ const resolveSet = (setKey) => {
     });
     return [...set];
   }
+  if (setKey.startsWith("weeks-")) {
+    const nums = setKey.slice(6).split(",").map(x => +x).filter(n => !isNaN(n));
+    const set = new Set();
+    nums.forEach(n => {
+      const wk = WEEKS.find(x => x.num === n);
+      if (wk) wk.words.forEach(w => set.add(w));
+    });
+    return [...set];
+  }
   if (setKey === "all") return Object.keys(WORDS);
   return [];
 };
@@ -291,12 +300,17 @@ const setLabel = (setKey) => {
     const names = ids.map(id => UNITS.find(x => x.id === id)?.name || id).join(" + ");
     return `📝 自訂考試：${names}`;
   }
+  if (setKey?.startsWith("weeks-")) {
+    const nums = setKey.slice(6).split(",").filter(Boolean);
+    return `📝 自訂考試：第 ${nums.join("、")} 週`;
+  }
   return "全部";
 };
 const backHashFor = (setKey) => {
   if (setKey?.startsWith("week-")) return `#/week/${setKey.slice(5)}`;
   if (setKey?.startsWith("category-")) return `#/category/${setKey.slice(9)}`;
   if (setKey?.startsWith("units-")) return `#/exam`;
+  if (setKey?.startsWith("weeks-")) return `#/exam`;
   return "#/";
 };
 
@@ -329,11 +343,49 @@ function renderProfileGate() {
 
   card.appendChild(el("div", { style: "font-size: 56px; line-height: 1;" }, "📚"));
   card.appendChild(el("h1", {}, "歡迎！"));
-  card.appendChild(el("p", {}, "輸入你的名字，我會幫你記住你學會的字"));
+  card.appendChild(rubyEl("請選擇模式", null, "p"));
+
+  // 兩個大按鈕：兒童 / 家長
+  const modeBtns = el("div", { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; margin-bottom: 16px;" });
+  const childBtn = el("button", { class: "btn btn--accent btn--xl", style: "min-height: 96px; flex-direction: column;" });
+  childBtn.appendChild(el("div", { style: "font-size: 40px; line-height: 1;" }, "👶"));
+  childBtn.appendChild(rubyEl("兒童模式", null, "div", { style: "margin-top: 4px;" }));
+  const parentBtn = el("button", { class: "btn btn--xl", style: "background: var(--candy-5); color: var(--ink); min-height: 96px; flex-direction: column;" });
+  parentBtn.appendChild(el("div", { style: "font-size: 40px; line-height: 1;" }, "👪"));
+  parentBtn.appendChild(rubyEl("家長模式", null, "div", { style: "margin-top: 4px;" }));
+  modeBtns.appendChild(childBtn);
+  modeBtns.appendChild(parentBtn);
+  card.appendChild(modeBtns);
+
+  // 兒童模式區塊
+  const childPanel = el("div", { style: "display: none;" });
+  childPanel.appendChild(rubyEl("選擇要學習的小孩", null, "div", { style: "font-weight: 700; color: var(--ink-soft); margin-bottom: 10px;" }));
+
+  const existing = Object.keys(STORE.profiles);
+  if (existing.length) {
+    const list = el("div", { class: "profile-list" });
+    existing.forEach(name => {
+      const p = STORE.profiles[name];
+      const pill = el("div", { class: "profile-pill" });
+      pill.appendChild(el("span", {}, "👤"));
+      pill.appendChild(el("span", {}, name));
+      pill.appendChild(el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`));
+      const pickBtn = el("button", { onclick: () => { switchProfile(name); location.hash = "#/"; route(); } });
+      pickBtn.appendChild(t("選這個"));
+      pill.appendChild(pickBtn);
+      const delBtn = el("button", {
+        onclick: () => { if (confirm(`刪除 ${name} 的進度？`)) { deleteProfile(name); route(); } }
+      });
+      delBtn.appendChild(t("刪"));
+      pill.appendChild(delBtn);
+      list.appendChild(pill);
+    });
+    childPanel.appendChild(list);
+    childPanel.appendChild(rubyEl("或新增小孩：", null, "div", { style: "margin-top: 14px; font-weight: 700; color: var(--ink-soft);" }));
+  }
 
   const input = el("input", { type: "text", placeholder: "你叫什麼名字？", maxlength: 12 });
-  card.appendChild(input);
-
+  childPanel.appendChild(input);
   const start = () => {
     const name = (input.value || "").trim();
     if (!name) return;
@@ -342,25 +394,25 @@ function renderProfileGate() {
     route();
   };
   input.addEventListener("keydown", e => { if (e.key === "Enter") start(); });
-  card.appendChild(el("button", { class: "btn btn--accent btn--full", style: "margin-top: 14px;", onclick: start }, "開始學習！"));
+  const startBtn = el("button", { class: "btn btn--accent btn--full", style: "margin-top: 10px;", onclick: start });
+  startBtn.appendChild(t("✨ 開始學習！"));
+  childPanel.appendChild(startBtn);
+  card.appendChild(childPanel);
 
-  const existing = Object.keys(STORE.profiles);
-  if (existing.length) {
-    card.appendChild(el("div", { style: "margin-top: 18px; font-weight: 700; color: var(--ink-soft);" }, "或選之前的人："));
-    const list = el("div", { class: "profile-list" });
-    existing.forEach(name => {
-      const p = STORE.profiles[name];
-      list.appendChild(el("div", { class: "profile-pill" },
-        el("span", {}, "👤"),
-        el("span", {}, name),
-        el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`),
-        el("button", { onclick: () => { switchProfile(name); location.hash = "#/"; route(); } }, "選這個"),
-        el("button", { onclick: () => { if (confirm(`刪除 ${name} 的進度？`)) { deleteProfile(name); route(); } } }, "刪")
-      ));
-    });
-    card.appendChild(list);
-  }
-  setTimeout(() => input.focus(), 100);
+  // 切換顯示
+  childBtn.addEventListener("click", () => {
+    childPanel.style.display = "";
+    childBtn.classList.add("btn--accent");
+    parentBtn.classList.remove("btn--accent");
+    setTimeout(() => input.focus(), 80);
+  });
+  parentBtn.addEventListener("click", () => {
+    location.hash = "#/parent";
+  });
+
+  // 預設顯示兒童模式（多數情境用兒童居多）
+  childPanel.style.display = "";
+
   root.appendChild(card);
   return root;
 }
