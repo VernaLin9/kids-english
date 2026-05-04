@@ -73,7 +73,7 @@ rt {
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   font-size: 0.5em;
   line-height: 1;
   color: var(--ink-soft);
@@ -87,13 +87,19 @@ rt {
   display: block;
   line-height: 1;
 }
+/* 聲調 ˊ ˇ ˋ：直書欄的「右上角」（台灣課本習慣） */
 .bopo-tone {
   display: block;
   line-height: 1;
-  font-size: 0.95em;
+  font-size: 1em;
   font-weight: 800;
   align-self: flex-end;
-  margin-top: -1px;
+  margin-bottom: -0.1em;
+}
+/* 輕聲 ˙：頂端置中（不在右側） */
+.bopo-tone--neutral {
+  align-self: center;
+  margin-bottom: 0;
 }
 /* Mobile: smaller bopomofo + tighter gap */
 @media (max-width: 480px) {
