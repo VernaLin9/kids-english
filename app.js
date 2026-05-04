@@ -110,12 +110,14 @@ function applySettings() {
   document.body.classList.toggle("focus", !!STORE.settings.focus);
 }
 
-// === 注音 ruby helper ===
-// rubyEl(text, bopo?, tag?, attrs?) — 把中文字串包成帶 <ruby><rt> 的 DOM 節點
+// === 注音 helper ===
+// rubyEl(text, bopo?, tag?, attrs?) — 把中文字串包成帶注音的 DOM 節點
 // - 有 bopo（空白分隔每個漢字一段）→ 使用人工標注（精準，處理多音字）
 // - 沒給 bopo → 自動逐字查 CHAR_BOPO
 // - STORE.settings.bopomofo = false → 不顯示注音，僅純文字
-// - 注音直書放在每個漢字右側；聲調符號（ˊˇˋ）放在頂端右側；輕聲 ˙ 放在頂端中央
+// - 注音直書放在每個漢字右側，與漢字「垂直至中」對齊
+// - 聲調符號（ˊˇˋ）放在頂端右側；輕聲 ˙ 放在頂端中央
+// - 不用 <ruby><rt>（瀏覽器 ruby 預設位置會干擾），改用 span/flex
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
   if (!STORE.settings.bopomofo) {
@@ -128,30 +130,34 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
   for (const ch of text) {
     if (/[一-鿿]/.test(ch)) {
       const reading = explicit ? (explicit[bi++] || "") : ((typeof CHAR_BOPO !== "undefined" ? CHAR_BOPO[ch] : "") || "");
-      const ruby = document.createElement("ruby");
-      ruby.appendChild(document.createTextNode(ch));
-      const rt = document.createElement("rt");
-      // 拆出聲調符號獨立放（台灣課本：聲調在注音字母「右上角」；輕聲 ˙ 在頂上）
+      // 結構：<span.zh-pair><span.zh-base>漢字</span><span.zh-bopo>注音欄</span></span>
+      const pair = document.createElement("span");
+      pair.className = "zh-pair";
+      const base = document.createElement("span");
+      base.className = "zh-base";
+      base.textContent = ch;
+      pair.appendChild(base);
       let tone = "";
       let bare = reading;
       const m = reading.match(TONE_RE);
       if (m) { tone = m[0]; bare = reading.replace(TONE_RE, ""); }
-      // 聲調先 render（成為 column 的第一個 item → 視覺上跑到頂端）
+      const bopoCol = document.createElement("span");
+      bopoCol.className = "zh-bopo";
+      // 聲調先 render → 跑到 column 頂端
       if (tone) {
         const tn = document.createElement("span");
         tn.className = "bopo-tone" + (tone === "˙" ? " bopo-tone--neutral" : "");
         tn.textContent = tone;
-        rt.appendChild(tn);
+        bopoCol.appendChild(tn);
       }
-      // 注音字元逐個 span（直書堆疊用 CSS）
       for (const c of bare) {
         const s = document.createElement("span");
         s.className = "bopo-char";
         s.textContent = c;
-        rt.appendChild(s);
+        bopoCol.appendChild(s);
       }
-      ruby.appendChild(rt);
-      node.appendChild(ruby);
+      pair.appendChild(bopoCol);
+      node.appendChild(pair);
     } else {
       node.appendChild(document.createTextNode(ch));
     }
