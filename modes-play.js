@@ -4,11 +4,24 @@ function renderExam() {
   root.appendChild(renderHeader("📝 自選考試 Custom Exam", { back: "#/" }));
   const app = el("main", { class: "app" });
 
-  app.appendChild(el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" },
-    "勾選想考的單元（可以多選），然後選練習方式。"));
+  // 切換 Tab：依單元 / 依週次
+  let mode = "units"; // "units" or "weeks"
+  const selectedUnits = new Set();
+  const selectedWeeks = new Set();
 
-  const selected = new Set();
-  const grid = el("div", { class: "unit-pick" });
+  const tabBar = el("div", { style: "display: flex; gap: 8px; margin-bottom: 12px;" });
+  const tabUnits = el("button", { class: "btn btn--accent btn--full" }, t("📦 依單元"));
+  const tabWeeks = el("button", { class: "btn btn--ghost btn--full" }, t("📅 依週次"));
+  tabBar.appendChild(tabUnits);
+  tabBar.appendChild(tabWeeks);
+  app.appendChild(tabBar);
+
+  const hint = el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" },
+    "勾選想考的單元（可複選），然後選練習方式。");
+  app.appendChild(hint);
+
+  // Units grid
+  const unitsGrid = el("div", { class: "unit-pick" });
   UNITS.forEach(u => {
     const item = el("button", { class: "unit-pick__item", style: `background: ${u.color};` });
     const name = el("div", { class: "unit-pick__name" });
@@ -17,36 +30,90 @@ function renderExam() {
     item.appendChild(name);
     item.appendChild(el("div", { class: "unit-pick__count" }, `${u.words.length} 個字`));
     item.addEventListener("click", () => {
-      if (selected.has(u.id)) { selected.delete(u.id); item.classList.remove("checked"); }
-      else { selected.add(u.id); item.classList.add("checked"); }
+      if (selectedUnits.has(u.id)) { selectedUnits.delete(u.id); item.classList.remove("checked"); }
+      else { selectedUnits.add(u.id); item.classList.add("checked"); }
       updateBar();
     });
-    grid.appendChild(item);
+    unitsGrid.appendChild(item);
   });
-  app.appendChild(grid);
+  app.appendChild(unitsGrid);
+
+  // Weeks grid (skip exam weeks with no words)
+  const weeksGrid = el("div", { class: "unit-pick", style: "display: none;" });
+  WEEKS.forEach(w => {
+    if (!w.words.length) return; // skip exam-only weeks
+    const item = el("button", { class: "unit-pick__item", style: "background: var(--candy-2);" });
+    const name = el("div", { class: "unit-pick__name" });
+    name.appendChild(el("span", { class: "unit-pick__emoji" }, "📅"));
+    name.appendChild(document.createTextNode(`第 ${w.num} 週`));
+    item.appendChild(name);
+    item.appendChild(el("div", { class: "unit-pick__count" },
+      `${w.dateRange}・${w.progress}・${w.words.length} 個字`));
+    item.addEventListener("click", () => {
+      if (selectedWeeks.has(w.num)) { selectedWeeks.delete(w.num); item.classList.remove("checked"); }
+      else { selectedWeeks.add(w.num); item.classList.add("checked"); }
+      updateBar();
+    });
+    weeksGrid.appendChild(item);
+  });
+  app.appendChild(weeksGrid);
+
+  const switchTab = (which) => {
+    mode = which;
+    if (which === "units") {
+      tabUnits.className = "btn btn--accent btn--full";
+      tabWeeks.className = "btn btn--ghost btn--full";
+      unitsGrid.style.display = "";
+      weeksGrid.style.display = "none";
+      hint.replaceChildren(t("勾選想考的單元（可複選），然後選練習方式。"));
+    } else {
+      tabUnits.className = "btn btn--ghost btn--full";
+      tabWeeks.className = "btn btn--accent btn--full";
+      unitsGrid.style.display = "none";
+      weeksGrid.style.display = "";
+      hint.replaceChildren(t("勾選想考的週次（可複選），然後選練習方式。"));
+    }
+    updateBar();
+  };
+  tabUnits.addEventListener("click", () => switchTab("units"));
+  tabWeeks.addEventListener("click", () => switchTab("weeks"));
 
   const bar = el("div", { class: "section", style: "position: sticky; bottom: 8px; background: var(--bg); padding: 12px; border-radius: var(--radius-lg); box-shadow: var(--shadow);" });
   const status = el("div", { style: "font-weight: 800; margin-bottom: 8px;" });
   bar.appendChild(status);
   const modeRow = el("div", { class: "exam-options", style: "margin-bottom: 8px;" });
-  ["📝 選擇題", "👂 聽力", "✏️ 拼字", "✍️ 手寫"].forEach((label, i) => {
-    const btn = el("button", { onclick: () => start(["quiz","listening","spelling","handwrite"][i]) }, label);
+  [["📝 選擇題","quiz"],["👂 聽力","listening"],["✏️ 拼字","spelling"],["✍️ 手寫","handwrite"]].forEach(([label, m]) => {
+    const btn = el("button", { onclick: () => start(m) });
+    btn.appendChild(t(label));
     modeRow.appendChild(btn);
   });
   bar.appendChild(modeRow);
 
   const updateBar = () => {
-    const total = [...selected].reduce((s, id) => s + (UNITS.find(u => u.id === id)?.words.length || 0), 0);
-    const dedupe = new Set();
-    [...selected].forEach(id => UNITS.find(u => u.id === id)?.words.forEach(w => dedupe.add(w)));
-    status.textContent = selected.size
-      ? `選了 ${selected.size} 個單元・${dedupe.size} 個不同的字`
-      : "請至少選 1 個單元";
+    if (mode === "units") {
+      const dedupe = new Set();
+      [...selectedUnits].forEach(id => UNITS.find(u => u.id === id)?.words.forEach(w => dedupe.add(w)));
+      status.textContent = selectedUnits.size
+        ? `選了 ${selectedUnits.size} 個單元・${dedupe.size} 個不同的字`
+        : "請至少選 1 個單元";
+    } else {
+      const dedupe = new Set();
+      [...selectedWeeks].forEach(n => WEEKS.find(w => w.num === n)?.words.forEach(w => dedupe.add(w)));
+      status.textContent = selectedWeeks.size
+        ? `選了 ${selectedWeeks.size} 個週次・${dedupe.size} 個不同的字`
+        : "請至少選 1 個週次";
+    }
   };
-  const start = (mode) => {
-    if (!selected.size) { alert("請先選至少 1 個單元"); return; }
-    const setKey = "units-" + [...selected].join(",");
-    navigate(`#/play/${mode}?set=${setKey}`);
+  const start = (m) => {
+    let setKey;
+    if (mode === "units") {
+      if (!selectedUnits.size) { alert("請先選至少 1 個單元"); return; }
+      setKey = "units-" + [...selectedUnits].join(",");
+    } else {
+      if (!selectedWeeks.size) { alert("請先選至少 1 個週次"); return; }
+      setKey = "weeks-" + [...selectedWeeks].sort((a,b)=>a-b).join(",");
+    }
+    navigate(`#/play/${m}?set=${setKey}`);
   };
   updateBar();
   app.appendChild(bar);
