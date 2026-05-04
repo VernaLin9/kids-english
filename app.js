@@ -345,14 +345,14 @@ function renderProfileGate() {
   card.appendChild(el("h1", {}, "歡迎！"));
   card.appendChild(rubyEl("請選擇模式", null, "p"));
 
-  // 兩個大按鈕：兒童 / 家長
-  const modeBtns = el("div", { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; margin-bottom: 16px;" });
-  const childBtn = el("button", { class: "btn btn--accent btn--xl", style: "min-height: 96px; flex-direction: column;" });
-  childBtn.appendChild(el("div", { style: "font-size: 40px; line-height: 1;" }, "👶"));
-  childBtn.appendChild(rubyEl("兒童模式", null, "div", { style: "margin-top: 4px;" }));
-  const parentBtn = el("button", { class: "btn btn--xl", style: "background: var(--candy-5); color: var(--ink); min-height: 96px; flex-direction: column;" });
-  parentBtn.appendChild(el("div", { style: "font-size: 40px; line-height: 1;" }, "👪"));
-  parentBtn.appendChild(rubyEl("家長模式", null, "div", { style: "margin-top: 4px;" }));
+  // 兩個大按鈕：兒童 / 家長（上下排，全寬）
+  const modeBtns = el("div", { style: "display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; margin-bottom: 16px;" });
+  const childBtn = el("button", { class: "btn btn--accent btn--xl btn--full", style: "min-height: 80px; gap: 14px; padding: 12px 18px; white-space: nowrap;" });
+  childBtn.appendChild(el("span", { style: "font-size: 36px; line-height: 1; flex: 0 0 auto;" }, "👶"));
+  childBtn.appendChild(rubyEl("兒童模式", null, "span", { style: "white-space: nowrap;" }));
+  const parentBtn = el("button", { class: "btn btn--xl btn--full", style: "background: var(--candy-5); color: var(--ink); min-height: 80px; gap: 14px; padding: 12px 18px; white-space: nowrap;" });
+  parentBtn.appendChild(el("span", { style: "font-size: 36px; line-height: 1; flex: 0 0 auto;" }, "👪"));
+  parentBtn.appendChild(rubyEl("家長模式", null, "span", { style: "white-space: nowrap;" }));
   modeBtns.appendChild(childBtn);
   modeBtns.appendChild(parentBtn);
   card.appendChild(modeBtns);
