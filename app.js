@@ -471,6 +471,7 @@ function renderHome() {
       t("💬 每週一句 Sentence of the Week"))
   ));
 
+  root.appendChild(app);
   return root;
 }
 
