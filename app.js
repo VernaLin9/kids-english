@@ -115,6 +115,7 @@ function applySettings() {
 // - 有 bopo（空白分隔每個漢字一段）→ 使用人工標注（精準，處理多音字）
 // - 沒給 bopo → 自動逐字查 CHAR_BOPO
 // - STORE.settings.bopomofo = false → 不顯示注音，僅純文字
+// - 注音直書放在每個漢字右側；聲調符號（ˊˇˋ˙）獨立放在右上角
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
   if (!STORE.settings.bopomofo) {
@@ -123,13 +124,31 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
   }
   const explicit = bopo ? bopo.split(/\s+/).filter(Boolean) : null;
   let bi = 0;
+  const TONE_RE = /[ˊˇˋ˙]/;
   for (const ch of text) {
     if (/[一-鿿]/.test(ch)) {
       const reading = explicit ? (explicit[bi++] || "") : ((typeof CHAR_BOPO !== "undefined" ? CHAR_BOPO[ch] : "") || "");
       const ruby = document.createElement("ruby");
       ruby.appendChild(document.createTextNode(ch));
       const rt = document.createElement("rt");
-      rt.textContent = reading;
+      // 拆出聲調符號獨立放
+      let tone = "";
+      let bare = reading;
+      const m = reading.match(TONE_RE);
+      if (m) { tone = m[0]; bare = reading.replace(TONE_RE, ""); }
+      // 注音字元逐個 span（直書堆疊用 CSS）
+      for (const c of bare) {
+        const s = document.createElement("span");
+        s.className = "bopo-char";
+        s.textContent = c;
+        rt.appendChild(s);
+      }
+      if (tone) {
+        const tn = document.createElement("span");
+        tn.className = "bopo-tone";
+        tn.textContent = tone;
+        rt.appendChild(tn);
+      }
       ruby.appendChild(rt);
       node.appendChild(ruby);
     } else {
