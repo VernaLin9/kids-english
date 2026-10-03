@@ -65,7 +65,7 @@ function modeName(m) {
 }
 function exportProfileText(name) {
   const p = STORE.profiles[name]; if (!p) return "";
-  const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+  const masteredCount = countMastered(p.progress);
   const total = Object.keys(WORDS).length;
   const att = totalAttempts(p);
   const lines = [];
@@ -184,7 +184,7 @@ function renderParentDashboard() {
     const list = el("div", { class: "kid-grid" });
     kidNames.forEach(name => {
       const p = STORE.profiles[name];
-      const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+      const masteredCount = countMastered(p.progress);
       const totalWords = Object.keys(WORDS).length;
       const pct = Math.round((masteredCount / totalWords) * 100);
       const att = totalAttempts(p);
@@ -240,7 +240,7 @@ function renderParentDashboard() {
 function renderParentKidDetail(name) {
   const p = STORE.profiles[name];
   if (!p) return renderEmpty("#/parent", "找不到這個小孩");
-  const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+  const masteredCount = countMastered(p.progress);
   const totalWords = Object.keys(WORDS).length;
   const att = totalAttempts(p);
 

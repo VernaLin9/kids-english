@@ -259,6 +259,8 @@ const navigate = h => { location.hash = h; };
 // === Helpers ===
 const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
 const weekProgress = (n) => WEEKS.find(w => w.num === n)?.progress || "";
+// 只計算目前單字表內的字（舊學期練熟的字不算進本學期進度）
+const countMastered = (progress) => Object.entries(progress || {}).filter(([w, r]) => WORDS[w] && r.mastered).length;
 
 // === 取單字集合 ===
 const resolveSet = (setKey) => {
@@ -444,7 +446,7 @@ function renderHome() {
   const profile = getProfile();
   const cw = getCurrentWeek();
   const cs = SENTENCES.find(s => s.week === cw.num);
-  const masteredCount = profile ? Object.values(profile.progress).filter(p => p.mastered).length : 0;
+  const masteredCount = profile ? countMastered(profile.progress) : 0;
   const totalWords = Object.keys(WORDS).length;
   const pct = Math.round((masteredCount / totalWords) * 100);
 
@@ -559,10 +561,12 @@ function renderHome() {
   app.appendChild(weekSection);
 
   // Sentences shortcut
-  app.appendChild(el("section", { class: "section section--hide-on-focus" },
-    el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
-      t("💬 每週一句 Sentence of the Week"))
-  ));
+  if (SENTENCES.length) {
+    app.appendChild(el("section", { class: "section section--hide-on-focus" },
+      el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
+        t("💬 每週一句 Sentence of the Week"))
+    ));
+  }
 
   root.appendChild(app);
   return root;
