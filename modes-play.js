@@ -11,22 +11,16 @@ function renderExam() {
   const progress = profile?.progress || {};
 
   // 快速複習：常錯 / 還沒學會
-  const nWrong = wrongWords(profile).length;
-  const nTodo = unmasteredWords(profile).length;
-  const quick = el("div", { class: "review-picks", style: "margin-bottom: 16px;" },
-    el("button", { class: "review-pick review-pick--wrong", disabled: !nWrong, onclick: () => navigate("#/play/quiz?set=wrong") },
-      el("span", { class: "review-pick__emoji" }, "❌"), t("常錯的字"), el("span", { class: "review-pick__count" }, nWrong ? `${nWrong} 個` : "還沒有")),
-    el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
-      el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`))
-  );
+  const quick = renderReviewPicks(profile, { custom: false });
+  quick.style.marginBottom = "16px";
   app.appendChild(quick);
 
   // Tabs
   const TABS = [
-    ["units", "📦 單元", "勾選想複習的單元（可複選）"],
-    ["weeks", "📅 週次", "勾選想複習的週次（可複選）"],
-    ["cats",  "🎨 主題", "勾選想複習的主題（可複選）"],
-    ["words", "🔤 單字", "點單字自己挑（可複選），也可以整週一起選"],
+    ["units", "單元", "勾選想複習的單元（可複選）"],
+    ["weeks", "週次", "勾選想複習的週次（可複選）"],
+    ["cats",  "主題", "勾選想複習的主題（可複選）"],
+    ["words", "單字", "點單字自己挑（可複選），也可以整週一起選"],
   ];
   const tabBar = el("div", { class: "pick-tabs" });
   const hint = el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" });
@@ -109,8 +103,8 @@ function renderExam() {
   const status = el("div", { style: "font-weight: 800; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;" });
   bar.appendChild(status);
   const modeRow = el("div", { class: "exam-options" });
-  [["🃏 單字卡","flashcard"],["📝 選擇題","quiz"],["👂 聽力","listening"],["✏️ 拼字","spelling"],["✍️ 手寫","handwrite"]].forEach(([label, m]) => {
-    modeRow.appendChild(el("button", { onclick: () => start(m) }, t(label)));
+  PRACTICE_MODES.forEach(([m, emoji, label]) => {
+    modeRow.appendChild(el("button", { onclick: () => start(m) }, `${emoji} `, t(label)));
   });
   bar.appendChild(modeRow);
   app.appendChild(bar);
@@ -132,11 +126,11 @@ function renderExam() {
       set.size
         ? (S.tab === "words" ? `選了 ${n} 個字` : `選了 ${set.size} 個${UNIT_NAME[S.tab]}・${n} 個字`)
         : `請先選${UNIT_NAME[S.tab]}`,
-      set.size ? el("button", { class: "pick-clear", onclick: () => {
+      ...(set.size ? [el("button", { class: "pick-clear", onclick: () => {
         set.clear();
         panels[S.tab].querySelectorAll(".checked").forEach(x => x.classList.remove("checked"));
         updateBar();
-      } }, "清除") : null
+      } }, "清除")] : [])
     );
     modeRow.querySelectorAll("button").forEach(b => { b.disabled = !n; });
   }

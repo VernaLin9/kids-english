@@ -1258,3 +1258,115 @@ body.focus .app { padding-top: 8px; }
 .hero__buttons .btn { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
 
 .review-pick { font-size: calc(14px * var(--font-scale)); padding-left: 4px; padding-right: 4px; }
+
+/* =====================================================================
+   介面整理（v3）：白色卡片＋淡色邊框為主，顏色只留給重點按鈕
+   ===================================================================== */
+.app { max-width: 720px; }
+.section { margin-top: 24px; }
+.section__title { font-size: calc(19px * var(--font-scale)); margin-bottom: 10px; }
+
+/* 狀態列 */
+.status-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 6px 14px;
+  border-radius: 999px; background: white;
+  border: 2px solid var(--primary-soft);
+  font-weight: 800; font-size: calc(16px * var(--font-scale));
+  white-space: nowrap;
+}
+.status-chip__more { font-size: calc(13px * var(--font-scale)); color: var(--primary); font-weight: 700; }
+.status-chip--star { border-color: #ffe08a; background: #fff8dc; margin-left: auto; }
+
+/* 本週 */
+.hero { padding: 18px 16px; }
+.hero__head { margin-bottom: 12px; }
+.hero__title { font-size: calc(26px * var(--font-scale)); margin: 0; }
+.hero__sub { color: var(--ink-soft); font-weight: 700; font-size: calc(15px * var(--font-scale)); margin-top: 2px; }
+.hero__words { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.hero__word {
+  display: flex; align-items: center; gap: 8px;
+  background: white; border-radius: 14px; padding: 10px 12px;
+  font-weight: 800; font-size: calc(17px * var(--font-scale));
+  border: 2px solid transparent; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hero__word-emoji { font-size: 22px; flex-shrink: 0; }
+.hero__word--done { border-color: var(--success); }
+.hero__word--done::after { content: "✓"; margin-left: auto; color: var(--success); font-weight: 900; }
+.hero__learned { margin: 10px 2px 12px; font-weight: 800; color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
+.hero__empty { margin: 4px 0 14px; color: var(--ink-soft); font-weight: 700; }
+.hero__sentence {
+  display: flex; gap: 10px; align-items: center; width: 100%;
+  margin-top: 12px; padding: 12px 14px; border-radius: 14px;
+  background: white; text-align: left;
+}
+.hero__sentence-icon { font-size: 26px; }
+.hero__sentence-en { font-weight: 800; font-size: calc(17px * var(--font-scale)); }
+.hero__sentence-zh { color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
+
+/* 複習卡片 */
+.review-picks--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.review-pick { background: white; border: 2px solid var(--candy-2); box-shadow: none; }
+.review-pick--wrong  { border-color: #ffc2d4; }
+.review-pick--todo   { border-color: #b8ecd8; }
+.review-pick--custom { border-color: #d9c4f7; }
+
+/* 進度 */
+.progress-head { display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: calc(18px * var(--font-scale)); margin-bottom: 8px; }
+.progress-head__num { color: var(--primary); }
+.progress-note { margin-top: 6px; color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); }
+.home-links { display: grid; gap: 8px; margin-top: 16px; }
+
+/* 練習方式：統一白色卡片 */
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 600px) { .mode-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.mode-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 88px; padding: 10px;
+  border-radius: var(--radius); background: white;
+  border: 2px solid var(--primary-soft);
+  font-weight: 900; font-size: calc(17px * var(--font-scale));
+}
+.mode-btn:active { border-color: var(--primary); background: var(--candy-2); }
+.mode-btn__emoji { font-size: 30px; line-height: 1; }
+
+/* 單字列表：表情 / 文字 / 喇叭 三欄對齊 */
+.word-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 48px; align-items: center; gap: 10px; }
+.word-row__text { min-width: 0; }
+.word-row__speak {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--primary-soft); font-size: 22px;
+  display: grid; place-items: center;
+}
+
+/* 全部單字頁 */
+.pick-tabs--2 { grid-template-columns: repeat(2, 1fr); margin-bottom: 14px; }
+.list-cards { display: grid; gap: 10px; }
+.list-cards--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.list-card {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 14px; border-radius: var(--radius); background: white;
+  border: 2px solid var(--candy-2); text-align: left;
+}
+.list-card--current { border-color: var(--accent); background: #fff5f9; }
+.list-card--exam { background: #f7f5fb; }
+.list-card--cat { flex-direction: column; align-items: flex-start; gap: 4px; }
+.list-card__emoji { font-size: 30px; line-height: 1; }
+.list-card__main { flex: 1; min-width: 0; }
+.list-card__title { font-weight: 900; font-size: calc(18px * var(--font-scale)); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.list-card__badge { background: var(--accent); color: white; border-radius: 999px; padding: 2px 10px; font-size: calc(13px * var(--font-scale)); }
+.list-card__sub { color: var(--ink-soft); font-weight: 700; font-size: calc(14px * var(--font-scale)); }
+.list-card__words { color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.list-card__side { font-weight: 900; color: var(--primary); white-space: nowrap; }
+.list-cards { grid-template-columns: minmax(0, 1fr); }
+.list-cards--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.list-card { min-width: 0; }
+.status-chip__more { font-size: calc(18px * var(--font-scale)); }
+.mode-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mode-btn { min-height: 84px; font-size: calc(16px * var(--font-scale)); }
+/* 自選複習：白色卡片，選到的變綠 */
+.unit-pick__item { background: white !important; border: 2px solid var(--candy-2); box-shadow: none; }
+.unit-pick__item.checked { background: #effaf5 !important; border-color: var(--success); }
+.pick-tab { font-size: calc(16px * var(--font-scale)); }

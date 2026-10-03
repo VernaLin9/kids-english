@@ -577,8 +577,38 @@ function renderProfileGate() {
 }
 
 // === Home ===
+// 練習方式（週次頁、主題頁、自選複習共用）
+const PRACTICE_MODES = [
+  ["flashcard", "🃏", "單字卡"],
+  ["quiz",      "📝", "選擇題"],
+  ["listening", "👂", "聽力"],
+  ["spelling",  "✏️", "拼字"],
+  ["handwrite", "✍️", "手寫"],
+];
+function renderModeGrid(setKey) {
+  return el("div", { class: "mode-grid" },
+    PRACTICE_MODES.map(([m, emoji, label]) =>
+      el("button", { class: "mode-btn", onclick: () => navigate(`#/play/${m}?set=${encodeURIComponent(setKey)}`) },
+        el("span", { class: "mode-btn__emoji" }, emoji), t(label))));
+}
+
+// 複習卡片：常錯的字 / 還沒學會 / 自己選（首頁、自選複習共用）
+function renderReviewPicks(profile, { custom = true } = {}) {
+  const nWrong = wrongWords(profile).length;
+  const nTodo = unmasteredWords(profile).length;
+  const card = (cls, emoji, label, sub, onclick, disabled = false) =>
+    el("button", { class: `review-pick ${cls}`, disabled, onclick },
+      el("span", { class: "review-pick__emoji" }, emoji), t(label), el("span", { class: "review-pick__count" }, sub));
+  return el("div", { class: `review-picks ${custom ? "" : "review-picks--2"}` },
+    card("review-pick--wrong", "❌", "常錯字", nWrong ? `${nWrong} 個` : "還沒有", () => navigate("#/play/quiz?set=wrong"), !nWrong),
+    card("review-pick--todo", "🌱", "沒學會", `${nTodo} 個`, () => navigate("#/play/flashcard?set=unmastered"), !nTodo),
+    custom ? card("review-pick--custom", "🎯", "自己選", "挑範圍", () => navigate("#/exam")) : null
+  );
+}
+
 function renderHome() {
   const profile = getProfile();
+  const progress = profile?.progress || {};
   const cw = getCurrentWeek();
   const cs = SENTENCES.find(s => s.week === cw.num);
   const masteredCount = profile ? countMastered(profile.progress) : 0;
@@ -587,140 +617,102 @@ function renderHome() {
 
   const root = el("div", {});
   root.appendChild(renderHeader(`Hi ${profile?.name || STORE.active || "👤"}`, { back: null }));
-
   const app = el("main", { class: "app" });
 
-  // Star jar + name chip
-  app.appendChild(el("div", { style: "display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;" },
-    el("div", { class: "user-chip" }, "👤", STORE.active || ""),
-    el("button", { class: "tool-btn", title: "切換使用者", style: "background: var(--candy-5);", onclick: () => { location.hash = "#/profile"; route(); } }, "↻"),
-    el("div", { class: "star-jar", style: "flex: 1;" },
-      el("span", { class: "star-jar__icon" }, "⭐"),
-      el("div", {},
-        el("div", { class: "star-jar__count" }, `${profile?.stars || 0} 顆星`),
-        el("div", { class: "star-jar__label" }, "答對一題 +1")
-      )
-    )
+  // 狀態列：誰在練習 / 年級 / 星星（都可以點）
+  app.appendChild(el("div", { class: "status-bar" },
+    el("button", { class: "status-chip", onclick: () => navigate("#/profile") }, `👤 ${STORE.active || ""}`, el("span", { class: "status-chip__more" }, "›")),
+    el("button", { class: "status-chip", onclick: openSettingsSheet }, `📚 ${GRADES[CURRENT_GRADE].name}`, el("span", { class: "status-chip__more" }, "›")),
+    el("div", { class: "status-chip status-chip--star" }, `⭐ ${profile?.stars || 0}`)
   ));
 
-  // Hero - this week
-  const dateStr = TODAY.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+  // 本週：單字 + 一顆大按鈕
   const hero = el("section", { class: "hero" },
-    el("div", { class: "hero__date" }, `今天 ${dateStr}`),
-    el("button", { class: "grade-chip", onclick: openSettingsSheet }, `📚 ${GRADES[CURRENT_GRADE].name}`, el("span", { class: "grade-chip__hint" }, "換年級 ›")),
-    el("h1", { class: "hero__title" }, `本週 第 ${cw.num} 週`,
-      el("small", {}, `${cw.dateRange}・${cw.progress}`)
+    el("div", { class: "hero__head" },
+      el("h1", { class: "hero__title" }, `本週 第 ${cw.num} 週`),
+      el("div", { class: "hero__sub" }, `${cw.dateRange}・${cw.progress}`)
     )
   );
   if (cw.words.length) {
-    const chips = el("div", { class: "hero__words" });
-    cw.words.forEach(w => {
-      const chip = el("span", { class: "hero__chip" });
-      chip.appendChild(document.createTextNode(`${WORDS[w]?.emoji || ""} ${w} `));
-      chip.appendChild(wordZhEl(w, "span", { style: "color: var(--ink-soft); font-weight: 500;" }));
-      chips.appendChild(chip);
-    });
-    hero.appendChild(chips);
+    const learned = cw.words.filter(w => progress[w]?.mastered).length;
+    hero.appendChild(el("div", { class: "hero__words" },
+      cw.words.map(w => el("div", { class: `hero__word ${progress[w]?.mastered ? "hero__word--done" : ""}` },
+        el("span", { class: "hero__word-emoji" }, WORDS[w]?.emoji || ""), w))));
+    hero.appendChild(el("div", { class: "hero__learned" }, `學會 ${learned} / ${cw.words.length} 個 ${learned === cw.words.length ? "🎉" : ""}`));
+    hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/week/${cw.num}`) }, t("▶ 開始練習本週")));
   } else {
-    hero.appendChild(el("p", { style: "margin: 8px 0; color: var(--ink-soft);" }, "本週為複習 / 考試週，沒有新單字 — 來複習之前的吧！"));
+    hero.appendChild(el("p", { class: "hero__empty" }, "這週是考試 / 複習週，沒有新單字。把還沒學會的字練一練吧！"));
+    hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/play/flashcard?set=unmastered") }, t("▶ 開始複習")));
   }
   if (cs) {
-    const sentenceBox = el("div", {});
-    sentenceBox.appendChild(el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); font-weight: 500;" },
-      `第 ${cs.week} 週・${weekDateRange(cs.week)} 每週一句`));
-    sentenceBox.appendChild(el("div", {}, cs.en));
-    sentenceBox.appendChild(rubyEl(cs.zh, cs.bopo, "small"));
-    hero.appendChild(el("div", { class: "hero__sentence" },
-      el("span", { style: "font-size: 28px;" }, "💬"),
-      sentenceBox
-    ));
+    hero.appendChild(el("button", { class: "hero__sentence", onclick: () => navigate("#/sentences") },
+      el("span", { class: "hero__sentence-icon" }, "💬"),
+      el("div", {}, el("div", { class: "hero__sentence-en" }, cs.en), rubyEl(cs.zh, cs.bopo, "div", { class: "hero__sentence-zh" }))));
   }
-  const buttons = el("div", { class: "hero__buttons" });
-  if (cw.words.length) {
-    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/week/${cw.num}`) }, t("📖 練習本週")));
-  } else {
-    buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/flashcard?set=all`) }, t("📖 全部複習")));
-  }
-  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("🎯 自選複習")));
-  hero.appendChild(buttons);
   app.appendChild(hero);
 
-  // Quick review: 常錯 / 還沒學會 / 自己選
-  const nWrong = wrongWords(profile).length;
-  const nTodo = unmasteredWords(profile).length;
+  // 複習
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, t("🎯 今天想複習什麼？")),
-    el("div", { class: "review-picks" },
-      el("button", { class: "review-pick review-pick--wrong", disabled: !nWrong, onclick: () => navigate("#/play/quiz?set=wrong") },
-        el("span", { class: "review-pick__emoji" }, "❌"), t("常錯的字"), el("span", { class: "review-pick__count" }, nWrong ? `${nWrong} 個` : "還沒有")),
-      el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
-        el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`)),
-      el("button", { class: "review-pick review-pick--custom", onclick: () => navigate("#/exam") },
-        el("span", { class: "review-pick__emoji" }, "🎯"), t("自己選"), el("span", { class: "review-pick__count" }, "單元・單字"))
-    ),
-    el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); margin-top: 8px;" },
-      `選擇題・聽力・拼字連續答對 ${MASTER_STREAK} 次，就算學會 ⭐`)
+    el("div", { class: "section__title" }, t("🔁 複習")),
+    renderReviewPicks(profile)
   ));
 
-  // Mastered progress bar
+  // 進度 + 全部單字
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, t("🌟 學習進度")),
-    el("div", { class: "progress-bar" },
-      el("div", { class: "progress-bar__fill", style: `width: ${pct}%;` })
-    ),
-    el("div", { style: "text-align: right; margin-top: 6px; font-weight: 700; color: var(--ink-soft);" },
-      t(`已學會 ${masteredCount} / ${totalWords} 個字（${pct}%）`))
+    el("div", { class: "progress-head" },
+      el("span", {}, t("🌟 學會")),
+      el("span", { class: "progress-head__num" }, `${masteredCount} / ${totalWords}`)),
+    el("div", { class: "progress-bar" }, el("div", { class: "progress-bar__fill", style: `width: ${pct}%;` })),
+    el("div", { class: "progress-note" }, `選擇題、聽力、拼字連續答對 ${MASTER_STREAK} 次，就算學會`),
+    el("div", { class: "home-links" },
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/words") }, t("📖 全部單字（週次・主題）")),
+      SENTENCES.length ? el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/sentences") }, t("💬 每週一句")) : null
+    )
   ));
 
-  // Categories
-  const catSection = el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, t("🎨 依主題複習"))
-  );
-  const catGrid = el("div", { class: "categories" });
-  CATEGORIES.forEach(c => {
-    const card = el("button", {
-      class: "cat-card",
-      style: `background: ${c.color};`,
-      onclick: () => navigate(`#/category/${c.id}`)
-    });
-    card.appendChild(el("span", { class: "cat-card__emoji" }, c.emoji));
-    card.appendChild(rubyEl(c.name, c.bopo, "div", { class: "cat-card__name" }));
-    card.appendChild(el("div", { class: "cat-card__name-en" }, c.nameEn));
-    card.appendChild(el("div", { class: "cat-card__count" }, `${c.words.length} 個字`));
-    catGrid.appendChild(card);
-  });
-  catSection.appendChild(catGrid);
-  app.appendChild(catSection);
+  root.appendChild(app);
+  return root;
+}
 
-  // Weeks
-  const weekSection = el("section", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, t("📅 依週次複習"))
-  );
-  const weekGrid = el("div", { class: "weeks" });
-  WEEKS.forEach(w => {
-    const isCurrent = w.num === cw.num;
-    const isExam = !w.words.length;
-    weekGrid.appendChild(el("button", {
-      class: `week-card ${isCurrent ? "week-card--current" : ""} ${isExam ? "week-card--exam" : ""}`,
-      onclick: () => navigate(`#/week/${w.num}`)
-    },
-      el("div", { class: "week-card__num" }, `第 ${w.num} 週${isCurrent ? " 👈" : ""}`),
-      el("div", { class: "week-card__date" }, w.dateRange),
-      el("div", { class: "week-card__progress" }, w.progress),
-      el("div", { class: "week-card__words" }, w.words.length ? w.words.join(", ") : "—")
-    ));
-  });
-  weekSection.appendChild(weekGrid);
-  app.appendChild(weekSection);
+// === 全部單字：依週次 / 依主題 ===
+let WORDS_TAB = "weeks";
+function renderWordsPage() {
+  const profile = getProfile();
+  const progress = profile?.progress || {};
+  const cw = getCurrentWeek();
+  const root = el("div", {});
+  root.appendChild(renderHeader("📖 全部單字", { back: "#/" }));
+  const app = el("main", { class: "app" });
+  const learnedOf = words => words.filter(w => progress[w]?.mastered).length;
 
-  // Sentences shortcut
-  if (SENTENCES.length) {
-    app.appendChild(el("section", { class: "section section--hide-on-focus" },
-      el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
-        t("💬 每週一句 Sentence of the Week"))
-    ));
-  }
-
+  const tabs = el("div", { class: "pick-tabs pick-tabs--2" });
+  const body = el("div", {});
+  const show = (tab) => {
+    WORDS_TAB = tab;
+    tabs.querySelectorAll(".pick-tab").forEach(b => b.classList.toggle("pick-tab--on", b.dataset.tab === tab));
+    if (tab === "weeks") {
+      body.replaceChildren(el("div", { class: "list-cards" }, WEEKS.map(w => {
+        const isCurrent = w.num === cw.num;
+        return el("button", { class: `list-card ${isCurrent ? "list-card--current" : ""} ${w.words.length ? "" : "list-card--exam"}`, onclick: () => navigate(`#/week/${w.num}`) },
+          el("div", { class: "list-card__main" },
+            el("div", { class: "list-card__title" }, `第 ${w.num} 週`, isCurrent ? el("span", { class: "list-card__badge" }, "本週") : null),
+            el("div", { class: "list-card__sub" }, `${w.dateRange}・${w.progress}`),
+            w.words.length ? el("div", { class: "list-card__words" }, w.words.join(", ")) : null),
+          el("div", { class: "list-card__side" }, w.words.length ? `${learnedOf(w.words)}/${w.words.length}` : "📝"));
+      })));
+    } else {
+      body.replaceChildren(el("div", { class: "list-cards list-cards--grid" }, CATEGORIES.map(c =>
+        el("button", { class: "list-card list-card--cat", onclick: () => navigate(`#/category/${c.id}`) },
+          el("span", { class: "list-card__emoji" }, c.emoji),
+          el("div", { class: "list-card__main" },
+            rubyEl(c.name, c.bopo, "div", { class: "list-card__title" }),
+            el("div", { class: "list-card__sub" }, `${c.nameEn}・學會 ${learnedOf(c.words)}/${c.words.length}`))))));
+    }
+  };
+  [["weeks", "📅 週次"], ["cats", "🎨 主題"]].forEach(([id, label]) =>
+    tabs.appendChild(el("button", { class: "pick-tab", "data-tab": id, onclick: () => show(id) }, t(label))));
+  app.append(tabs, body);
+  show(WORDS_TAB);
   root.appendChild(app);
   return root;
 }
@@ -784,14 +776,8 @@ function renderListPage(setKey) {
 
   if (words.length) {
     app.appendChild(el("section", { class: "section" },
-      el("div", { class: "section__title" }, t("🎮 練習方式")),
-      el("div", { class: "modes" },
-        el("button", { class: "btn", onclick: () => navigate(`#/play/flashcard?set=${setKey}`) }, t("🃏 單字卡")),
-        el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/quiz?set=${setKey}`) }, t("📝 選擇題")),
-        el("button", { class: "btn btn--success", onclick: () => navigate(`#/play/listening?set=${setKey}`) }, t("👂 聽力")),
-        el("button", { class: "btn btn--warn", onclick: () => navigate(`#/play/spelling?set=${setKey}`) }, t("✏️ 拼字")),
-        el("button", { class: "btn btn--danger", onclick: () => navigate(`#/play/handwrite?set=${setKey}`) }, t("✍️ 手寫"))
-      )
+      el("div", { class: "section__title" }, t("🎮 選一種練習")),
+      renderModeGrid(setKey)
     ));
 
     const wordSection = el("section", { class: "section" },
@@ -803,17 +789,11 @@ function renderListPage(setKey) {
       const r = progress[w];
       const row = el("div", { class: "word-row" });
       row.appendChild(el("span", { class: "word-row__emoji" }, info.emoji));
-      const text = el("div", {});
-      text.appendChild(el("div", { class: "word-row__en" }, w));
+      const text = el("div", { class: "word-row__text" });
+      text.appendChild(el("div", { class: "word-row__en" }, w, r?.mastered ? el("span", { class: "word-row__star" }, " ⭐") : null));
       text.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "word-row__zh" }));
       row.appendChild(text);
-      row.appendChild(el("button", {
-        class: "icon-btn",
-        style: "width: 44px; height: 44px; font-size: 22px; margin-left: auto;",
-        onclick: () => speakWord(w),
-        "aria-label": `念 ${w}`
-      }, "🔊"));
-      row.appendChild(el("span", { class: "word-row__star" }, r?.mastered ? "⭐" : ""));
+      row.appendChild(el("button", { class: "word-row__speak", onclick: () => speakWord(w), "aria-label": `念 ${w}` }, "🔊"));
       list.appendChild(row);
     });
     wordSection.appendChild(list);
