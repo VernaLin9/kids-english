@@ -149,18 +149,27 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
       if (m) { tone = m[0]; bare = reading.replace(TONE_RE, ""); }
       const bopoCol = document.createElement("span");
       bopoCol.className = "zh-bopo";
-      // 聲調先 render → 跑到 column 頂端
-      if (tone) {
+      // 台灣課本直式注音：輕聲 ˙ 在最上方；ˊˇˋ 在「最後一個注音符號」的右邊
+      const neutral = tone === "˙";
+      if (neutral) {
         const tn = document.createElement("span");
-        tn.className = "bopo-tone" + (tone === "˙" ? " bopo-tone--neutral" : "");
+        tn.className = "bopo-tone bopo-tone--neutral";
         tn.textContent = tone;
         bopoCol.appendChild(tn);
       }
-      for (const c of bare) {
+      const chars = [...bare];
+      chars.forEach(c => {
         const s = document.createElement("span");
         s.className = "bopo-char";
         s.textContent = c;
         bopoCol.appendChild(s);
+      });
+      if (tone && !neutral) {
+        const tn = document.createElement("span");
+        tn.className = "bopo-tone";
+        tn.textContent = tone;
+        tn.style.gridRow = String(Math.max(chars.length, 1));
+        bopoCol.appendChild(tn);
       }
       pair.appendChild(bopoCol);
       node.appendChild(pair);

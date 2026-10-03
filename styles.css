@@ -55,7 +55,7 @@ button {
    結構：<span.zh-pair>
             <span.zh-base>漢字</span>
             <span.zh-bopo>
-              <span.bopo-tone>聲調</span>  // 在頂端
+              <span.bopo-tone>聲調</span>  // ˊˇˋ 在最後一個符號右邊；輕聲 ˙ 在最上方
               <span.bopo-char>注音字</span>
               <span.bopo-char>注音字</span>
             </span>
@@ -76,10 +76,12 @@ button {
   line-height: 1;
 }
 .zh-bopo {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  /* 第 1 欄：注音符號由上往下；第 2 欄：聲調，和最後一個符號同一列 */
+  display: inline-grid;
+  grid-template-columns: auto;
+  grid-auto-rows: auto;
+  align-content: center;
+  justify-items: center;
   font-size: 0.5em;
   line-height: 1;
   color: var(--ink-soft);
@@ -92,19 +94,26 @@ button {
 }
 .bopo-char {
   display: block;
+  grid-column: 1;
   line-height: 1;
 }
-/* 聲調 ˊ ˇ ˋ：直書欄的「右上角」（先 render → 跑到 column 頂端） */
+/* 聲調 ˊ ˇ ˋ：最後一個注音符號的右邊（偏上） */
 .bopo-tone {
   display: block;
+  grid-column: 2;
   line-height: 1;
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 800;
-  align-self: flex-end;
+  align-self: start;
+  justify-self: start;
+  margin-left: 1px;
 }
-/* 輕聲 ˙：頂端置中 */
+/* 輕聲 ˙：最上方、置中 */
 .bopo-tone--neutral {
-  align-self: center;
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: center;
+  margin-left: 0;
 }
 /* 注音最小 9px：小字（按鈕、說明）旁的注音也看得清楚 */
 .zh-bopo { font-size: max(0.5em, 9px); }
