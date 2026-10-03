@@ -403,6 +403,7 @@ function route() {
     }
   }
   else if (path[0] === "exam") view = renderExam();
+  else if (path[0] === "words") view = renderWordsPage();
   else if (path[0] === "week" && path[1]) view = renderListPage(`week-${path[1]}`);
   else if (path[0] === "category" && path[1]) view = renderListPage(`category-${path[1]}`);
   else if (path[0] === "sentences") view = renderSentences();
