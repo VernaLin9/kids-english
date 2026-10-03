@@ -168,7 +168,7 @@ function renderParentGate() {
 }
 
 function renderParentDashboard() {
-  const root = el("div", {});
+  const root = el("div", { "data-nobopo": "" });
   const header = el("header", { class: "header" },
     el("button", { class: "header__back", onclick: () => navigate("#/"), "aria-label": "回首頁" }, "←"),
     el("div", { class: "header__title" }, t("家長模式")),
@@ -245,7 +245,7 @@ function renderParentKidDetail(name) {
   const totalWords = Object.keys(WORDS).length;
   const att = totalAttempts(p);
 
-  const root = el("div", {});
+  const root = el("div", { "data-nobopo": "" });
   root.appendChild(el("header", { class: "header" },
     el("button", { class: "header__back", onclick: () => navigate("#/parent"), "aria-label": "回家長首頁" }, "←"),
     el("div", { class: "header__title" }, "👤 " + name),

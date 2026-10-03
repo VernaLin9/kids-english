@@ -177,6 +177,32 @@ const wordZhEl = (w, tag = "span", attrs = {}) => {
 // 介面文字快捷：自動逐字注音
 const t = (text, attrs = {}) => rubyEl(text, null, "span", attrs);
 
+// === 自動注音 ===
+// 畫面上所有沒標注音的國字，自動查 CHAR_BOPO 補上注音（包含之後才出現的文字，例如答對/答錯提示）。
+// 不處理：已經有注音的 .zh-pair、輸入框、家長頁（[data-nobopo]）
+const CJK_RE = /[\u4e00-\u9fff]/;
+function autoBopoText(node) {
+  if (!STORE.settings.bopomofo || !node.isConnected || !CJK_RE.test(node.nodeValue)) return;
+  const parent = node.parentElement;
+  if (!parent || parent.closest(".zh-pair, script, style, textarea, input, select, option, [data-nobopo]")) return;
+  node.replaceWith(rubyEl(node.nodeValue, null, "span"));
+}
+function autoBopo(root) {
+  if (!STORE.settings.bopomofo) return;
+  if (root.nodeType === Node.TEXT_NODE) return autoBopoText(root);
+  if (root.nodeType !== Node.ELEMENT_NODE) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(autoBopoText);
+}
+new MutationObserver(muts => {
+  for (const m of muts) {
+    if (m.type === "characterData") autoBopoText(m.target);
+    else m.addedNodes.forEach(autoBopo);
+  }
+}).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+
 // === 語音 speech ===
 let voicesCache = [];
 const initVoices = () => {
@@ -357,14 +383,6 @@ const backHashFor = (setKey) => {
 
 // === Header ===
 const renderHeader = (title, { back = "#/", progress = "", streak = null } = {}) => {
-  const tools = el("div", { class: "header__tools" },
-    el("button", { class: "tool-btn", title: "縮小字", onclick: () => { STORE.settings.fontScale = Math.max(0.8, +(STORE.settings.fontScale - 0.1).toFixed(2)); saveStore(); applySettings(); } }, "A−"),
-    el("button", { class: "tool-btn", title: "放大字", onclick: () => { STORE.settings.fontScale = Math.min(1.6, +(STORE.settings.fontScale + 0.1).toFixed(2)); saveStore(); applySettings(); } }, "A+"),
-    el("button", { class: `tool-btn ${STORE.settings.bopomofo ? "tool-btn--on" : ""}`, title: "注音", onclick: () => { STORE.settings.bopomofo = !STORE.settings.bopomofo; saveStore(); route(); } }, "ㄅ"),
-    el("button", { class: `tool-btn ${STORE.settings.sound ? "tool-btn--on" : ""}`, title: "音效", onclick: () => { STORE.settings.sound = !STORE.settings.sound; saveStore(); route(); } }, "🔊"),
-    el("button", { class: `tool-btn ${STORE.settings.focus ? "tool-btn--on" : ""}`, title: "專注模式", onclick: () => { STORE.settings.focus = !STORE.settings.focus; saveStore(); applySettings(); } }, "🎯"),
-    el("button", { class: "tool-btn", title: "家長模式", style: "background: var(--candy-5);", onclick: () => navigate("#/parent") }, "👪")
-  );
   const left = back
     ? el("button", { class: "header__back", onclick: () => navigate(back), "aria-label": "回上一頁" }, "←")
     : el("div", { class: "header__back", style: "background: var(--accent-soft);" }, "📚");
@@ -374,8 +392,53 @@ const renderHeader = (title, { back = "#/", progress = "", streak = null } = {})
     const s = el("span", { class: "streak" }, `🔥${streak}`);
     right.appendChild(s);
   }
-  return el("header", { class: "header" }, left, el("div", { class: "header__title" }, title), tools, right);
+  const gear = el("button", { class: "header__gear", onclick: openSettingsSheet, "aria-label": "設定" }, "⚙️");
+  return el("header", { class: "header" }, left, el("div", { class: "header__title" }, title), right, gear);
 };
+
+// === 設定面板（字的大小 / 注音 / 音效 / 專注模式 / 家長）===
+function openSettingsSheet() {
+  const overlay = el("div", { class: "overlay settings-overlay" });
+  const close = (rerender) => { overlay.remove(); if (rerender) route(); };
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(false); });
+  const sizeLabel = el("span", { class: "settings-row__value" });
+  const showSize = () => sizeLabel.textContent = `${Math.round(STORE.settings.fontScale * 100)}%`;
+  showSize();
+  const setScale = d => {
+    STORE.settings.fontScale = Math.min(1.6, Math.max(0.8, +(STORE.settings.fontScale + d).toFixed(2)));
+    saveStore(); applySettings(); showSize();
+  };
+  let dirty = false;
+  const toggleRow = (emoji, label, desc, key) => {
+    const btn = el("button", { class: `settings-toggle ${STORE.settings[key] ? "settings-toggle--on" : ""}` }, STORE.settings[key] ? "開" : "關");
+    btn.addEventListener("click", () => {
+      STORE.settings[key] = !STORE.settings[key];
+      saveStore(); applySettings(); dirty = true;
+      btn.textContent = STORE.settings[key] ? "開" : "關";
+      btn.classList.toggle("settings-toggle--on", STORE.settings[key]);
+    });
+    return el("div", { class: "settings-row" },
+      el("span", { class: "settings-row__emoji" }, emoji),
+      el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, label), el("div", { class: "settings-row__desc" }, desc)),
+      btn);
+  };
+  const card = el("div", { class: "overlay__card settings-card pop" },
+    el("div", { class: "settings-card__title" }, "⚙️ 設定"),
+    el("div", { class: "settings-row" },
+      el("span", { class: "settings-row__emoji" }, "🔠"),
+      el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, "字的大小"), sizeLabel),
+      el("div", { class: "settings-row__pair" },
+        el("button", { class: "settings-step", onclick: () => setScale(-0.1), "aria-label": "字變小" }, "A−"),
+        el("button", { class: "settings-step", onclick: () => setScale(0.1), "aria-label": "字變大" }, "A+"))),
+    toggleRow("ㄅ", "注音", "國字旁邊顯示注音", "bopomofo"),
+    toggleRow("🔊", "音效", "答對、答錯的聲音", "sound"),
+    toggleRow("🎯", "專注模式", "首頁只留下本週練習", "focus"),
+    el("button", { class: "btn btn--ghost btn--full", style: "margin-top: 8px;", onclick: () => { overlay.remove(); navigate("#/parent"); } }, "👪 家長模式"),
+    el("button", { class: "btn btn--accent btn--full", style: "margin-top: 8px;", onclick: () => close(dirty) }, "好了")
+  );
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
 
 // === Profile gate ===
 function renderProfileGate() {
@@ -495,7 +558,7 @@ function renderHome() {
       el("span", { class: "star-jar__icon" }, "⭐"),
       el("div", {},
         el("div", { class: "star-jar__count" }, `${profile?.stars || 0} 顆星`),
-        el("div", { class: "star-jar__label" }, "答對 / 練熟一個字 +1")
+        el("div", { class: "star-jar__label" }, "答對一題 +1")
       )
     )
   ));
@@ -552,7 +615,7 @@ function renderHome() {
       el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
         el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`)),
       el("button", { class: "review-pick review-pick--custom", onclick: () => navigate("#/exam") },
-        el("span", { class: "review-pick__emoji" }, "🎯"), t("自己選"), el("span", { class: "review-pick__count" }, "單元・主題"))
+        el("span", { class: "review-pick__emoji" }, "🎯"), t("自己選"), el("span", { class: "review-pick__count" }, "單元・單字"))
     ),
     el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); margin-top: 8px;" },
       `選擇題・聽力・拼字連續答對 ${MASTER_STREAK} 次，就算學會 ⭐`)
