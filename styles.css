@@ -102,8 +102,8 @@ button {
   display: block;
   grid-column: 2;
   line-height: 1;
-  font-size: 0.9em;
-  font-weight: 800;
+  font-size: 1.1em;
+  font-weight: 900;
   align-self: start;
   justify-self: start;
   margin-left: 1px;
@@ -1224,3 +1224,37 @@ body.focus .app { padding-top: 8px; }
 .tool-btn { min-width: 44px; min-height: 44px; }
 .word-row .icon-btn { min-width: 44px; }
 .review-pick__count { line-height: 1.6; }
+
+/* === 年級標籤（首頁）=== */
+.grade-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  padding: 6px 12px;
+  min-height: 44px;
+  border-radius: 999px;
+  background: white;
+  font-weight: 900;
+  font-size: calc(16px * var(--font-scale));
+  box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+}
+.grade-chip__hint {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 700;
+  color: var(--primary);
+}
+.settings-row__pair .settings-toggle { min-width: 64px; font-size: calc(15px * var(--font-scale)); }
+
+/* 設定面板：文字不被擠成直排；兩顆按鈕的列（年級、字的大小）按鈕放到第二行 */
+.settings-card { padding: 20px 16px; }
+.settings-row { flex-wrap: wrap; row-gap: 8px; }
+.settings-row__label, .settings-row__value { white-space: nowrap; }
+.settings-row__text { flex: 1 1 120px; }
+.settings-row__pair { flex: 1 1 100%; padding-left: 48px; }
+.settings-row__pair > button { flex: 1; white-space: nowrap; }
+
+.grade-chip { white-space: nowrap; }
+.hero__buttons .btn { white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+
+.review-pick { font-size: calc(14px * var(--font-scale)); padding-left: 4px; padding-right: 4px; }

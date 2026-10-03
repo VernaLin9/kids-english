@@ -72,19 +72,41 @@ function touchProfileVisit() {
 }
 function createProfile(name) {
   if (!name) return;
+  const isNew = !STORE.profiles[name];
   STORE.profiles[name] = ensureProfileFields(STORE.profiles[name] || {});
+  if (isNew) STORE.profiles[name].grade = CURRENT_GRADE; // 新使用者沿用目前畫面的年級
   STORE.active = name;
   saveStore();
+  reloadIfGradeChanged();
 }
 function switchProfile(name) {
   if (!STORE.profiles[name]) return;
   STORE.active = name;
   saveStore();
+  reloadIfGradeChanged();
 }
 function deleteProfile(name) {
   delete STORE.profiles[name];
   if (STORE.active === name) STORE.active = Object.keys(STORE.profiles)[0] || null;
   saveStore();
+  reloadIfGradeChanged();
+}
+
+// === 年級 ===
+// 單字資料在 data.js 載入時就依目前使用者的年級決定，所以年級改變要重新載入頁面
+const profileGrade = (p = getProfile()) => (GRADES[p?.grade] ? p.grade : DEFAULT_GRADE);
+function reloadIfGradeChanged() {
+  if (STORE.active && profileGrade() !== CURRENT_GRADE) {
+    location.hash = "#/";
+    location.reload();
+  }
+}
+function setGrade(g) {
+  const p = getProfile();
+  if (!p || !GRADES[g]) return;
+  p.grade = g;
+  saveStore();
+  reloadIfGradeChanged();
 }
 
 // 連續答對 MASTER_STREAK 次 → 自動標記「學會」；答錯 → 取消學會、重新累計
@@ -431,8 +453,17 @@ function openSettingsSheet() {
       el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, label), el("div", { class: "settings-row__desc" }, desc)),
       btn);
   };
+  const gradeRow = STORE.active ? el("div", { class: "settings-row" },
+    el("span", { class: "settings-row__emoji" }, "📚"),
+    el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, "年級"),
+      el("div", { class: "settings-row__desc" }, `${STORE.active} 的單字表`)),
+    el("div", { class: "settings-row__pair" },
+      ...Object.entries(GRADES).map(([g, info]) =>
+        el("button", { class: `settings-toggle ${g === CURRENT_GRADE ? "settings-toggle--on" : ""}`, onclick: () => { if (g !== CURRENT_GRADE) setGrade(g); } }, info.name)))
+  ) : null;
   const card = el("div", { class: "overlay__card settings-card pop" },
     el("div", { class: "settings-card__title" }, "⚙️ 設定"),
+    gradeRow,
     el("div", { class: "settings-row" },
       el("span", { class: "settings-row__emoji" }, "🔠"),
       el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, "字的大小"), sizeLabel),
@@ -576,6 +607,7 @@ function renderHome() {
   const dateStr = TODAY.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
   const hero = el("section", { class: "hero" },
     el("div", { class: "hero__date" }, `今天 ${dateStr}`),
+    el("button", { class: "grade-chip", onclick: openSettingsSheet }, `📚 ${GRADES[CURRENT_GRADE].name}`, el("span", { class: "grade-chip__hint" }, "換年級 ›")),
     el("h1", { class: "hero__title" }, `本週 第 ${cw.num} 週`,
       el("small", {}, `${cw.dateRange}・${cw.progress}`)
     )

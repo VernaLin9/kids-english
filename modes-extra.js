@@ -227,7 +227,7 @@ function renderSentenceListen(weekArg) {
     const feedback = el("div", { class: "quiz-feedback" }, "");
     const optionsWrap = el("div", { class: "quiz-options", style: "grid-template-columns: 1fr;" });
     opts.forEach(opt => {
-      const btn = el("button", { class: "quiz-option", style: "font-size: calc(20px * var(--font-scale)); min-height: 64px; text-align: left; padding-left: 18px;" });
+      const btn = el("button", { class: "quiz-option", "data-zh": opt.zh, style: "font-size: calc(20px * var(--font-scale)); min-height: 64px; text-align: left; padding-left: 18px;" });
       btn.appendChild(rubyEl(opt.zh, opt.bopo, "span"));
       btn.addEventListener("click", () => {
         if (locked) return;
@@ -240,7 +240,7 @@ function renderSentenceListen(weekArg) {
           dingCorrect();
         } else {
           btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === s.zh) b.classList.add("quiz-option--correct"); });
+          [...optionsWrap.children].forEach(b => { if (b.dataset.zh === s.zh) b.classList.add("quiz-option--correct"); });
           feedback.textContent = `正確：${s.en}`;
           feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           streak = 0;
