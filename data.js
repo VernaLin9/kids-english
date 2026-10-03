@@ -2,228 +2,248 @@
 // 資料來源：學校單字表 PDF「115-1 G2 單字表」(Next Move 2)
 // bopo 欄位：每個漢字一段注音（空白分隔），用於注音標示
 
-const WORDS = {
-  // 數字 Numbers
-  "one":          { zh: "一",         bopo: "ㄧ",                           emoji: "1️⃣", category: "numbers" },
-  "two":          { zh: "二",         bopo: "ㄦˋ",                          emoji: "2️⃣", category: "numbers" },
-  "three":        { zh: "三",         bopo: "ㄙㄢ",                         emoji: "3️⃣", category: "numbers" },
-  "four":         { zh: "四",         bopo: "ㄙˋ",                          emoji: "4️⃣", category: "numbers" },
-  "five":         { zh: "五",         bopo: "ㄨˇ",                          emoji: "5️⃣", category: "numbers" },
-  "six":          { zh: "六",         bopo: "ㄌㄧㄡˋ",                      emoji: "6️⃣", category: "numbers" },
-  "seven":        { zh: "七",         bopo: "ㄑㄧ",                         emoji: "7️⃣", category: "numbers" },
-  "eight":        { zh: "八",         bopo: "ㄅㄚ",                         emoji: "8️⃣", category: "numbers" },
-  "nine":         { zh: "九",         bopo: "ㄐㄧㄡˇ",                      emoji: "9️⃣", category: "numbers" },
-  "ten":          { zh: "十",         bopo: "ㄕˊ",                          emoji: "🔟", category: "numbers" },
-  "eleven":       { zh: "十一",       bopo: "ㄕˊ ㄧ",                       emoji: "1️⃣1️⃣", category: "numbers" },
-  "twelve":       { zh: "十二",       bopo: "ㄕˊ ㄦˋ",                      emoji: "1️⃣2️⃣", category: "numbers" },
-  "thirteen":     { zh: "十三",       bopo: "ㄕˊ ㄙㄢ",                     emoji: "1️⃣3️⃣", category: "numbers" },
-  "fourteen":     { zh: "十四",       bopo: "ㄕˊ ㄙˋ",                      emoji: "1️⃣4️⃣", category: "numbers" },
-  "fifteen":      { zh: "十五",       bopo: "ㄕˊ ㄨˇ",                      emoji: "1️⃣5️⃣", category: "numbers" },
-  "sixteen":      { zh: "十六",       bopo: "ㄕˊ ㄌㄧㄡˋ",                  emoji: "1️⃣6️⃣", category: "numbers" },
-  "seventeen":    { zh: "十七",       bopo: "ㄕˊ ㄑㄧ",                     emoji: "1️⃣7️⃣", category: "numbers" },
-  "eighteen":     { zh: "十八",       bopo: "ㄕˊ ㄅㄚ",                     emoji: "1️⃣8️⃣", category: "numbers" },
-  "nineteen":     { zh: "十九",       bopo: "ㄕˊ ㄐㄧㄡˇ",                  emoji: "1️⃣9️⃣", category: "numbers" },
-  "twenty":       { zh: "二十",       bopo: "ㄦˋ ㄕˊ",                      emoji: "2️⃣0️⃣", category: "numbers" },
-  "number":       { zh: "數字",       bopo: "ㄕㄨˋ ㄗˋ",                    emoji: "🔢", category: "numbers" },
+const GRADE2 = (() => {
+  const WORDS = {
+    // 數字 Numbers
+    "one":          { zh: "一",         bopo: "ㄧ",                           emoji: "1️⃣", category: "numbers" },
+    "two":          { zh: "二",         bopo: "ㄦˋ",                          emoji: "2️⃣", category: "numbers" },
+    "three":        { zh: "三",         bopo: "ㄙㄢ",                         emoji: "3️⃣", category: "numbers" },
+    "four":         { zh: "四",         bopo: "ㄙˋ",                          emoji: "4️⃣", category: "numbers" },
+    "five":         { zh: "五",         bopo: "ㄨˇ",                          emoji: "5️⃣", category: "numbers" },
+    "six":          { zh: "六",         bopo: "ㄌㄧㄡˋ",                      emoji: "6️⃣", category: "numbers" },
+    "seven":        { zh: "七",         bopo: "ㄑㄧ",                         emoji: "7️⃣", category: "numbers" },
+    "eight":        { zh: "八",         bopo: "ㄅㄚ",                         emoji: "8️⃣", category: "numbers" },
+    "nine":         { zh: "九",         bopo: "ㄐㄧㄡˇ",                      emoji: "9️⃣", category: "numbers" },
+    "ten":          { zh: "十",         bopo: "ㄕˊ",                          emoji: "🔟", category: "numbers" },
+    "eleven":       { zh: "十一",       bopo: "ㄕˊ ㄧ",                       emoji: "1️⃣1️⃣", category: "numbers" },
+    "twelve":       { zh: "十二",       bopo: "ㄕˊ ㄦˋ",                      emoji: "1️⃣2️⃣", category: "numbers" },
+    "thirteen":     { zh: "十三",       bopo: "ㄕˊ ㄙㄢ",                     emoji: "1️⃣3️⃣", category: "numbers" },
+    "fourteen":     { zh: "十四",       bopo: "ㄕˊ ㄙˋ",                      emoji: "1️⃣4️⃣", category: "numbers" },
+    "fifteen":      { zh: "十五",       bopo: "ㄕˊ ㄨˇ",                      emoji: "1️⃣5️⃣", category: "numbers" },
+    "sixteen":      { zh: "十六",       bopo: "ㄕˊ ㄌㄧㄡˋ",                  emoji: "1️⃣6️⃣", category: "numbers" },
+    "seventeen":    { zh: "十七",       bopo: "ㄕˊ ㄑㄧ",                     emoji: "1️⃣7️⃣", category: "numbers" },
+    "eighteen":     { zh: "十八",       bopo: "ㄕˊ ㄅㄚ",                     emoji: "1️⃣8️⃣", category: "numbers" },
+    "nineteen":     { zh: "十九",       bopo: "ㄕˊ ㄐㄧㄡˇ",                  emoji: "1️⃣9️⃣", category: "numbers" },
+    "twenty":       { zh: "二十",       bopo: "ㄦˋ ㄕˊ",                      emoji: "2️⃣0️⃣", category: "numbers" },
+    "number":       { zh: "數字",       bopo: "ㄕㄨˋ ㄗˋ",                    emoji: "🔢", category: "numbers" },
 
-  // 人 People
-  "aunt":         { zh: "阿姨",       bopo: "ㄚ ㄧˊ",                       emoji: "👩", category: "people" },
-  "uncle":        { zh: "叔叔",       bopo: "ㄕㄨˊ ㄕㄨ˙",                  emoji: "👨", category: "people" },
-  "cousin":       { zh: "表兄弟姊妹", bopo: "ㄅㄧㄠˇ ㄒㄩㄥ ㄉㄧˋ ㄐㄧㄝˇ ㄇㄟˋ", emoji: "🧒", category: "people" },
-  "people":       { zh: "人們",       bopo: "ㄖㄣˊ ㄇㄣ˙",                  emoji: "👥", category: "people" },
-  "children":     { zh: "孩子們",     bopo: "ㄏㄞˊ ㄗ˙ ㄇㄣ˙",              emoji: "👧", category: "people" },
-  "artist":       { zh: "藝術家",     bopo: "ㄧˋ ㄕㄨˋ ㄐㄧㄚ",             emoji: "🧑‍🎨", category: "people" },
+    // 人 People
+    "aunt":         { zh: "阿姨",       bopo: "ㄚ ㄧˊ",                       emoji: "👩", category: "people" },
+    "uncle":        { zh: "叔叔",       bopo: "ㄕㄨˊ ㄕㄨ˙",                  emoji: "👨", category: "people" },
+    "cousin":       { zh: "表兄弟姊妹", bopo: "ㄅㄧㄠˇ ㄒㄩㄥ ㄉㄧˋ ㄐㄧㄝˇ ㄇㄟˋ", emoji: "🧒", category: "people" },
+    "people":       { zh: "人們",       bopo: "ㄖㄣˊ ㄇㄣ˙",                  emoji: "👥", category: "people" },
+    "children":     { zh: "孩子們",     bopo: "ㄏㄞˊ ㄗ˙ ㄇㄣ˙",              emoji: "👧", category: "people" },
+    "artist":       { zh: "藝術家",     bopo: "ㄧˋ ㄕㄨˋ ㄐㄧㄚ",             emoji: "🧑‍🎨", category: "people" },
 
-  // 課堂活動 Class Actions
-  "reading":      { zh: "閱讀",       bopo: "ㄩㄝˋ ㄉㄨˊ",                  emoji: "📖", category: "actions" },
-  "counting":     { zh: "數數",       bopo: "ㄕㄨˇ ㄕㄨˋ",                  emoji: "🧮", category: "actions" },
-  "coloring":     { zh: "著色",       bopo: "ㄓㄨㄛˊ ㄙㄜˋ",                emoji: "🖍️", category: "actions" },
-  "cutting":      { zh: "剪",         bopo: "ㄐㄧㄢˇ",                      emoji: "✂️", category: "actions" },
-  "writing":      { zh: "寫字",       bopo: "ㄒㄧㄝˇ ㄗˋ",                  emoji: "✍️", category: "actions" },
-  "drawing":      { zh: "畫畫",       bopo: "ㄏㄨㄚˋ ㄏㄨㄚˋ",              emoji: "🎨", category: "actions" },
-  "gluing":       { zh: "黏貼",       bopo: "ㄋㄧㄢˊ ㄊㄧㄝ",               emoji: "🩹", category: "actions" },
-  "talking":      { zh: "說話",       bopo: "ㄕㄨㄛ ㄏㄨㄚˋ",               emoji: "🗣️", category: "actions" },
-  "erasing":      { zh: "擦掉",       bopo: "ㄘㄚ ㄉㄧㄠˋ",                 emoji: "🧽", category: "actions" },
-  "listening":    { zh: "聽",         bopo: "ㄊㄧㄥ",                       emoji: "👂", category: "actions" },
-  "using":        { zh: "使用",       bopo: "ㄕˇ ㄩㄥˋ",                    emoji: "🫳", category: "actions" },
+    // 課堂活動 Class Actions
+    "reading":      { zh: "閱讀",       bopo: "ㄩㄝˋ ㄉㄨˊ",                  emoji: "📖", category: "actions" },
+    "counting":     { zh: "數數",       bopo: "ㄕㄨˇ ㄕㄨˋ",                  emoji: "🧮", category: "actions" },
+    "coloring":     { zh: "著色",       bopo: "ㄓㄨㄛˊ ㄙㄜˋ",                emoji: "🖍️", category: "actions" },
+    "cutting":      { zh: "剪",         bopo: "ㄐㄧㄢˇ",                      emoji: "✂️", category: "actions" },
+    "writing":      { zh: "寫字",       bopo: "ㄒㄧㄝˇ ㄗˋ",                  emoji: "✍️", category: "actions" },
+    "drawing":      { zh: "畫畫",       bopo: "ㄏㄨㄚˋ ㄏㄨㄚˋ",              emoji: "🎨", category: "actions" },
+    "gluing":       { zh: "黏貼",       bopo: "ㄋㄧㄢˊ ㄊㄧㄝ",               emoji: "🩹", category: "actions" },
+    "talking":      { zh: "說話",       bopo: "ㄕㄨㄛ ㄏㄨㄚˋ",               emoji: "🗣️", category: "actions" },
+    "erasing":      { zh: "擦掉",       bopo: "ㄘㄚ ㄉㄧㄠˋ",                 emoji: "🧽", category: "actions" },
+    "listening":    { zh: "聽",         bopo: "ㄊㄧㄥ",                       emoji: "👂", category: "actions" },
+    "using":        { zh: "使用",       bopo: "ㄕˇ ㄩㄥˋ",                    emoji: "🫳", category: "actions" },
 
-  // 文具 School Supplies
-  "glue":         { zh: "膠水",       bopo: "ㄐㄧㄠ ㄕㄨㄟˇ",               emoji: "🧴", category: "supplies" },
-  "marker":       { zh: "麥克筆",     bopo: "ㄇㄞˋ ㄎㄜˋ ㄅㄧˇ",            emoji: "🖊️", category: "supplies" },
-  "notebook":     { zh: "筆記本",     bopo: "ㄅㄧˇ ㄐㄧˋ ㄅㄣˇ",            emoji: "📓", category: "supplies" },
-  "scissors":     { zh: "剪刀",       bopo: "ㄐㄧㄢˇ ㄉㄠ",                 emoji: "✂️", category: "supplies" },
-  "paintbrush":   { zh: "畫筆",       bopo: "ㄏㄨㄚˋ ㄅㄧˇ",                emoji: "🖌️", category: "supplies" },
+    // 文具 School Supplies
+    "glue":         { zh: "膠水",       bopo: "ㄐㄧㄠ ㄕㄨㄟˇ",               emoji: "🧴", category: "supplies" },
+    "marker":       { zh: "麥克筆",     bopo: "ㄇㄞˋ ㄎㄜˋ ㄅㄧˇ",            emoji: "🖊️", category: "supplies" },
+    "notebook":     { zh: "筆記本",     bopo: "ㄅㄧˇ ㄐㄧˋ ㄅㄣˇ",            emoji: "📓", category: "supplies" },
+    "scissors":     { zh: "剪刀",       bopo: "ㄐㄧㄢˇ ㄉㄠ",                 emoji: "✂️", category: "supplies" },
+    "paintbrush":   { zh: "畫筆",       bopo: "ㄏㄨㄚˋ ㄅㄧˇ",                emoji: "🖌️", category: "supplies" },
 
-  // 天氣 Weather
-  "hot":          { zh: "熱",         bopo: "ㄖㄜˋ",                        emoji: "🥵", category: "weather" },
-  "sunny":        { zh: "晴朗",       bopo: "ㄑㄧㄥˊ ㄌㄤˇ",                emoji: "☀️", category: "weather" },
-  "cloudy":       { zh: "多雲",       bopo: "ㄉㄨㄛ ㄩㄣˊ",                 emoji: "☁️", category: "weather" },
-  "rainy":        { zh: "下雨",       bopo: "ㄒㄧㄚˋ ㄩˇ",                  emoji: "🌧️", category: "weather" },
-  "windy":        { zh: "颳風",       bopo: "ㄍㄨㄚ ㄈㄥ",                  emoji: "🌬️", category: "weather" },
-  "cold":         { zh: "冷",         bopo: "ㄌㄥˇ",                        emoji: "🥶", category: "weather" },
-  "snowy":        { zh: "下雪",       bopo: "ㄒㄧㄚˋ ㄒㄩㄝˇ",              emoji: "🌨️", category: "weather" },
-  "weather":      { zh: "天氣",       bopo: "ㄊㄧㄢ ㄑㄧˋ",                 emoji: "🌤️", category: "weather" },
+    // 天氣 Weather
+    "hot":          { zh: "熱",         bopo: "ㄖㄜˋ",                        emoji: "🥵", category: "weather" },
+    "sunny":        { zh: "晴朗",       bopo: "ㄑㄧㄥˊ ㄌㄤˇ",                emoji: "☀️", category: "weather" },
+    "cloudy":       { zh: "多雲",       bopo: "ㄉㄨㄛ ㄩㄣˊ",                 emoji: "☁️", category: "weather" },
+    "rainy":        { zh: "下雨",       bopo: "ㄒㄧㄚˋ ㄩˇ",                  emoji: "🌧️", category: "weather" },
+    "windy":        { zh: "颳風",       bopo: "ㄍㄨㄚ ㄈㄥ",                  emoji: "🌬️", category: "weather" },
+    "cold":         { zh: "冷",         bopo: "ㄌㄥˇ",                        emoji: "🥶", category: "weather" },
+    "snowy":        { zh: "下雪",       bopo: "ㄒㄧㄚˋ ㄒㄩㄝˇ",              emoji: "🌨️", category: "weather" },
+    "weather":      { zh: "天氣",       bopo: "ㄊㄧㄢ ㄑㄧˋ",                 emoji: "🌤️", category: "weather" },
 
-  // 衣服 Clothes
-  "raincoat":     { zh: "雨衣",       bopo: "ㄩˇ ㄧ",                       emoji: "🧥", category: "clothes" },
-  "boots":        { zh: "靴子",       bopo: "ㄒㄩㄝ ㄗ˙",                   emoji: "👢", category: "clothes" },
-  "sweater":      { zh: "毛衣",       bopo: "ㄇㄠˊ ㄧ",                     emoji: "🧶", category: "clothes" },
-  "gloves":       { zh: "手套",       bopo: "ㄕㄡˇ ㄊㄠˋ",                  emoji: "🧤", category: "clothes" },
-  "hat":          { zh: "帽子",       bopo: "ㄇㄠˋ ㄗ˙",                    emoji: "👒", category: "clothes" },
-  "jacket":       { zh: "夾克",       bopo: "ㄐㄧㄚˊ ㄎㄜˋ",                emoji: "🧥", category: "clothes" },
-  "pants":        { zh: "褲子",       bopo: "ㄎㄨˋ ㄗ˙",                    emoji: "👖", category: "clothes" },
-  "wearing":      { zh: "穿著",       bopo: "ㄔㄨㄢ ㄓㄜ˙",                 emoji: "👕", category: "clothes" },
-  "bathing suit": { zh: "泳衣",       bopo: "ㄩㄥˇ ㄧ",                     emoji: "🩱", category: "clothes" },
-  "shorts":       { zh: "短褲",       bopo: "ㄉㄨㄢˇ ㄎㄨˋ",                emoji: "🩳", category: "clothes" },
-  "jeans":        { zh: "牛仔褲",     bopo: "ㄋㄧㄡˊ ㄗㄞˇ ㄎㄨˋ",          emoji: "👖", category: "clothes" },
-  "socks":        { zh: "襪子",       bopo: "ㄨㄚˋ ㄗ˙",                    emoji: "🧦", category: "clothes" },
-  "shoes":        { zh: "鞋子",       bopo: "ㄒㄧㄝˊ ㄗ˙",                  emoji: "👞", category: "clothes" },
-  "sneakers":     { zh: "運動鞋",     bopo: "ㄩㄣˋ ㄉㄨㄥˋ ㄒㄧㄝˊ",        emoji: "👟", category: "clothes" },
-  "skirt":        { zh: "裙子",       bopo: "ㄑㄩㄣˊ ㄗ˙",                  emoji: "👗", category: "clothes" },
-  "coat":         { zh: "外套",       bopo: "ㄨㄞˋ ㄊㄠˋ",                  emoji: "🧥", category: "clothes" },
-  "umbrella":     { zh: "雨傘",       bopo: "ㄩˇ ㄙㄢˇ",                    emoji: "☂️", category: "clothes" },
-  "dress":        { zh: "洋裝",       bopo: "ㄧㄤˊ ㄓㄨㄤ",                 emoji: "👗", category: "clothes" },
+    // 衣服 Clothes
+    "raincoat":     { zh: "雨衣",       bopo: "ㄩˇ ㄧ",                       emoji: "🧥", category: "clothes" },
+    "boots":        { zh: "靴子",       bopo: "ㄒㄩㄝ ㄗ˙",                   emoji: "👢", category: "clothes" },
+    "sweater":      { zh: "毛衣",       bopo: "ㄇㄠˊ ㄧ",                     emoji: "🧶", category: "clothes" },
+    "gloves":       { zh: "手套",       bopo: "ㄕㄡˇ ㄊㄠˋ",                  emoji: "🧤", category: "clothes" },
+    "hat":          { zh: "帽子",       bopo: "ㄇㄠˋ ㄗ˙",                    emoji: "👒", category: "clothes" },
+    "jacket":       { zh: "夾克",       bopo: "ㄐㄧㄚˊ ㄎㄜˋ",                emoji: "🧥", category: "clothes" },
+    "pants":        { zh: "褲子",       bopo: "ㄎㄨˋ ㄗ˙",                    emoji: "👖", category: "clothes" },
+    "wearing":      { zh: "穿著",       bopo: "ㄔㄨㄢ ㄓㄜ˙",                 emoji: "👕", category: "clothes" },
+    "bathing suit": { zh: "泳衣",       bopo: "ㄩㄥˇ ㄧ",                     emoji: "🩱", category: "clothes" },
+    "shorts":       { zh: "短褲",       bopo: "ㄉㄨㄢˇ ㄎㄨˋ",                emoji: "🩳", category: "clothes" },
+    "jeans":        { zh: "牛仔褲",     bopo: "ㄋㄧㄡˊ ㄗㄞˇ ㄎㄨˋ",          emoji: "👖", category: "clothes" },
+    "socks":        { zh: "襪子",       bopo: "ㄨㄚˋ ㄗ˙",                    emoji: "🧦", category: "clothes" },
+    "shoes":        { zh: "鞋子",       bopo: "ㄒㄧㄝˊ ㄗ˙",                  emoji: "👞", category: "clothes" },
+    "sneakers":     { zh: "運動鞋",     bopo: "ㄩㄣˋ ㄉㄨㄥˋ ㄒㄧㄝˊ",        emoji: "👟", category: "clothes" },
+    "skirt":        { zh: "裙子",       bopo: "ㄑㄩㄣˊ ㄗ˙",                  emoji: "👗", category: "clothes" },
+    "coat":         { zh: "外套",       bopo: "ㄨㄞˋ ㄊㄠˋ",                  emoji: "🧥", category: "clothes" },
+    "umbrella":     { zh: "雨傘",       bopo: "ㄩˇ ㄙㄢˇ",                    emoji: "☂️", category: "clothes" },
+    "dress":        { zh: "洋裝",       bopo: "ㄧㄤˊ ㄓㄨㄤ",                 emoji: "👗", category: "clothes" },
 
-  // 星期 Days
-  "Monday":       { zh: "星期一",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄧ",              emoji: "📅", category: "days" },
-  "Tuesday":      { zh: "星期二",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄦˋ",             emoji: "📅", category: "days" },
-  "Wednesday":    { zh: "星期三",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄙㄢ",            emoji: "📅", category: "days" },
-  "Thursday":     { zh: "星期四",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄙˋ",             emoji: "📅", category: "days" },
-  "Friday":       { zh: "星期五",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄨˇ",             emoji: "📅", category: "days" },
-  "Saturday":     { zh: "星期六",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄌㄧㄡˋ",          emoji: "📅", category: "days" },
-  "Sunday":       { zh: "星期日",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄖˋ",             emoji: "📅", category: "days" },
-  "today":        { zh: "今天",       bopo: "ㄐㄧㄣ ㄊㄧㄢ",                emoji: "🗓️", category: "days" },
+    // 星期 Days
+    "Monday":       { zh: "星期一",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄧ",              emoji: "📅", category: "days" },
+    "Tuesday":      { zh: "星期二",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄦˋ",             emoji: "📅", category: "days" },
+    "Wednesday":    { zh: "星期三",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄙㄢ",            emoji: "📅", category: "days" },
+    "Thursday":     { zh: "星期四",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄙˋ",             emoji: "📅", category: "days" },
+    "Friday":       { zh: "星期五",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄨˇ",             emoji: "📅", category: "days" },
+    "Saturday":     { zh: "星期六",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄌㄧㄡˋ",          emoji: "📅", category: "days" },
+    "Sunday":       { zh: "星期日",     bopo: "ㄒㄧㄥ ㄑㄧˊ ㄖˋ",             emoji: "📅", category: "days" },
+    "today":        { zh: "今天",       bopo: "ㄐㄧㄣ ㄊㄧㄢ",                emoji: "🗓️", category: "days" },
 
-  // 遊戲 Play
-  "jump rope":    { zh: "跳繩",       bopo: "ㄊㄧㄠˋ ㄕㄥˊ",                emoji: "🪢", category: "play" },
-  "play":         { zh: "玩",         bopo: "ㄨㄢˊ",                        emoji: "🤹", category: "play" },
-  "game":         { zh: "遊戲",       bopo: "ㄧㄡˊ ㄒㄧˋ",                  emoji: "🎲", category: "play" },
-  "hide":         { zh: "躲起來",     bopo: "ㄉㄨㄛˇ ㄑㄧˇ ㄌㄞˊ",          emoji: "🙈", category: "play" },
-  "seek":         { zh: "尋找",       bopo: "ㄒㄩㄣˊ ㄓㄠˇ",                emoji: "🔍", category: "play" },
-  "ride":         { zh: "騎",         bopo: "ㄑㄧˊ",                        emoji: "🚴", category: "play" },
-  "bike":         { zh: "腳踏車",     bopo: "ㄐㄧㄠˇ ㄊㄚˋ ㄔㄜ",           emoji: "🚲", category: "play" },
-  "fly":          { zh: "飛",         bopo: "ㄈㄟ",                         emoji: "🕊️", category: "play" },
-  "kite":         { zh: "風箏",       bopo: "ㄈㄥ ㄓㄥ",                    emoji: "🪁", category: "play" },
-  "rollerblade":  { zh: "溜直排輪",   bopo: "ㄌㄧㄡ ㄓˊ ㄆㄞˊ ㄌㄨㄣˊ",     emoji: "🛼", category: "play" },
-  "skate":        { zh: "溜冰",       bopo: "ㄌㄧㄡ ㄅㄧㄥ",                emoji: "⛸️", category: "play" },
-  "skateboard":   { zh: "滑板",       bopo: "ㄏㄨㄚˊ ㄅㄢˇ",                emoji: "🛹", category: "play" },
-  "ball":         { zh: "球",         bopo: "ㄑㄧㄡˊ",                      emoji: "⚽", category: "play" },
-  "throw":        { zh: "丟",         bopo: "ㄉㄧㄡ",                       emoji: "🤾", category: "play" },
-  "catch":        { zh: "接",         bopo: "ㄐㄧㄝ",                       emoji: "🧤", category: "play" },
-  "bounce":       { zh: "彈跳",       bopo: "ㄊㄢˊ ㄊㄧㄠˋ",                emoji: "🏀", category: "play" },
-  "play tag":     { zh: "玩鬼抓人",   bopo: "ㄨㄢˊ ㄍㄨㄟˇ ㄓㄨㄚ ㄖㄣˊ",    emoji: "🏃", category: "play" },
-  "run":          { zh: "跑",         bopo: "ㄆㄠˇ",                        emoji: "🏃", category: "play" },
-  "crawl":        { zh: "爬",         bopo: "ㄆㄚˊ",                        emoji: "🐛", category: "play" },
-  "climb":        { zh: "攀爬",       bopo: "ㄆㄢ ㄆㄚˊ",                   emoji: "🧗", category: "play" },
-  "slide":        { zh: "溜滑梯",     bopo: "ㄌㄧㄡ ㄏㄨㄚˊ ㄊㄧ",          emoji: "🛝", category: "play" },
-  "swing":        { zh: "盪鞦韆",     bopo: "ㄉㄤˋ ㄑㄧㄡ ㄑㄧㄢ",          emoji: "🌳", category: "play" },
-  "playground":   { zh: "遊樂場",     bopo: "ㄧㄡˊ ㄌㄜˋ ㄔㄤˇ",            emoji: "🛝", category: "play" },
+    // 遊戲 Play
+    "jump rope":    { zh: "跳繩",       bopo: "ㄊㄧㄠˋ ㄕㄥˊ",                emoji: "🪢", category: "play" },
+    "play":         { zh: "玩",         bopo: "ㄨㄢˊ",                        emoji: "🤹", category: "play" },
+    "game":         { zh: "遊戲",       bopo: "ㄧㄡˊ ㄒㄧˋ",                  emoji: "🎲", category: "play" },
+    "hide":         { zh: "躲起來",     bopo: "ㄉㄨㄛˇ ㄑㄧˇ ㄌㄞˊ",          emoji: "🙈", category: "play" },
+    "seek":         { zh: "尋找",       bopo: "ㄒㄩㄣˊ ㄓㄠˇ",                emoji: "🔍", category: "play" },
+    "ride":         { zh: "騎",         bopo: "ㄑㄧˊ",                        emoji: "🚴", category: "play" },
+    "bike":         { zh: "腳踏車",     bopo: "ㄐㄧㄠˇ ㄊㄚˋ ㄔㄜ",           emoji: "🚲", category: "play" },
+    "fly":          { zh: "飛",         bopo: "ㄈㄟ",                         emoji: "🕊️", category: "play" },
+    "kite":         { zh: "風箏",       bopo: "ㄈㄥ ㄓㄥ",                    emoji: "🪁", category: "play" },
+    "rollerblade":  { zh: "溜直排輪",   bopo: "ㄌㄧㄡ ㄓˊ ㄆㄞˊ ㄌㄨㄣˊ",     emoji: "🛼", category: "play" },
+    "skate":        { zh: "溜冰",       bopo: "ㄌㄧㄡ ㄅㄧㄥ",                emoji: "⛸️", category: "play" },
+    "skateboard":   { zh: "滑板",       bopo: "ㄏㄨㄚˊ ㄅㄢˇ",                emoji: "🛹", category: "play" },
+    "ball":         { zh: "球",         bopo: "ㄑㄧㄡˊ",                      emoji: "⚽", category: "play" },
+    "throw":        { zh: "丟",         bopo: "ㄉㄧㄡ",                       emoji: "🤾", category: "play" },
+    "catch":        { zh: "接",         bopo: "ㄐㄧㄝ",                       emoji: "🧤", category: "play" },
+    "bounce":       { zh: "彈跳",       bopo: "ㄊㄢˊ ㄊㄧㄠˋ",                emoji: "🏀", category: "play" },
+    "play tag":     { zh: "玩鬼抓人",   bopo: "ㄨㄢˊ ㄍㄨㄟˇ ㄓㄨㄚ ㄖㄣˊ",    emoji: "🏃", category: "play" },
+    "run":          { zh: "跑",         bopo: "ㄆㄠˇ",                        emoji: "🏃", category: "play" },
+    "crawl":        { zh: "爬",         bopo: "ㄆㄚˊ",                        emoji: "🐛", category: "play" },
+    "climb":        { zh: "攀爬",       bopo: "ㄆㄢ ㄆㄚˊ",                   emoji: "🧗", category: "play" },
+    "slide":        { zh: "溜滑梯",     bopo: "ㄌㄧㄡ ㄏㄨㄚˊ ㄊㄧ",          emoji: "🛝", category: "play" },
+    "swing":        { zh: "盪鞦韆",     bopo: "ㄉㄤˋ ㄑㄧㄡ ㄑㄧㄢ",          emoji: "🌳", category: "play" },
+    "playground":   { zh: "遊樂場",     bopo: "ㄧㄡˊ ㄌㄜˋ ㄔㄤˇ",            emoji: "🛝", category: "play" },
 
-  // 運動 Sports
-  "basketball":   { zh: "籃球",       bopo: "ㄌㄢˊ ㄑㄧㄡˊ",                emoji: "🏀", category: "sports" },
-  "baseball":     { zh: "棒球",       bopo: "ㄅㄤˋ ㄑㄧㄡˊ",                emoji: "⚾", category: "sports" },
-  "soccer":       { zh: "足球",       bopo: "ㄗㄨˊ ㄑㄧㄡˊ",                emoji: "⚽", category: "sports" },
-  "sport":        { zh: "運動",       bopo: "ㄩㄣˋ ㄉㄨㄥˋ",                emoji: "🏅", category: "sports" },
-  "rules":        { zh: "規則",       bopo: "ㄍㄨㄟ ㄗㄜˊ",                 emoji: "📋", category: "sports" },
-  "fair":         { zh: "公平",       bopo: "ㄍㄨㄥ ㄆㄧㄥˊ",               emoji: "⚖️", category: "sports" },
-  "take turns":   { zh: "輪流",       bopo: "ㄌㄨㄣˊ ㄌㄧㄡˊ",              emoji: "🔄", category: "sports" },
-  "fun":          { zh: "好玩",       bopo: "ㄏㄠˇ ㄨㄢˊ",                  emoji: "😄", category: "sports" },
-  "boring":       { zh: "無聊",       bopo: "ㄨˊ ㄌㄧㄠˊ",                  emoji: "🥱", category: "sports" },
+    // 運動 Sports
+    "basketball":   { zh: "籃球",       bopo: "ㄌㄢˊ ㄑㄧㄡˊ",                emoji: "🏀", category: "sports" },
+    "baseball":     { zh: "棒球",       bopo: "ㄅㄤˋ ㄑㄧㄡˊ",                emoji: "⚾", category: "sports" },
+    "soccer":       { zh: "足球",       bopo: "ㄗㄨˊ ㄑㄧㄡˊ",                emoji: "⚽", category: "sports" },
+    "sport":        { zh: "運動",       bopo: "ㄩㄣˋ ㄉㄨㄥˋ",                emoji: "🏅", category: "sports" },
+    "rules":        { zh: "規則",       bopo: "ㄍㄨㄟ ㄗㄜˊ",                 emoji: "📋", category: "sports" },
+    "fair":         { zh: "公平",       bopo: "ㄍㄨㄥ ㄆㄧㄥˊ",               emoji: "⚖️", category: "sports" },
+    "take turns":   { zh: "輪流",       bopo: "ㄌㄨㄣˊ ㄌㄧㄡˊ",              emoji: "🔄", category: "sports" },
+    "fun":          { zh: "好玩",       bopo: "ㄏㄠˇ ㄨㄢˊ",                  emoji: "😄", category: "sports" },
+    "boring":       { zh: "無聊",       bopo: "ㄨˊ ㄌㄧㄠˊ",                  emoji: "🥱", category: "sports" },
 
-  // 家裡 Home
-  "tub":          { zh: "浴缸",       bopo: "ㄩˋ ㄍㄤ",                     emoji: "🛁", category: "home" },
-  "shower":       { zh: "淋浴",       bopo: "ㄌㄧㄣˊ ㄩˋ",                  emoji: "🚿", category: "home" },
-  "rug":          { zh: "地毯",       bopo: "ㄉㄧˋ ㄊㄢˇ",                  emoji: "🟫", category: "home" },
-  "shelves":      { zh: "架子",       bopo: "ㄐㄧㄚˋ ㄗ˙",                  emoji: "🗄️", category: "home" },
-  "stairs":       { zh: "樓梯",       bopo: "ㄌㄡˊ ㄊㄧ",                   emoji: "🪜", category: "home" },
-  "stove":        { zh: "爐子",       bopo: "ㄌㄨˊ ㄗ˙",                    emoji: "🔥", category: "home" },
-  "microwave":    { zh: "微波爐",     bopo: "ㄨㄟ ㄅㄛ ㄌㄨˊ",              emoji: "📦", category: "home" },
-  "bookcase":     { zh: "書櫃",       bopo: "ㄕㄨ ㄍㄨㄟˋ",                 emoji: "📚", category: "home" },
-  "armchair":     { zh: "扶手椅",     bopo: "ㄈㄨˊ ㄕㄡˇ ㄧˇ",              emoji: "🛋️", category: "home" },
-  "fireplace":    { zh: "壁爐",       bopo: "ㄅㄧˋ ㄌㄨˊ",                  emoji: "🔥", category: "home" },
-  "window":       { zh: "窗戶",       bopo: "ㄔㄨㄤ ㄏㄨˋ",                 emoji: "🪟", category: "home" },
-  "phone":        { zh: "電話",       bopo: "ㄉㄧㄢˋ ㄏㄨㄚˋ",              emoji: "☎️", category: "home" },
-  "door":         { zh: "門",         bopo: "ㄇㄣˊ",                        emoji: "🚪", category: "home" },
-  "sink":         { zh: "洗手台",     bopo: "ㄒㄧˇ ㄕㄡˇ ㄊㄞˊ",            emoji: "🚰", category: "home" },
-  "refrigerator": { zh: "冰箱",       bopo: "ㄅㄧㄥ ㄒㄧㄤ",                 emoji: "🧊", category: "home" },
-  "furniture":    { zh: "家具",       bopo: "ㄐㄧㄚ ㄐㄩˋ",                 emoji: "🪑", category: "home" },
-  "chores":       { zh: "家事",       bopo: "ㄐㄧㄚ ㄕˋ",                   emoji: "🧹", category: "home" },
-  "put away":     { zh: "收好",       bopo: "ㄕㄡ ㄏㄠˇ",                   emoji: "📥", category: "home" },
-  "neat":         { zh: "整齊",       bopo: "ㄓㄥˇ ㄑㄧˊ",                  emoji: "✨", category: "home" },
+    // 家裡 Home
+    "tub":          { zh: "浴缸",       bopo: "ㄩˋ ㄍㄤ",                     emoji: "🛁", category: "home" },
+    "shower":       { zh: "淋浴",       bopo: "ㄌㄧㄣˊ ㄩˋ",                  emoji: "🚿", category: "home" },
+    "rug":          { zh: "地毯",       bopo: "ㄉㄧˋ ㄊㄢˇ",                  emoji: "🟫", category: "home" },
+    "shelves":      { zh: "架子",       bopo: "ㄐㄧㄚˋ ㄗ˙",                  emoji: "🗄️", category: "home" },
+    "stairs":       { zh: "樓梯",       bopo: "ㄌㄡˊ ㄊㄧ",                   emoji: "🪜", category: "home" },
+    "stove":        { zh: "爐子",       bopo: "ㄌㄨˊ ㄗ˙",                    emoji: "🔥", category: "home" },
+    "microwave":    { zh: "微波爐",     bopo: "ㄨㄟ ㄅㄛ ㄌㄨˊ",              emoji: "📦", category: "home" },
+    "bookcase":     { zh: "書櫃",       bopo: "ㄕㄨ ㄍㄨㄟˋ",                 emoji: "📚", category: "home" },
+    "armchair":     { zh: "扶手椅",     bopo: "ㄈㄨˊ ㄕㄡˇ ㄧˇ",              emoji: "🛋️", category: "home" },
+    "fireplace":    { zh: "壁爐",       bopo: "ㄅㄧˋ ㄌㄨˊ",                  emoji: "🔥", category: "home" },
+    "window":       { zh: "窗戶",       bopo: "ㄔㄨㄤ ㄏㄨˋ",                 emoji: "🪟", category: "home" },
+    "phone":        { zh: "電話",       bopo: "ㄉㄧㄢˋ ㄏㄨㄚˋ",              emoji: "☎️", category: "home" },
+    "door":         { zh: "門",         bopo: "ㄇㄣˊ",                        emoji: "🚪", category: "home" },
+    "sink":         { zh: "洗手台",     bopo: "ㄒㄧˇ ㄕㄡˇ ㄊㄞˊ",            emoji: "🚰", category: "home" },
+    "refrigerator": { zh: "冰箱",       bopo: "ㄅㄧㄥ ㄒㄧㄤ",                 emoji: "🧊", category: "home" },
+    "furniture":    { zh: "家具",       bopo: "ㄐㄧㄚ ㄐㄩˋ",                 emoji: "🪑", category: "home" },
+    "chores":       { zh: "家事",       bopo: "ㄐㄧㄚ ㄕˋ",                   emoji: "🧹", category: "home" },
+    "put away":     { zh: "收好",       bopo: "ㄕㄡ ㄏㄠˇ",                   emoji: "📥", category: "home" },
+    "neat":         { zh: "整齊",       bopo: "ㄓㄥˇ ㄑㄧˊ",                  emoji: "✨", category: "home" },
 
-  // 位置 Positions
-  "above":        { zh: "在上方",     bopo: "ㄗㄞˋ ㄕㄤˋ ㄈㄤ",             emoji: "⬆️", category: "positions" },
-  "behind":       { zh: "在後面",     bopo: "ㄗㄞˋ ㄏㄡˋ ㄇㄧㄢˋ",          emoji: "🔙", category: "positions" },
-  "under":        { zh: "在下面",     bopo: "ㄗㄞˋ ㄒㄧㄚˋ ㄇㄧㄢˋ",        emoji: "⬇️", category: "positions" },
-  "between":      { zh: "在中間",     bopo: "ㄗㄞˋ ㄓㄨㄥ ㄐㄧㄢ",          emoji: "↔️", category: "positions" },
-  "next to":      { zh: "在旁邊",     bopo: "ㄗㄞˋ ㄆㄤˊ ㄅㄧㄢ",           emoji: "➡️", category: "positions" },
-  "in front of":  { zh: "在前面",     bopo: "ㄗㄞˋ ㄑㄧㄢˊ ㄇㄧㄢˋ",        emoji: "🔜", category: "positions" },
-  "inside":       { zh: "在裡面",     bopo: "ㄗㄞˋ ㄌㄧˇ ㄇㄧㄢˋ",          emoji: "📥", category: "positions" },
-  "outside":      { zh: "在外面",     bopo: "ㄗㄞˋ ㄨㄞˋ ㄇㄧㄢˋ",          emoji: "🏞️", category: "positions" },
+    // 位置 Positions
+    "above":        { zh: "在上方",     bopo: "ㄗㄞˋ ㄕㄤˋ ㄈㄤ",             emoji: "⬆️", category: "positions" },
+    "behind":       { zh: "在後面",     bopo: "ㄗㄞˋ ㄏㄡˋ ㄇㄧㄢˋ",          emoji: "🔙", category: "positions" },
+    "under":        { zh: "在下面",     bopo: "ㄗㄞˋ ㄒㄧㄚˋ ㄇㄧㄢˋ",        emoji: "⬇️", category: "positions" },
+    "between":      { zh: "在中間",     bopo: "ㄗㄞˋ ㄓㄨㄥ ㄐㄧㄢ",          emoji: "↔️", category: "positions" },
+    "next to":      { zh: "在旁邊",     bopo: "ㄗㄞˋ ㄆㄤˊ ㄅㄧㄢ",           emoji: "➡️", category: "positions" },
+    "in front of":  { zh: "在前面",     bopo: "ㄗㄞˋ ㄑㄧㄢˊ ㄇㄧㄢˋ",        emoji: "🔜", category: "positions" },
+    "inside":       { zh: "在裡面",     bopo: "ㄗㄞˋ ㄌㄧˇ ㄇㄧㄢˋ",          emoji: "📥", category: "positions" },
+    "outside":      { zh: "在外面",     bopo: "ㄗㄞˋ ㄨㄞˋ ㄇㄧㄢˋ",          emoji: "🏞️", category: "positions" },
 
-  // 常用字 Useful Words
-  "welcome":      { zh: "歡迎",       bopo: "ㄏㄨㄢ ㄧㄥˊ",                 emoji: "👋", category: "useful" },
-  "different":    { zh: "不同的",     bopo: "ㄅㄨˋ ㄊㄨㄥˊ ㄉㄜ˙",          emoji: "🔀", category: "useful" },
-  "visit":        { zh: "拜訪",       bopo: "ㄅㄞˋ ㄈㄤˇ",                  emoji: "🏠", category: "useful" },
-  "shape":        { zh: "形狀",       bopo: "ㄒㄧㄥˊ ㄓㄨㄤˋ",              emoji: "🔷", category: "useful" },
-  "favorite":     { zh: "最喜歡的",   bopo: "ㄗㄨㄟˋ ㄒㄧˇ ㄏㄨㄢ ㄉㄜ˙",   emoji: "❤️", category: "useful" },
-  "help":         { zh: "幫忙",       bopo: "ㄅㄤ ㄇㄤˊ",                   emoji: "🤝", category: "useful" },
-  "special":      { zh: "特別的",     bopo: "ㄊㄜˋ ㄅㄧㄝˊ ㄉㄜ˙",          emoji: "🌟", category: "useful" },
-  "really":       { zh: "真的",       bopo: "ㄓㄣ ㄉㄜ˙",                   emoji: "❗", category: "useful" },
+    // 常用字 Useful Words
+    "welcome":      { zh: "歡迎",       bopo: "ㄏㄨㄢ ㄧㄥˊ",                 emoji: "👋", category: "useful" },
+    "different":    { zh: "不同的",     bopo: "ㄅㄨˋ ㄊㄨㄥˊ ㄉㄜ˙",          emoji: "🔀", category: "useful" },
+    "visit":        { zh: "拜訪",       bopo: "ㄅㄞˋ ㄈㄤˇ",                  emoji: "🏠", category: "useful" },
+    "shape":        { zh: "形狀",       bopo: "ㄒㄧㄥˊ ㄓㄨㄤˋ",              emoji: "🔷", category: "useful" },
+    "favorite":     { zh: "最喜歡的",   bopo: "ㄗㄨㄟˋ ㄒㄧˇ ㄏㄨㄢ ㄉㄜ˙",   emoji: "❤️", category: "useful" },
+    "help":         { zh: "幫忙",       bopo: "ㄅㄤ ㄇㄤˊ",                   emoji: "🤝", category: "useful" },
+    "special":      { zh: "特別的",     bopo: "ㄊㄜˋ ㄅㄧㄝˊ ㄉㄜ˙",          emoji: "🌟", category: "useful" },
+    "really":       { zh: "真的",       bopo: "ㄓㄣ ㄉㄜ˙",                   emoji: "❗", category: "useful" },
+  };
+
+  const WEEKS = [
+    { num: 1,  dateRange: "8/31-9/5",   start: "2026-08-31", end: "2026-09-05", progress: "Unit 0",              words: ["one","two","three","four","five","six","seven","eight"] },
+    { num: 2,  dateRange: "9/6-9/12",   start: "2026-09-06", end: "2026-09-12", progress: "Unit 1",              words: ["nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen"] },
+    { num: 3,  dateRange: "9/13-9/19",  start: "2026-09-13", end: "2026-09-19", progress: "Unit 1",              words: ["seventeen","eighteen","nineteen","twenty","number","aunt","uncle","cousin"] },
+    { num: 4,  dateRange: "9/20-9/26",  start: "2026-09-20", end: "2026-09-26", progress: "Unit 1",              words: ["reading","counting","coloring","cutting","writing","drawing","gluing","talking"] },
+    { num: 5,  dateRange: "9/27-10/3",  start: "2026-09-27", end: "2026-10-03", progress: "Unit 1 Quiz 1",       words: ["erasing","listening","using","glue","marker","notebook","scissors","paintbrush"] },
+    { num: 6,  dateRange: "10/4-10/10", start: "2026-10-04", end: "2026-10-10", progress: "Unit 2",              words: ["hot","sunny","cloudy","rainy","windy","cold","snowy","raincoat"] },
+    { num: 7,  dateRange: "10/11-10/17",start: "2026-10-11", end: "2026-10-17", progress: "Unit 2",              words: ["boots","sweater","gloves","hat","jacket","pants","wearing","bathing suit"] },
+    { num: 8,  dateRange: "10/18-10/24",start: "2026-10-18", end: "2026-10-24", progress: "Unit 2",              words: ["shorts","jeans","socks","shoes","sneakers","skirt","coat","umbrella"] },
+    { num: 9,  dateRange: "10/25-10/31",start: "2026-10-25", end: "2026-10-31", progress: "Unit 2 Quiz 2",       words: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","today"] },
+    { num: 10, dateRange: "11/1-11/7",  start: "2026-11-01", end: "2026-11-07", progress: "Midterm (Unit 1-2)",  words: [] },
+    { num: 11, dateRange: "11/8-11/14", start: "2026-11-08", end: "2026-11-14", progress: "Unit 3",              words: ["jump rope","play","game","basketball","baseball","soccer","hide","seek"] },
+    { num: 12, dateRange: "11/15-11/21",start: "2026-11-15", end: "2026-11-21", progress: "Unit 3",              words: ["ride","bike","fly","kite","rollerblade","skate","skateboard","ball"] },
+    { num: 13, dateRange: "11/22-11/28",start: "2026-11-22", end: "2026-11-28", progress: "Unit 3",              words: ["throw","catch","bounce","play tag","fun","boring","run","crawl"] },
+    { num: 14, dateRange: "11/29-12/5", start: "2026-11-29", end: "2026-12-05", progress: "Unit 3 Quiz 3",       words: ["climb","slide","swing","playground","sport","rules","fair","take turns"] },
+    { num: 15, dateRange: "12/6-12/12", start: "2026-12-06", end: "2026-12-12", progress: "Unit 4",              words: ["tub","shower","rug","shelves","stairs","stove","microwave","bookcase"] },
+    { num: 16, dateRange: "12/13-12/19",start: "2026-12-13", end: "2026-12-19", progress: "Unit 4",              words: ["armchair","fireplace","above","behind","under","between","next to","in front of"] },
+    { num: 17, dateRange: "12/20-12/26",start: "2026-12-20", end: "2026-12-26", progress: "Unit 4",              words: ["window","phone","door","sink","refrigerator","inside","outside","welcome"] },
+    { num: 18, dateRange: "12/27-1/2",  start: "2026-12-27", end: "2027-01-02", progress: "Unit 4 Quiz 4",       words: ["different","people","visit","shape","favorite","help","chores","furniture"] },
+    { num: 19, dateRange: "1/3-1/9",    start: "2027-01-03", end: "2027-01-09", progress: "Review Unit 3-4",     words: ["special","really","artist","children","weather","dress","neat","put away"] },
+    { num: 20, dateRange: "1/10-1/16",  start: "2027-01-10", end: "2027-01-16", progress: "Final (Unit 3-4)",    words: [] },
+    { num: 21, dateRange: "1/17-1/20",  start: "2027-01-17", end: "2027-01-20", progress: "Review",              words: [] },
+  ];
+
+  // 單元組 Units（依 Next Move 2 課程進度，由 WEEKS 組合）— 用於自選單元考試
+  const weeksWords = (...nums) => nums.flatMap(n => WEEKS.find(w => w.num === n).words);
+  const UNITS = [
+    { id: "unit-0", name: "Unit 0 數字 1-8",          emoji: "🔢", color: "#e0c3fc", words: weeksWords(1) },
+    { id: "unit-1", name: "Unit 1 數字·家人·上課",    emoji: "✏️", color: "#ffe5b4", words: weeksWords(2, 3, 4, 5) },
+    { id: "unit-2", name: "Unit 2 天氣·衣服·星期",    emoji: "☀️", color: "#cdeafe", words: weeksWords(6, 7, 8, 9) },
+    { id: "unit-3", name: "Unit 3 遊戲·運動",         emoji: "⚽", color: "#d0f4de", words: weeksWords(11, 12, 13, 14) },
+    { id: "unit-4", name: "Unit 4 家裡·位置",         emoji: "🏠", color: "#fcd5ce", words: weeksWords(15, 16, 17, 18) },
+    { id: "review-19", name: "第 19 週 複習新字",     emoji: "📦", color: "#e0e0e0", words: weeksWords(19) },
+  ];
+
+  // 每週一句：二年級尚未提供每週一句資料，暫為空（有資料後依一年級格式補上）
+  const SENTENCES = [];
+
+  const CATEGORIES = [
+    { id: "numbers",   name: "數字",   bopo: "ㄕㄨˋ ㄗˋ",           nameEn: "Numbers",   emoji: "🔢", color: "#e0c3fc" },
+    { id: "people",    name: "人物",   bopo: "ㄖㄣˊ ㄨˋ",           nameEn: "People",    emoji: "👨‍👩‍👧", color: "#ffd6e0" },
+    { id: "actions",   name: "上課",   bopo: "ㄕㄤˋ ㄎㄜˋ",         nameEn: "In Class",  emoji: "📖", color: "#ffe5b4" },
+    { id: "supplies",  name: "文具",   bopo: "ㄨㄣˊ ㄐㄩˋ",         nameEn: "Supplies",  emoji: "✂️", color: "#fff5ba" },
+    { id: "weather",   name: "天氣",   bopo: "ㄊㄧㄢ ㄑㄧˋ",        nameEn: "Weather",   emoji: "☀️", color: "#cdeafe" },
+    { id: "clothes",   name: "衣服",   bopo: "ㄧ ㄈㄨˊ",            nameEn: "Clothes",   emoji: "👕", color: "#f5d0c5" },
+    { id: "days",      name: "星期",   bopo: "ㄒㄧㄥ ㄑㄧˊ",        nameEn: "Days",      emoji: "📅", color: "#b8e0d2" },
+    { id: "play",      name: "遊戲",   bopo: "ㄧㄡˊ ㄒㄧˋ",         nameEn: "Play",      emoji: "🪁", color: "#d0f4de" },
+    { id: "sports",    name: "運動",   bopo: "ㄩㄣˋ ㄉㄨㄥˋ",       nameEn: "Sports",    emoji: "⚽", color: "#c1e7e3" },
+    { id: "home",      name: "家裡",   bopo: "ㄐㄧㄚ ㄌㄧˇ",        nameEn: "Home",      emoji: "🏠", color: "#fcd5ce" },
+    { id: "positions", name: "位置",   bopo: "ㄨㄟˋ ㄓˋ",           nameEn: "Positions", emoji: "📍", color: "#e0e0e0" },
+    { id: "useful",    name: "常用字", bopo: "ㄔㄤˊ ㄩㄥˋ ㄗˋ",     nameEn: "Useful",    emoji: "💡", color: "#ffd6e0" },
+  ].map(c => ({ ...c, words: Object.keys(WORDS).filter(w => WORDS[w].category === c.id) }));
+
+  return { WORDS, WEEKS, UNITS, SENTENCES, CATEGORIES };
+})();
+
+// === 年級切換 ===
+// 每個小孩各自記住年級（profile.grade）；切換時重新載入頁面，下面這組全域資料就換成該年級
+const GRADES = {
+  g1: { name: "一年級", term: "下學期", data: GRADE1 },
+  g2: { name: "二年級", term: "上學期", data: GRADE2 },
 };
-
-const WEEKS = [
-  { num: 1,  dateRange: "8/31-9/5",   start: "2026-08-31", end: "2026-09-05", progress: "Unit 0",              words: ["one","two","three","four","five","six","seven","eight"] },
-  { num: 2,  dateRange: "9/6-9/12",   start: "2026-09-06", end: "2026-09-12", progress: "Unit 1",              words: ["nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen"] },
-  { num: 3,  dateRange: "9/13-9/19",  start: "2026-09-13", end: "2026-09-19", progress: "Unit 1",              words: ["seventeen","eighteen","nineteen","twenty","number","aunt","uncle","cousin"] },
-  { num: 4,  dateRange: "9/20-9/26",  start: "2026-09-20", end: "2026-09-26", progress: "Unit 1",              words: ["reading","counting","coloring","cutting","writing","drawing","gluing","talking"] },
-  { num: 5,  dateRange: "9/27-10/3",  start: "2026-09-27", end: "2026-10-03", progress: "Unit 1 Quiz 1",       words: ["erasing","listening","using","glue","marker","notebook","scissors","paintbrush"] },
-  { num: 6,  dateRange: "10/4-10/10", start: "2026-10-04", end: "2026-10-10", progress: "Unit 2",              words: ["hot","sunny","cloudy","rainy","windy","cold","snowy","raincoat"] },
-  { num: 7,  dateRange: "10/11-10/17",start: "2026-10-11", end: "2026-10-17", progress: "Unit 2",              words: ["boots","sweater","gloves","hat","jacket","pants","wearing","bathing suit"] },
-  { num: 8,  dateRange: "10/18-10/24",start: "2026-10-18", end: "2026-10-24", progress: "Unit 2",              words: ["shorts","jeans","socks","shoes","sneakers","skirt","coat","umbrella"] },
-  { num: 9,  dateRange: "10/25-10/31",start: "2026-10-25", end: "2026-10-31", progress: "Unit 2 Quiz 2",       words: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","today"] },
-  { num: 10, dateRange: "11/1-11/7",  start: "2026-11-01", end: "2026-11-07", progress: "Midterm (Unit 1-2)",  words: [] },
-  { num: 11, dateRange: "11/8-11/14", start: "2026-11-08", end: "2026-11-14", progress: "Unit 3",              words: ["jump rope","play","game","basketball","baseball","soccer","hide","seek"] },
-  { num: 12, dateRange: "11/15-11/21",start: "2026-11-15", end: "2026-11-21", progress: "Unit 3",              words: ["ride","bike","fly","kite","rollerblade","skate","skateboard","ball"] },
-  { num: 13, dateRange: "11/22-11/28",start: "2026-11-22", end: "2026-11-28", progress: "Unit 3",              words: ["throw","catch","bounce","play tag","fun","boring","run","crawl"] },
-  { num: 14, dateRange: "11/29-12/5", start: "2026-11-29", end: "2026-12-05", progress: "Unit 3 Quiz 3",       words: ["climb","slide","swing","playground","sport","rules","fair","take turns"] },
-  { num: 15, dateRange: "12/6-12/12", start: "2026-12-06", end: "2026-12-12", progress: "Unit 4",              words: ["tub","shower","rug","shelves","stairs","stove","microwave","bookcase"] },
-  { num: 16, dateRange: "12/13-12/19",start: "2026-12-13", end: "2026-12-19", progress: "Unit 4",              words: ["armchair","fireplace","above","behind","under","between","next to","in front of"] },
-  { num: 17, dateRange: "12/20-12/26",start: "2026-12-20", end: "2026-12-26", progress: "Unit 4",              words: ["window","phone","door","sink","refrigerator","inside","outside","welcome"] },
-  { num: 18, dateRange: "12/27-1/2",  start: "2026-12-27", end: "2027-01-02", progress: "Unit 4 Quiz 4",       words: ["different","people","visit","shape","favorite","help","chores","furniture"] },
-  { num: 19, dateRange: "1/3-1/9",    start: "2027-01-03", end: "2027-01-09", progress: "Review Unit 3-4",     words: ["special","really","artist","children","weather","dress","neat","put away"] },
-  { num: 20, dateRange: "1/10-1/16",  start: "2027-01-10", end: "2027-01-16", progress: "Final (Unit 3-4)",    words: [] },
-  { num: 21, dateRange: "1/17-1/20",  start: "2027-01-17", end: "2027-01-20", progress: "Review",              words: [] },
-];
-
-// 單元組 Units（依 Next Move 2 課程進度，由 WEEKS 組合）— 用於自選單元考試
-const weeksWords = (...nums) => nums.flatMap(n => WEEKS.find(w => w.num === n).words);
-const UNITS = [
-  { id: "unit-0", name: "Unit 0 數字 1-8",          emoji: "🔢", color: "#e0c3fc", words: weeksWords(1) },
-  { id: "unit-1", name: "Unit 1 數字·家人·上課",    emoji: "✏️", color: "#ffe5b4", words: weeksWords(2, 3, 4, 5) },
-  { id: "unit-2", name: "Unit 2 天氣·衣服·星期",    emoji: "☀️", color: "#cdeafe", words: weeksWords(6, 7, 8, 9) },
-  { id: "unit-3", name: "Unit 3 遊戲·運動",         emoji: "⚽", color: "#d0f4de", words: weeksWords(11, 12, 13, 14) },
-  { id: "unit-4", name: "Unit 4 家裡·位置",         emoji: "🏠", color: "#fcd5ce", words: weeksWords(15, 16, 17, 18) },
-  { id: "review-19", name: "第 19 週 複習新字",     emoji: "📦", color: "#e0e0e0", words: weeksWords(19) },
-];
-
-// 每週一句：二年級尚未提供每週一句資料，暫為空（有資料後依一年級格式補上）
-const SENTENCES = [];
-
-const CATEGORIES = [
-  { id: "numbers",   name: "數字",   bopo: "ㄕㄨˋ ㄗˋ",           nameEn: "Numbers",   emoji: "🔢", color: "#e0c3fc" },
-  { id: "people",    name: "人物",   bopo: "ㄖㄣˊ ㄨˋ",           nameEn: "People",    emoji: "👨‍👩‍👧", color: "#ffd6e0" },
-  { id: "actions",   name: "上課",   bopo: "ㄕㄤˋ ㄎㄜˋ",         nameEn: "In Class",  emoji: "📖", color: "#ffe5b4" },
-  { id: "supplies",  name: "文具",   bopo: "ㄨㄣˊ ㄐㄩˋ",         nameEn: "Supplies",  emoji: "✂️", color: "#fff5ba" },
-  { id: "weather",   name: "天氣",   bopo: "ㄊㄧㄢ ㄑㄧˋ",        nameEn: "Weather",   emoji: "☀️", color: "#cdeafe" },
-  { id: "clothes",   name: "衣服",   bopo: "ㄧ ㄈㄨˊ",            nameEn: "Clothes",   emoji: "👕", color: "#f5d0c5" },
-  { id: "days",      name: "星期",   bopo: "ㄒㄧㄥ ㄑㄧˊ",        nameEn: "Days",      emoji: "📅", color: "#b8e0d2" },
-  { id: "play",      name: "遊戲",   bopo: "ㄧㄡˊ ㄒㄧˋ",         nameEn: "Play",      emoji: "🪁", color: "#d0f4de" },
-  { id: "sports",    name: "運動",   bopo: "ㄩㄣˋ ㄉㄨㄥˋ",       nameEn: "Sports",    emoji: "⚽", color: "#c1e7e3" },
-  { id: "home",      name: "家裡",   bopo: "ㄐㄧㄚ ㄌㄧˇ",        nameEn: "Home",      emoji: "🏠", color: "#fcd5ce" },
-  { id: "positions", name: "位置",   bopo: "ㄨㄟˋ ㄓˋ",           nameEn: "Positions", emoji: "📍", color: "#e0e0e0" },
-  { id: "useful",    name: "常用字", bopo: "ㄔㄤˊ ㄩㄥˋ ㄗˋ",     nameEn: "Useful",    emoji: "💡", color: "#ffd6e0" },
-].map(c => ({ ...c, words: Object.keys(WORDS).filter(w => WORDS[w].category === c.id) }));
+const DEFAULT_GRADE = "g2";
+const CURRENT_GRADE = (() => {
+  try {
+    const s = JSON.parse(localStorage.getItem("partygo:store:v1"));
+    const g = s?.profiles?.[s?.active]?.grade;
+    return GRADES[g] ? g : DEFAULT_GRADE;
+  } catch { return DEFAULT_GRADE; }
+})();
+const { WORDS, WEEKS, UNITS, SENTENCES, CATEGORIES } = GRADES[CURRENT_GRADE].data;
 
 // ADHD 友善 — 動一動小提示，每答對 N 題彈一次
 const MOVEMENT_BREAKS = [
@@ -328,4 +348,5 @@ const CHAR_BOPO = {
   "作": "ㄗㄨㄛˋ", "人": "ㄖㄣˊ", "氣": "ㄑㄧˋ", "衣": "ㄧ", "服": "ㄈㄨˊ",
   "遊": "ㄧㄡˊ", "戲": "ㄒㄧˋ", "運": "ㄩㄣˋ", "置": "ㄓˋ", "物": "ㄨˋ",
   "寶": "ㄅㄠˇ", "貝": "ㄅㄟˋ", "格": "ㄍㄜˊ", "母": "ㄇㄨˇ",
+  "級": "ㄐㄧˊ", "顏": "ㄧㄢˊ", "身": "ㄕㄣ", "體": "ㄊㄧˇ", "水": "ㄕㄨㄟˇ", "房": "ㄈㄤˊ",
 };
