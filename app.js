@@ -87,12 +87,18 @@ function deleteProfile(name) {
   saveStore();
 }
 
+// 連續答對 MASTER_STREAK 次 → 自動標記「學會」；答錯 → 取消學會、重新累計
+const MASTER_STREAK = 3;
 function recordWord(w, hit) {
   const p = getProfile(); if (!p) return;
   const r = p.progress[w] || { seen: 0, correct: 0, wrong: 0, mastered: false };
   r.seen += 1;
-  if (hit === true) { r.correct += 1; p.stars = (p.stars || 0) + 1; }
-  if (hit === false) r.wrong += 1;
+  if (hit === true) {
+    r.correct += 1; p.stars = (p.stars || 0) + 1;
+    r.streak = (r.streak || 0) + 1;
+    if (r.streak >= MASTER_STREAK) r.mastered = true;
+  }
+  if (hit === false) { r.wrong += 1; r.streak = 0; r.mastered = false; }
   p.progress[w] = r;
   saveStore();
 }
@@ -143,18 +149,27 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
       if (m) { tone = m[0]; bare = reading.replace(TONE_RE, ""); }
       const bopoCol = document.createElement("span");
       bopoCol.className = "zh-bopo";
-      // 聲調先 render → 跑到 column 頂端
-      if (tone) {
+      // 台灣課本直式注音：輕聲 ˙ 在最上方；ˊˇˋ 在「最後一個注音符號」的右邊
+      const neutral = tone === "˙";
+      if (neutral) {
         const tn = document.createElement("span");
-        tn.className = "bopo-tone" + (tone === "˙" ? " bopo-tone--neutral" : "");
+        tn.className = "bopo-tone bopo-tone--neutral";
         tn.textContent = tone;
         bopoCol.appendChild(tn);
       }
-      for (const c of bare) {
+      const chars = [...bare];
+      chars.forEach(c => {
         const s = document.createElement("span");
         s.className = "bopo-char";
         s.textContent = c;
         bopoCol.appendChild(s);
+      });
+      if (tone && !neutral) {
+        const tn = document.createElement("span");
+        tn.className = "bopo-tone";
+        tn.textContent = tone;
+        tn.style.gridRow = String(Math.max(chars.length, 1));
+        bopoCol.appendChild(tn);
       }
       pair.appendChild(bopoCol);
       node.appendChild(pair);
@@ -170,6 +185,32 @@ const wordZhEl = (w, tag = "span", attrs = {}) => {
 };
 // 介面文字快捷：自動逐字注音
 const t = (text, attrs = {}) => rubyEl(text, null, "span", attrs);
+
+// === 自動注音 ===
+// 畫面上所有沒標注音的國字，自動查 CHAR_BOPO 補上注音（包含之後才出現的文字，例如答對/答錯提示）。
+// 不處理：已經有注音的 .zh-pair、輸入框、家長頁（[data-nobopo]）
+const CJK_RE = /[\u4e00-\u9fff]/;
+function autoBopoText(node) {
+  if (!STORE.settings.bopomofo || !node.isConnected || !CJK_RE.test(node.nodeValue)) return;
+  const parent = node.parentElement;
+  if (!parent || parent.closest(".zh-pair, script, style, textarea, input, select, option, [data-nobopo]")) return;
+  node.replaceWith(rubyEl(node.nodeValue, null, "span"));
+}
+function autoBopo(root) {
+  if (!STORE.settings.bopomofo) return;
+  if (root.nodeType === Node.TEXT_NODE) return autoBopoText(root);
+  if (root.nodeType !== Node.ELEMENT_NODE) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(autoBopoText);
+}
+new MutationObserver(muts => {
+  for (const m of muts) {
+    if (m.type === "characterData") autoBopoText(m.target);
+    else m.addedNodes.forEach(autoBopo);
+  }
+}).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 
 // === 語音 speech ===
 let voicesCache = [];
@@ -259,6 +300,17 @@ const navigate = h => { location.hash = h; };
 // === Helpers ===
 const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
 const weekProgress = (n) => WEEKS.find(w => w.num === n)?.progress || "";
+// 只計算目前單字表內的字（舊學期練熟的字不算進本學期進度）
+const countMastered = (progress) => Object.entries(progress || {}).filter(([w, r]) => WORDS[w] && r.mastered).length;
+// 常錯的字：答錯過、還沒重新學會（依錯誤率排序）
+const wrongWords = (profile = getProfile()) => Object.entries(profile?.progress || {})
+  .filter(([w, r]) => WORDS[w] && r.wrong > 0 && !r.mastered)
+  .sort(([, a], [, b]) => b.wrong / Math.max(b.seen, 1) - a.wrong / Math.max(a.seen, 1) || b.wrong - a.wrong)
+  .map(([w]) => w);
+// 還沒學會的字（依單字表順序）
+const unmasteredWords = (profile = getProfile()) => Object.keys(WORDS).filter(w => !profile?.progress?.[w]?.mastered);
+// 單字清單 → setKey（"words-a,b,c"）
+const wordsSetKey = (words) => "words-" + words.join(",");
 
 // === 取單字集合 ===
 const resolveSet = (setKey) => {
@@ -289,6 +341,15 @@ const resolveSet = (setKey) => {
     });
     return [...set];
   }
+  if (setKey.startsWith("cats-")) {
+    const ids = setKey.slice(5).split(",").filter(Boolean);
+    return [...new Set(ids.flatMap(id => CATEGORIES.find(c => c.id === id)?.words || []))];
+  }
+  if (setKey.startsWith("words-")) {
+    return [...new Set(setKey.slice(6).split(",").filter(w => WORDS[w]))];
+  }
+  if (setKey === "wrong") return wrongWords();
+  if (setKey === "unmastered") return unmasteredWords();
   if (setKey === "all") return Object.keys(WORDS);
   return [];
 };
@@ -311,6 +372,13 @@ const setLabel = (setKey) => {
     const nums = setKey.slice(6).split(",").filter(Boolean);
     return `📝 自訂考試：第 ${nums.join("、")} 週`;
   }
+  if (setKey?.startsWith("cats-")) {
+    const ids = setKey.slice(5).split(",").filter(Boolean);
+    return `📝 自訂考試：${ids.map(id => CATEGORIES.find(c => c.id === id)?.name || id).join(" + ")}`;
+  }
+  if (setKey?.startsWith("words-")) return `📝 自選單字（${resolveSet(setKey).length} 個）`;
+  if (setKey === "wrong") return "❌ 常錯的字";
+  if (setKey === "unmastered") return "🌱 還沒學會的字";
   return "全部";
 };
 const backHashFor = (setKey) => {
@@ -318,19 +386,12 @@ const backHashFor = (setKey) => {
   if (setKey?.startsWith("category-")) return `#/category/${setKey.slice(9)}`;
   if (setKey?.startsWith("units-")) return `#/exam`;
   if (setKey?.startsWith("weeks-")) return `#/exam`;
+  if (setKey?.startsWith("cats-") || setKey?.startsWith("words-")) return `#/exam`;
   return "#/";
 };
 
 // === Header ===
 const renderHeader = (title, { back = "#/", progress = "", streak = null } = {}) => {
-  const tools = el("div", { class: "header__tools" },
-    el("button", { class: "tool-btn", title: "縮小字", onclick: () => { STORE.settings.fontScale = Math.max(0.8, +(STORE.settings.fontScale - 0.1).toFixed(2)); saveStore(); applySettings(); } }, "A−"),
-    el("button", { class: "tool-btn", title: "放大字", onclick: () => { STORE.settings.fontScale = Math.min(1.6, +(STORE.settings.fontScale + 0.1).toFixed(2)); saveStore(); applySettings(); } }, "A+"),
-    el("button", { class: `tool-btn ${STORE.settings.bopomofo ? "tool-btn--on" : ""}`, title: "注音", onclick: () => { STORE.settings.bopomofo = !STORE.settings.bopomofo; saveStore(); route(); } }, "ㄅ"),
-    el("button", { class: `tool-btn ${STORE.settings.sound ? "tool-btn--on" : ""}`, title: "音效", onclick: () => { STORE.settings.sound = !STORE.settings.sound; saveStore(); route(); } }, "🔊"),
-    el("button", { class: `tool-btn ${STORE.settings.focus ? "tool-btn--on" : ""}`, title: "專注模式", onclick: () => { STORE.settings.focus = !STORE.settings.focus; saveStore(); applySettings(); } }, "🎯"),
-    el("button", { class: "tool-btn", title: "家長模式", style: "background: var(--candy-5);", onclick: () => navigate("#/parent") }, "👪")
-  );
   const left = back
     ? el("button", { class: "header__back", onclick: () => navigate(back), "aria-label": "回上一頁" }, "←")
     : el("div", { class: "header__back", style: "background: var(--accent-soft);" }, "📚");
@@ -340,8 +401,53 @@ const renderHeader = (title, { back = "#/", progress = "", streak = null } = {})
     const s = el("span", { class: "streak" }, `🔥${streak}`);
     right.appendChild(s);
   }
-  return el("header", { class: "header" }, left, el("div", { class: "header__title" }, title), tools, right);
+  const gear = el("button", { class: "header__gear", onclick: openSettingsSheet, "aria-label": "設定" }, "⚙️");
+  return el("header", { class: "header" }, left, el("div", { class: "header__title" }, title), right, gear);
 };
+
+// === 設定面板（字的大小 / 注音 / 音效 / 專注模式 / 家長）===
+function openSettingsSheet() {
+  const overlay = el("div", { class: "overlay settings-overlay" });
+  const close = (rerender) => { overlay.remove(); if (rerender) route(); };
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(false); });
+  const sizeLabel = el("span", { class: "settings-row__value" });
+  const showSize = () => sizeLabel.textContent = `${Math.round(STORE.settings.fontScale * 100)}%`;
+  showSize();
+  const setScale = d => {
+    STORE.settings.fontScale = Math.min(1.6, Math.max(0.8, +(STORE.settings.fontScale + d).toFixed(2)));
+    saveStore(); applySettings(); showSize();
+  };
+  let dirty = false;
+  const toggleRow = (emoji, label, desc, key) => {
+    const btn = el("button", { class: `settings-toggle ${STORE.settings[key] ? "settings-toggle--on" : ""}` }, STORE.settings[key] ? "開" : "關");
+    btn.addEventListener("click", () => {
+      STORE.settings[key] = !STORE.settings[key];
+      saveStore(); applySettings(); dirty = true;
+      btn.textContent = STORE.settings[key] ? "開" : "關";
+      btn.classList.toggle("settings-toggle--on", STORE.settings[key]);
+    });
+    return el("div", { class: "settings-row" },
+      el("span", { class: "settings-row__emoji" }, emoji),
+      el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, label), el("div", { class: "settings-row__desc" }, desc)),
+      btn);
+  };
+  const card = el("div", { class: "overlay__card settings-card pop" },
+    el("div", { class: "settings-card__title" }, "⚙️ 設定"),
+    el("div", { class: "settings-row" },
+      el("span", { class: "settings-row__emoji" }, "🔠"),
+      el("div", { class: "settings-row__text" }, el("div", { class: "settings-row__label" }, "字的大小"), sizeLabel),
+      el("div", { class: "settings-row__pair" },
+        el("button", { class: "settings-step", onclick: () => setScale(-0.1), "aria-label": "字變小" }, "A−"),
+        el("button", { class: "settings-step", onclick: () => setScale(0.1), "aria-label": "字變大" }, "A+"))),
+    toggleRow("ㄅ", "注音", "國字旁邊顯示注音", "bopomofo"),
+    toggleRow("🔊", "音效", "答對、答錯的聲音", "sound"),
+    toggleRow("🎯", "專注模式", "首頁只留下本週練習", "focus"),
+    el("button", { class: "btn btn--ghost btn--full", style: "margin-top: 8px;", onclick: () => { overlay.remove(); navigate("#/parent"); } }, "👪 家長模式"),
+    el("button", { class: "btn btn--accent btn--full", style: "margin-top: 8px;", onclick: () => close(dirty) }, "好了")
+  );
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
 
 // === Profile gate ===
 function renderProfileGate() {
@@ -444,7 +550,7 @@ function renderHome() {
   const profile = getProfile();
   const cw = getCurrentWeek();
   const cs = SENTENCES.find(s => s.week === cw.num);
-  const masteredCount = profile ? Object.values(profile.progress).filter(p => p.mastered).length : 0;
+  const masteredCount = profile ? countMastered(profile.progress) : 0;
   const totalWords = Object.keys(WORDS).length;
   const pct = Math.round((masteredCount / totalWords) * 100);
 
@@ -461,7 +567,7 @@ function renderHome() {
       el("span", { class: "star-jar__icon" }, "⭐"),
       el("div", {},
         el("div", { class: "star-jar__count" }, `${profile?.stars || 0} 顆星`),
-        el("div", { class: "star-jar__label" }, "答對 / 練熟一個字 +1")
+        el("div", { class: "star-jar__label" }, "答對一題 +1")
       )
     )
   ));
@@ -503,9 +609,26 @@ function renderHome() {
   } else {
     buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/flashcard?set=all`) }, t("📖 全部複習")));
   }
-  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("📝 自選考試")));
+  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("🎯 自選複習")));
   hero.appendChild(buttons);
   app.appendChild(hero);
+
+  // Quick review: 常錯 / 還沒學會 / 自己選
+  const nWrong = wrongWords(profile).length;
+  const nTodo = unmasteredWords(profile).length;
+  app.appendChild(el("section", { class: "section section--hide-on-focus" },
+    el("div", { class: "section__title" }, t("🎯 今天想複習什麼？")),
+    el("div", { class: "review-picks" },
+      el("button", { class: "review-pick review-pick--wrong", disabled: !nWrong, onclick: () => navigate("#/play/quiz?set=wrong") },
+        el("span", { class: "review-pick__emoji" }, "❌"), t("常錯的字"), el("span", { class: "review-pick__count" }, nWrong ? `${nWrong} 個` : "還沒有")),
+      el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
+        el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`)),
+      el("button", { class: "review-pick review-pick--custom", onclick: () => navigate("#/exam") },
+        el("span", { class: "review-pick__emoji" }, "🎯"), t("自己選"), el("span", { class: "review-pick__count" }, "單元・單字"))
+    ),
+    el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); margin-top: 8px;" },
+      `選擇題・聽力・拼字連續答對 ${MASTER_STREAK} 次，就算學會 ⭐`)
+  ));
 
   // Mastered progress bar
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
@@ -559,10 +682,12 @@ function renderHome() {
   app.appendChild(weekSection);
 
   // Sentences shortcut
-  app.appendChild(el("section", { class: "section section--hide-on-focus" },
-    el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
-      t("💬 每週一句 Sentence of the Week"))
-  ));
+  if (SENTENCES.length) {
+    app.appendChild(el("section", { class: "section section--hide-on-focus" },
+      el("button", { class: "btn btn--full btn--xl", onclick: () => navigate("#/sentences") },
+        t("💬 每週一句 Sentence of the Week"))
+    ));
+  }
 
   root.appendChild(app);
   return root;

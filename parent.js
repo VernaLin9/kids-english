@@ -8,12 +8,13 @@ function renderEmpty(back, msg) {
   ));
   return root;
 }
-function renderResultBlock(score, emoji, btnText, onClick) {
+function renderResultBlock(score, emoji, btnText, onClick, extra = null) {
   return el("div", { class: "result pop" },
     el("div", { class: "result__emoji" }, emoji),
     el("div", { class: "result__score" }, score),
     el("div", { class: "result__msg" }, t("你好棒！繼續加油 💪")),
     el("div", { style: "display: grid; gap: 10px; max-width: 320px; margin: 0 auto;" },
+      extra,
       el("button", { class: "btn btn--accent", onclick: onClick }, typeof btnText === "string" ? t(btnText) : btnText),
       el("button", { class: "btn btn--ghost", onclick: () => navigate("#/") }, t("🏠 回首頁"))
     )
@@ -65,7 +66,7 @@ function modeName(m) {
 }
 function exportProfileText(name) {
   const p = STORE.profiles[name]; if (!p) return "";
-  const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+  const masteredCount = countMastered(p.progress);
   const total = Object.keys(WORDS).length;
   const att = totalAttempts(p);
   const lines = [];
@@ -167,7 +168,7 @@ function renderParentGate() {
 }
 
 function renderParentDashboard() {
-  const root = el("div", {});
+  const root = el("div", { "data-nobopo": "" });
   const header = el("header", { class: "header" },
     el("button", { class: "header__back", onclick: () => navigate("#/"), "aria-label": "回首頁" }, "←"),
     el("div", { class: "header__title" }, t("家長模式")),
@@ -184,7 +185,7 @@ function renderParentDashboard() {
     const list = el("div", { class: "kid-grid" });
     kidNames.forEach(name => {
       const p = STORE.profiles[name];
-      const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+      const masteredCount = countMastered(p.progress);
       const totalWords = Object.keys(WORDS).length;
       const pct = Math.round((masteredCount / totalWords) * 100);
       const att = totalAttempts(p);
@@ -240,11 +241,11 @@ function renderParentDashboard() {
 function renderParentKidDetail(name) {
   const p = STORE.profiles[name];
   if (!p) return renderEmpty("#/parent", "找不到這個小孩");
-  const masteredCount = Object.values(p.progress || {}).filter(x => x.mastered).length;
+  const masteredCount = countMastered(p.progress);
   const totalWords = Object.keys(WORDS).length;
   const att = totalAttempts(p);
 
-  const root = el("div", {});
+  const root = el("div", { "data-nobopo": "" });
   root.appendChild(el("header", { class: "header" },
     el("button", { class: "header__back", onclick: () => navigate("#/parent"), "aria-label": "回家長首頁" }, "←"),
     el("div", { class: "header__title" }, "👤 " + name),

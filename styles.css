@@ -55,7 +55,7 @@ button {
    結構：<span.zh-pair>
             <span.zh-base>漢字</span>
             <span.zh-bopo>
-              <span.bopo-tone>聲調</span>  // 在頂端
+              <span.bopo-tone>聲調</span>  // ˊˇˋ 在最後一個符號右邊；輕聲 ˙ 在最上方
               <span.bopo-char>注音字</span>
               <span.bopo-char>注音字</span>
             </span>
@@ -76,10 +76,12 @@ button {
   line-height: 1;
 }
 .zh-bopo {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  /* 第 1 欄：注音符號由上往下；第 2 欄：聲調，和最後一個符號同一列 */
+  display: inline-grid;
+  grid-template-columns: auto;
+  grid-auto-rows: auto;
+  align-content: center;
+  justify-items: center;
   font-size: 0.5em;
   line-height: 1;
   color: var(--ink-soft);
@@ -92,27 +94,32 @@ button {
 }
 .bopo-char {
   display: block;
+  grid-column: 1;
   line-height: 1;
 }
-/* 聲調 ˊ ˇ ˋ：直書欄的「右上角」（先 render → 跑到 column 頂端） */
+/* 聲調 ˊ ˇ ˋ：最後一個注音符號的右邊（偏上） */
 .bopo-tone {
   display: block;
+  grid-column: 2;
   line-height: 1;
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 800;
-  align-self: flex-end;
+  align-self: start;
+  justify-self: start;
+  margin-left: 1px;
 }
-/* 輕聲 ˙：頂端置中 */
+/* 輕聲 ˙：最上方、置中 */
 .bopo-tone--neutral {
-  align-self: center;
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: center;
+  margin-left: 0;
 }
-/* Mobile: smaller bopomofo */
-@media (max-width: 480px) {
-  .zh-bopo { font-size: 0.45em; margin-left: 1px; }
-}
+/* 注音最小 9px：小字（按鈕、說明）旁的注音也看得清楚 */
+.zh-bopo { font-size: max(0.5em, 9px); }
 /* Tablet+: bigger bopomofo */
 @media (min-width: 768px) {
-  .zh-bopo { font-size: 0.55em; margin-left: 3px; }
+  .zh-bopo { font-size: max(0.55em, 10px); margin-left: 3px; }
 }
 /* Give rows containing bopomofo enough vertical room so 3-bopo + tone
    never bumps into the next line. */
@@ -862,7 +869,6 @@ button {
 }
 
 /* === Focus mode (隱藏次要資訊) === */
-body.focus .header__tools,
 body.focus .star-jar,
 body.focus .section--hide-on-focus { display: none !important; }
 body.focus .app { padding-top: 8px; }
@@ -1066,3 +1072,155 @@ body.focus .app { padding-top: 8px; }
   font-size: 32px;
   animation: confetti-burst 0.6s ease-out forwards;
 }
+/* === Review picks（首頁 / 自選複習：常錯・還沒學會・自己選）=== */
+.review-picks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.review-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-weight: 900;
+  font-size: calc(15px * var(--font-scale));
+  min-width: 0;
+  min-height: 100px;
+  text-align: center;
+  border: 3px solid transparent;
+}
+.review-pick:disabled { opacity: 0.45; cursor: not-allowed; }
+.review-pick--wrong  { background: var(--candy-1); }
+.review-pick--todo   { background: var(--candy-3); }
+.review-pick--custom { background: var(--candy-5); }
+.review-pick__emoji { font-size: 32px; line-height: 1; }
+.review-pick__count { font-size: calc(13px * var(--font-scale)); font-weight: 700; color: var(--ink-soft); }
+
+/* === 自選複習 tabs / 單字挑選 === */
+.pick-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pick-tab {
+  padding: 10px 4px;
+  border-radius: var(--radius);
+  background: white;
+  border: 2px solid var(--candy-2);
+  font-weight: 800;
+  font-size: calc(15px * var(--font-scale));
+  min-height: 52px;
+}
+.pick-tab--on { background: var(--primary); border-color: var(--primary); color: white; }
+.pick-clear {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--candy-1);
+  font-weight: 700;
+  font-size: calc(14px * var(--font-scale));
+}
+.exam-options button:disabled { opacity: 0.45; cursor: not-allowed; }
+.pick-bar .exam-options { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.pick-bar .exam-options button { min-height: 44px; padding: 6px 4px; font-size: calc(15px * var(--font-scale)); }
+.word-pick-group { margin-bottom: 14px; }
+.word-pick-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 800;
+  margin-bottom: 6px;
+  font-size: calc(15px * var(--font-scale));
+}
+.word-pick-group__all {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--candy-2);
+  font-weight: 700;
+}
+.word-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.word-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: white;
+  border: 2px solid var(--candy-2);
+  font-weight: 700;
+  font-size: calc(16px * var(--font-scale));
+  min-height: 44px;
+}
+.word-chip.checked { background: var(--success-soft); border-color: var(--success); }
+
+
+/* === 頂部列：返回 / 標題 / 進度 / ⚙️（手機、平板都不擠）=== */
+.header__title {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.6;
+}
+.header__progress { min-width: 0; white-space: nowrap; }
+.header__progress:empty { display: none; }
+.header__gear {
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: var(--radius);
+  background: var(--candy-5);
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .header__back, .header__gear { min-width: 44px; min-height: 44px; }
+  .header__title { font-size: calc(16px * var(--font-scale)); }
+  .header__progress { font-size: calc(14px * var(--font-scale)); }
+}
+
+/* === 設定面板 === */
+.settings-card { text-align: left; max-width: 420px; width: calc(100% - 32px); max-height: calc(100vh - 32px); overflow-y: auto; }
+.settings-card__title { font-size: calc(24px * var(--font-scale)); font-weight: 900; margin-bottom: 8px; text-align: center; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 2px dashed var(--candy-2);
+}
+.settings-row__emoji { font-size: 28px; width: 36px; text-align: center; font-weight: 900; color: var(--primary); }
+.settings-row__text { flex: 1; min-width: 0; }
+.settings-row__label { font-weight: 900; font-size: calc(18px * var(--font-scale)); }
+.settings-row__desc, .settings-row__value { color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); }
+.settings-row__pair { display: flex; gap: 6px; }
+.settings-step, .settings-toggle {
+  min-width: 56px;
+  min-height: 48px;
+  border-radius: var(--radius);
+  background: var(--candy-2);
+  font-weight: 900;
+  font-size: calc(18px * var(--font-scale));
+}
+.settings-toggle { background: #e6e3ef; color: var(--ink-soft); }
+.settings-toggle--on { background: var(--success); color: white; }
+
+/* === 兒童看得清楚：說明小字至少 15px === */
+.flashcard__hint, .quiz-prompt__hint, .unit-pick__count, .star-jar__label,
+.week-card__date, .week-card__progress, .cat-card__count, .review-pick__count {
+  font-size: calc(15px * var(--font-scale));
+}
+.quiz-prompt__hint { margin-top: 10px; }
+
+/* 使用者頁小按鈕放大 */
+.profile-pill button { min-height: 44px; min-width: 44px; padding: 8px 12px; border-radius: 12px; background: var(--candy-2); font-weight: 800; }
+.profile-pill button:last-child { background: #f3e6ea; color: var(--ink-soft); }
+
+/* 小按鈕至少 44px，小孩手指好點 */
+.tool-btn { min-width: 44px; min-height: 44px; }
+.word-row .icon-btn { min-width: 44px; }
+.review-pick__count { line-height: 1.6; }
