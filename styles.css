@@ -1066,3 +1066,85 @@ body.focus .app { padding-top: 8px; }
   font-size: 32px;
   animation: confetti-burst 0.6s ease-out forwards;
 }
+/* === Review picks（首頁 / 自選複習：常錯・還沒學會・自己選）=== */
+.review-picks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.review-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-weight: 900;
+  font-size: calc(15px * var(--font-scale));
+  white-space: nowrap;
+  min-height: 100px;
+  text-align: center;
+  border: 3px solid transparent;
+}
+.review-pick:disabled { opacity: 0.45; cursor: not-allowed; }
+.review-pick--wrong  { background: var(--candy-1); }
+.review-pick--todo   { background: var(--candy-3); }
+.review-pick--custom { background: var(--candy-5); }
+.review-pick__emoji { font-size: 32px; line-height: 1; }
+.review-pick__count { font-size: calc(13px * var(--font-scale)); font-weight: 700; color: var(--ink-soft); }
+
+/* === 自選複習 tabs / 單字挑選 === */
+.pick-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pick-tab {
+  padding: 10px 4px;
+  border-radius: var(--radius);
+  background: white;
+  border: 2px solid var(--candy-2);
+  font-weight: 800;
+  font-size: calc(15px * var(--font-scale));
+  min-height: 52px;
+}
+.pick-tab--on { background: var(--primary); border-color: var(--primary); color: white; }
+.pick-clear {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--candy-1);
+  font-weight: 700;
+  font-size: calc(14px * var(--font-scale));
+}
+.exam-options button:disabled { opacity: 0.45; cursor: not-allowed; }
+.pick-bar .exam-options { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.pick-bar .exam-options button { min-height: 44px; padding: 6px 4px; font-size: calc(15px * var(--font-scale)); }
+.word-pick-group { margin-bottom: 14px; }
+.word-pick-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 800;
+  margin-bottom: 6px;
+  font-size: calc(15px * var(--font-scale));
+}
+.word-pick-group__all {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--candy-2);
+  font-weight: 700;
+}
+.word-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.word-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: white;
+  border: 2px solid var(--candy-2);
+  font-weight: 700;
+  font-size: calc(16px * var(--font-scale));
+  min-height: 44px;
+}
+.word-chip.checked { background: var(--success-soft); border-color: var(--success); }

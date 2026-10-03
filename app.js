@@ -87,12 +87,18 @@ function deleteProfile(name) {
   saveStore();
 }
 
+// 連續答對 MASTER_STREAK 次 → 自動標記「學會」；答錯 → 取消學會、重新累計
+const MASTER_STREAK = 3;
 function recordWord(w, hit) {
   const p = getProfile(); if (!p) return;
   const r = p.progress[w] || { seen: 0, correct: 0, wrong: 0, mastered: false };
   r.seen += 1;
-  if (hit === true) { r.correct += 1; p.stars = (p.stars || 0) + 1; }
-  if (hit === false) r.wrong += 1;
+  if (hit === true) {
+    r.correct += 1; p.stars = (p.stars || 0) + 1;
+    r.streak = (r.streak || 0) + 1;
+    if (r.streak >= MASTER_STREAK) r.mastered = true;
+  }
+  if (hit === false) { r.wrong += 1; r.streak = 0; r.mastered = false; }
   p.progress[w] = r;
   saveStore();
 }
@@ -261,6 +267,15 @@ const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
 const weekProgress = (n) => WEEKS.find(w => w.num === n)?.progress || "";
 // 只計算目前單字表內的字（舊學期練熟的字不算進本學期進度）
 const countMastered = (progress) => Object.entries(progress || {}).filter(([w, r]) => WORDS[w] && r.mastered).length;
+// 常錯的字：答錯過、還沒重新學會（依錯誤率排序）
+const wrongWords = (profile = getProfile()) => Object.entries(profile?.progress || {})
+  .filter(([w, r]) => WORDS[w] && r.wrong > 0 && !r.mastered)
+  .sort(([, a], [, b]) => b.wrong / Math.max(b.seen, 1) - a.wrong / Math.max(a.seen, 1) || b.wrong - a.wrong)
+  .map(([w]) => w);
+// 還沒學會的字（依單字表順序）
+const unmasteredWords = (profile = getProfile()) => Object.keys(WORDS).filter(w => !profile?.progress?.[w]?.mastered);
+// 單字清單 → setKey（"words-a,b,c"）
+const wordsSetKey = (words) => "words-" + words.join(",");
 
 // === 取單字集合 ===
 const resolveSet = (setKey) => {
@@ -291,6 +306,15 @@ const resolveSet = (setKey) => {
     });
     return [...set];
   }
+  if (setKey.startsWith("cats-")) {
+    const ids = setKey.slice(5).split(",").filter(Boolean);
+    return [...new Set(ids.flatMap(id => CATEGORIES.find(c => c.id === id)?.words || []))];
+  }
+  if (setKey.startsWith("words-")) {
+    return [...new Set(setKey.slice(6).split(",").filter(w => WORDS[w]))];
+  }
+  if (setKey === "wrong") return wrongWords();
+  if (setKey === "unmastered") return unmasteredWords();
   if (setKey === "all") return Object.keys(WORDS);
   return [];
 };
@@ -313,6 +337,13 @@ const setLabel = (setKey) => {
     const nums = setKey.slice(6).split(",").filter(Boolean);
     return `📝 自訂考試：第 ${nums.join("、")} 週`;
   }
+  if (setKey?.startsWith("cats-")) {
+    const ids = setKey.slice(5).split(",").filter(Boolean);
+    return `📝 自訂考試：${ids.map(id => CATEGORIES.find(c => c.id === id)?.name || id).join(" + ")}`;
+  }
+  if (setKey?.startsWith("words-")) return `📝 自選單字（${resolveSet(setKey).length} 個）`;
+  if (setKey === "wrong") return "❌ 常錯的字";
+  if (setKey === "unmastered") return "🌱 還沒學會的字";
   return "全部";
 };
 const backHashFor = (setKey) => {
@@ -320,6 +351,7 @@ const backHashFor = (setKey) => {
   if (setKey?.startsWith("category-")) return `#/category/${setKey.slice(9)}`;
   if (setKey?.startsWith("units-")) return `#/exam`;
   if (setKey?.startsWith("weeks-")) return `#/exam`;
+  if (setKey?.startsWith("cats-") || setKey?.startsWith("words-")) return `#/exam`;
   return "#/";
 };
 
@@ -505,9 +537,26 @@ function renderHome() {
   } else {
     buttons.appendChild(el("button", { class: "btn btn--accent", onclick: () => navigate(`#/play/flashcard?set=all`) }, t("📖 全部複習")));
   }
-  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("📝 自選考試")));
+  buttons.appendChild(el("button", { class: "btn", onclick: () => navigate(`#/exam`) }, t("🎯 自選複習")));
   hero.appendChild(buttons);
   app.appendChild(hero);
+
+  // Quick review: 常錯 / 還沒學會 / 自己選
+  const nWrong = wrongWords(profile).length;
+  const nTodo = unmasteredWords(profile).length;
+  app.appendChild(el("section", { class: "section section--hide-on-focus" },
+    el("div", { class: "section__title" }, t("🎯 今天想複習什麼？")),
+    el("div", { class: "review-picks" },
+      el("button", { class: "review-pick review-pick--wrong", disabled: !nWrong, onclick: () => navigate("#/play/quiz?set=wrong") },
+        el("span", { class: "review-pick__emoji" }, "❌"), t("常錯的字"), el("span", { class: "review-pick__count" }, nWrong ? `${nWrong} 個` : "還沒有")),
+      el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
+        el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`)),
+      el("button", { class: "review-pick review-pick--custom", onclick: () => navigate("#/exam") },
+        el("span", { class: "review-pick__emoji" }, "🎯"), t("自己選"), el("span", { class: "review-pick__count" }, "單元・主題"))
+    ),
+    el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); margin-top: 8px;" },
+      `選擇題・聽力・拼字連續答對 ${MASTER_STREAK} 次，就算學會 ⭐`)
+  ));
 
   // Mastered progress bar
   app.appendChild(el("section", { class: "section section--hide-on-focus" },

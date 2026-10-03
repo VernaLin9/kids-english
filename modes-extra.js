@@ -60,7 +60,7 @@ function renderHandwrite(setKey) {
   function render() {
     if (i >= queue.length) {
       recordSession("handwrite", setKey, doneCount, total);
-      app.replaceChildren(renderResultBlock(`寫完 ${doneCount} / ${total} 個字！`, "🌟", "再寫一次", () => navigate(`#/play/handwrite?set=${setKey}`)));
+      app.replaceChildren(renderResultBlock(`寫完 ${doneCount} / ${total} 個字！`, "🌟", "再寫一次", () => navigate(`#/play/handwrite?set=${encodeURIComponent(setKey)}`)));
       return;
     }
     const w = queue[i];

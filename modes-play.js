@@ -1,122 +1,160 @@
-// === Custom exam page ===
+// === Custom review page（自選複習）===
+// 選擇狀態存在記憶體：練完按「←」回來時，上次勾選的還在
+const EXAM_STATE = { tab: "units", units: new Set(), weeks: new Set(), cats: new Set(), words: new Set() };
+
 function renderExam() {
+  const S = EXAM_STATE;
   const root = el("div", {});
-  root.appendChild(renderHeader("📝 自選考試 Custom Exam", { back: "#/" }));
+  root.appendChild(renderHeader("🎯 自選複習", { back: "#/" }));
   const app = el("main", { class: "app" });
+  const profile = getProfile();
+  const progress = profile?.progress || {};
 
-  // 切換 Tab：依單元 / 依週次
-  let mode = "units"; // "units" or "weeks"
-  const selectedUnits = new Set();
-  const selectedWeeks = new Set();
+  // 快速複習：常錯 / 還沒學會
+  const nWrong = wrongWords(profile).length;
+  const nTodo = unmasteredWords(profile).length;
+  const quick = el("div", { class: "review-picks", style: "margin-bottom: 16px;" },
+    el("button", { class: "review-pick review-pick--wrong", disabled: !nWrong, onclick: () => navigate("#/play/quiz?set=wrong") },
+      el("span", { class: "review-pick__emoji" }, "❌"), t("常錯的字"), el("span", { class: "review-pick__count" }, nWrong ? `${nWrong} 個` : "還沒有")),
+    el("button", { class: "review-pick review-pick--todo", disabled: !nTodo, onclick: () => navigate("#/play/flashcard?set=unmastered") },
+      el("span", { class: "review-pick__emoji" }, "🌱"), t("還沒學會"), el("span", { class: "review-pick__count" }, `${nTodo} 個`))
+  );
+  app.appendChild(quick);
 
-  const tabBar = el("div", { style: "display: flex; gap: 8px; margin-bottom: 12px;" });
-  const tabUnits = el("button", { class: "btn btn--accent btn--full" }, t("📦 依單元"));
-  const tabWeeks = el("button", { class: "btn btn--ghost btn--full" }, t("📅 依週次"));
-  tabBar.appendChild(tabUnits);
-  tabBar.appendChild(tabWeeks);
+  // Tabs
+  const TABS = [
+    ["units", "📦 單元", "勾選想複習的單元（可複選）"],
+    ["weeks", "📅 週次", "勾選想複習的週次（可複選）"],
+    ["cats",  "🎨 主題", "勾選想複習的主題（可複選）"],
+    ["words", "🔤 單字", "點單字自己挑（可複選），也可以整週一起選"],
+  ];
+  const tabBar = el("div", { class: "pick-tabs" });
+  const hint = el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" });
+  const panels = {};
+  TABS.forEach(([id, label]) => {
+    tabBar.appendChild(el("button", { class: "pick-tab", "data-tab": id, onclick: () => switchTab(id) }, t(label)));
+  });
   app.appendChild(tabBar);
-
-  const hint = el("p", { style: "color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); margin: 4px 0 12px;" },
-    "勾選想考的單元（可複選），然後選練習方式。");
   app.appendChild(hint);
 
-  // Units grid
-  const unitsGrid = el("div", { class: "unit-pick" });
-  UNITS.forEach(u => {
-    const item = el("button", { class: "unit-pick__item", style: `background: ${u.color};` });
-    const name = el("div", { class: "unit-pick__name" });
-    name.appendChild(el("span", { class: "unit-pick__emoji" }, u.emoji));
-    name.appendChild(document.createTextNode(u.name));
-    item.appendChild(name);
-    item.appendChild(el("div", { class: "unit-pick__count" }, `${u.words.length} 個字`));
+  const pickItem = (set, key, bg, title, sub) => {
+    const item = el("button", { class: `unit-pick__item ${set.has(key) ? "checked" : ""}`, style: `background: ${bg};` });
+    item.appendChild(title);
+    item.appendChild(el("div", { class: "unit-pick__count" }, sub));
     item.addEventListener("click", () => {
-      if (selectedUnits.has(u.id)) { selectedUnits.delete(u.id); item.classList.remove("checked"); }
-      else { selectedUnits.add(u.id); item.classList.add("checked"); }
+      set.has(key) ? set.delete(key) : set.add(key);
+      item.classList.toggle("checked", set.has(key));
       updateBar();
     });
-    unitsGrid.appendChild(item);
-  });
-  app.appendChild(unitsGrid);
-
-  // Weeks grid (skip exam weeks with no words)
-  const weeksGrid = el("div", { class: "unit-pick", style: "display: none;" });
-  WEEKS.forEach(w => {
-    if (!w.words.length) return; // skip exam-only weeks
-    const item = el("button", { class: "unit-pick__item", style: "background: var(--candy-2);" });
-    const name = el("div", { class: "unit-pick__name" });
-    name.appendChild(el("span", { class: "unit-pick__emoji" }, "📅"));
-    name.appendChild(document.createTextNode(`第 ${w.num} 週`));
-    item.appendChild(name);
-    item.appendChild(el("div", { class: "unit-pick__count" },
-      `${w.dateRange}・${w.progress}・${w.words.length} 個字`));
-    item.addEventListener("click", () => {
-      if (selectedWeeks.has(w.num)) { selectedWeeks.delete(w.num); item.classList.remove("checked"); }
-      else { selectedWeeks.add(w.num); item.classList.add("checked"); }
-      updateBar();
-    });
-    weeksGrid.appendChild(item);
-  });
-  app.appendChild(weeksGrid);
-
-  const switchTab = (which) => {
-    mode = which;
-    if (which === "units") {
-      tabUnits.className = "btn btn--accent btn--full";
-      tabWeeks.className = "btn btn--ghost btn--full";
-      unitsGrid.style.display = "";
-      weeksGrid.style.display = "none";
-      hint.replaceChildren(t("勾選想考的單元（可複選），然後選練習方式。"));
-    } else {
-      tabUnits.className = "btn btn--ghost btn--full";
-      tabWeeks.className = "btn btn--accent btn--full";
-      unitsGrid.style.display = "none";
-      weeksGrid.style.display = "";
-      hint.replaceChildren(t("勾選想考的週次（可複選），然後選練習方式。"));
-    }
-    updateBar();
+    return item;
   };
-  tabUnits.addEventListener("click", () => switchTab("units"));
-  tabWeeks.addEventListener("click", () => switchTab("weeks"));
+  const masteredOf = words => words.filter(w => progress[w]?.mastered).length;
 
-  const bar = el("div", { class: "section", style: "position: sticky; bottom: 8px; background: var(--bg); padding: 12px; border-radius: var(--radius-lg); box-shadow: var(--shadow);" });
-  const status = el("div", { style: "font-weight: 800; margin-bottom: 8px;" });
+  // 單元
+  panels.units = el("div", { class: "unit-pick" });
+  UNITS.forEach(u => {
+    const name = el("div", { class: "unit-pick__name" }, el("span", { class: "unit-pick__emoji" }, u.emoji), u.name);
+    panels.units.appendChild(pickItem(S.units, u.id, u.color, name, `${u.words.length} 個字・學會 ${masteredOf(u.words)}`));
+  });
+
+  // 週次（跳過沒有單字的考試週）
+  panels.weeks = el("div", { class: "unit-pick" });
+  WEEKS.filter(w => w.words.length).forEach(w => {
+    const name = el("div", { class: "unit-pick__name" }, el("span", { class: "unit-pick__emoji" }, "📅"), `第 ${w.num} 週`);
+    panels.weeks.appendChild(pickItem(S.weeks, w.num, "var(--candy-2)", name,
+      `${w.dateRange}・${w.progress}・學會 ${masteredOf(w.words)}/${w.words.length}`));
+  });
+
+  // 主題
+  panels.cats = el("div", { class: "unit-pick" });
+  CATEGORIES.forEach(c => {
+    const name = el("div", { class: "unit-pick__name" }, el("span", { class: "unit-pick__emoji" }, c.emoji), rubyEl(c.name, c.bopo, "span"));
+    panels.cats.appendChild(pickItem(S.cats, c.id, c.color, name, `${c.nameEn}・${c.words.length} 個字・學會 ${masteredOf(c.words)}`));
+  });
+
+  // 單字：依週分組，每組可整組選
+  panels.words = el("div", {});
+  const chipEls = new Map();
+  const refreshChips = () => chipEls.forEach((chip, w) => chip.classList.toggle("checked", S.words.has(w)));
+  WEEKS.filter(w => w.words.length).forEach(wk => {
+    const group = el("div", { class: "word-pick-group" });
+    group.appendChild(el("div", { class: "word-pick-group__head" },
+      el("span", {}, `第 ${wk.num} 週・${wk.progress}`),
+      el("button", { class: "word-pick-group__all", onclick: () => {
+        const allIn = wk.words.every(w => S.words.has(w));
+        wk.words.forEach(w => allIn ? S.words.delete(w) : S.words.add(w));
+        refreshChips(); updateBar();
+      } }, t("整週"))
+    ));
+    const chips = el("div", { class: "word-pick" });
+    wk.words.forEach(w => {
+      const r = progress[w];
+      const chip = el("button", { class: "word-chip", onclick: () => {
+        S.words.has(w) ? S.words.delete(w) : S.words.add(w);
+        refreshChips(); updateBar();
+      } }, `${WORDS[w]?.emoji || ""} ${w}`, r?.mastered ? " ⭐" : (r?.wrong && !r.mastered ? " ❗" : ""));
+      chipEls.set(w, chip);
+      chips.appendChild(chip);
+    });
+    group.appendChild(chips);
+    panels.words.appendChild(group);
+  });
+  refreshChips();
+  panels.words.appendChild(el("div", { style: "font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); margin-top: 8px;" }, "⭐ 已學會　❗ 答錯過、還沒學會"));
+
+  Object.values(panels).forEach(p => app.appendChild(p));
+
+  // 底部：選取狀態 + 練習方式
+  const bar = el("div", { class: "section pick-bar", style: "position: sticky; bottom: 8px; background: var(--bg); padding: 10px; border-radius: var(--radius-lg); box-shadow: var(--shadow);" });
+  const status = el("div", { style: "font-weight: 800; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;" });
   bar.appendChild(status);
-  const modeRow = el("div", { class: "exam-options", style: "margin-bottom: 8px;" });
-  [["📝 選擇題","quiz"],["👂 聽力","listening"],["✏️ 拼字","spelling"],["✍️ 手寫","handwrite"]].forEach(([label, m]) => {
-    const btn = el("button", { onclick: () => start(m) });
-    btn.appendChild(t(label));
-    modeRow.appendChild(btn);
+  const modeRow = el("div", { class: "exam-options" });
+  [["🃏 單字卡","flashcard"],["📝 選擇題","quiz"],["👂 聽力","listening"],["✏️ 拼字","spelling"],["✍️ 手寫","handwrite"]].forEach(([label, m]) => {
+    modeRow.appendChild(el("button", { onclick: () => start(m) }, t(label)));
   });
   bar.appendChild(modeRow);
-
-  const updateBar = () => {
-    if (mode === "units") {
-      const dedupe = new Set();
-      [...selectedUnits].forEach(id => UNITS.find(u => u.id === id)?.words.forEach(w => dedupe.add(w)));
-      status.textContent = selectedUnits.size
-        ? `選了 ${selectedUnits.size} 個單元・${dedupe.size} 個不同的字`
-        : "請至少選 1 個單元";
-    } else {
-      const dedupe = new Set();
-      [...selectedWeeks].forEach(n => WEEKS.find(w => w.num === n)?.words.forEach(w => dedupe.add(w)));
-      status.textContent = selectedWeeks.size
-        ? `選了 ${selectedWeeks.size} 個週次・${dedupe.size} 個不同的字`
-        : "請至少選 1 個週次";
-    }
-  };
-  const start = (m) => {
-    let setKey;
-    if (mode === "units") {
-      if (!selectedUnits.size) { alert("請先選至少 1 個單元"); return; }
-      setKey = "units-" + [...selectedUnits].join(",");
-    } else {
-      if (!selectedWeeks.size) { alert("請先選至少 1 個週次"); return; }
-      setKey = "weeks-" + [...selectedWeeks].sort((a,b)=>a-b).join(",");
-    }
-    navigate(`#/play/${m}?set=${setKey}`);
-  };
-  updateBar();
   app.appendChild(bar);
+
+  const UNIT_NAME = { units: "單元", weeks: "週次", cats: "主題", words: "單字" };
+  const currentKey = () => {
+    const set = S[S.tab];
+    if (!set.size) return null;
+    if (S.tab === "units") return "units-" + [...set].join(",");
+    if (S.tab === "weeks") return "weeks-" + [...set].sort((a, b) => a - b).join(",");
+    if (S.tab === "cats") return "cats-" + [...set].join(",");
+    return wordsSetKey([...set]);
+  };
+  function updateBar() {
+    const set = S[S.tab];
+    const key = currentKey();
+    const n = key ? resolveSet(key).length : 0;
+    status.replaceChildren(
+      set.size
+        ? (S.tab === "words" ? `選了 ${n} 個字` : `選了 ${set.size} 個${UNIT_NAME[S.tab]}・${n} 個字`)
+        : `請先選${UNIT_NAME[S.tab]}`,
+      set.size ? el("button", { class: "pick-clear", onclick: () => {
+        set.clear();
+        panels[S.tab].querySelectorAll(".checked").forEach(x => x.classList.remove("checked"));
+        updateBar();
+      } }, "清除") : null
+    );
+    modeRow.querySelectorAll("button").forEach(b => { b.disabled = !n; });
+  }
+  function start(m) {
+    const key = currentKey();
+    if (!key) return;
+    const n = resolveSet(key).length;
+    if ((m === "quiz" || m === "listening") && n < 2) { alert("選擇題/聽力至少要 2 個字"); return; }
+    navigate(`#/play/${m}?set=${encodeURIComponent(key)}`);
+  }
+  function switchTab(id) {
+    S.tab = id;
+    tabBar.querySelectorAll(".pick-tab").forEach(b => b.classList.toggle("pick-tab--on", b.dataset.tab === id));
+    Object.entries(panels).forEach(([k, p]) => { p.style.display = k === id ? "" : "none"; });
+    hint.replaceChildren(t(TABS.find(x => x[0] === id)[2]));
+    updateBar();
+  }
+  switchTab(S.tab);
 
   root.appendChild(app);
   return root;
@@ -219,6 +257,13 @@ function renderFlashcard(setKey) {
   return root;
 }
 
+// 結果頁：這一輪答錯的字 → 再練一次
+function retryWrongButton(mode, wrongSet) {
+  if (!wrongSet.size) return null;
+  return el("button", { class: "btn btn--warn", onclick: () => navigate(`#/play/${mode}?set=${encodeURIComponent(wordsSetKey([...wrongSet]))}`) },
+    t(`🔁 再練錯的 ${wrongSet.size} 個字`));
+}
+
 // === Quiz / Listening / Spelling shared engine with spaced repetition ===
 function withSpacedRepetition(originalWords) {
   return shuffle(originalWords);
@@ -251,6 +296,7 @@ function renderQuiz(setKey) {
   let score = 0;
   let streak = 0;
   let locked = false;
+  const missed = new Set();
 
   const root = el("div", {});
   const header = renderHeader(`📝 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
@@ -262,7 +308,7 @@ function renderQuiz(setKey) {
   function render() {
     if (i >= queue.length) {
       recordSession("quiz", setKey, score, total);
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : score >= total * 0.7 ? "🎉" : "💪", "再來一次", () => navigate(`#/play/quiz?set=${setKey}`)));
+      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : score >= total * 0.7 ? "🎉" : "💪", "再來一次", () => navigate(`#/play/quiz?set=${encodeURIComponent(setKey)}`), retryWrongButton("quiz", missed)));
       return;
     }
     locked = false;
@@ -287,7 +333,7 @@ function renderQuiz(setKey) {
           btn.classList.add("quiz-option--correct");
           feedback.textContent = "答對了！🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          score++;
+          if (!missed.has(w)) score++; // 只算第一次就答對的
           streak++;
           recordWord(w, true);
           dingCorrect();
@@ -299,6 +345,7 @@ function renderQuiz(setKey) {
           feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           streak = 0;
           recordWord(w, false);
+          missed.add(w);
           buzzWrong();
           speakWord(w);
           pushWrongBack(queue, i, w);
@@ -327,6 +374,7 @@ function renderListening(setKey) {
   const queue = withSpacedRepetition(words);
   const total = words.length;
   let i = 0, score = 0, streak = 0, locked = false;
+  const missed = new Set();
 
   const root = el("div", {});
   const header = renderHeader(`👂 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
@@ -338,7 +386,7 @@ function renderListening(setKey) {
   function render() {
     if (i >= queue.length) {
       recordSession("listening", setKey, score, total);
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/listening?set=${setKey}`)));
+      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/listening?set=${encodeURIComponent(setKey)}`), retryWrongButton("listening", missed)));
       return;
     }
     locked = false;
@@ -357,7 +405,8 @@ function renderListening(setKey) {
           btn.classList.add("quiz-option--correct");
           feedback.textContent = "答對了！🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          score++; streak++;
+          if (!missed.has(w)) score++;
+          streak++;
           recordWord(w, true);
           dingCorrect();
         } else {
@@ -367,6 +416,7 @@ function renderListening(setKey) {
           feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           streak = 0;
           recordWord(w, false);
+          missed.add(w);
           buzzWrong();
           pushWrongBack(queue, i, w);
         }
@@ -398,6 +448,7 @@ function renderSpelling(setKey) {
   const queue = withSpacedRepetition(words);
   const total = words.length;
   let i = 0, score = 0, streak = 0;
+  const missed = new Set();
 
   const root = el("div", {});
   const header = renderHeader(`✏️ ${setLabel(setKey)}`, { back: backHashFor(setKey) });
@@ -409,7 +460,7 @@ function renderSpelling(setKey) {
   function render() {
     if (i >= queue.length) {
       recordSession("spelling", setKey, score, total);
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/spelling?set=${setKey}`)));
+      app.replaceChildren(renderResultBlock(`答對 ${score} / ${total}`, score === total ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/spelling?set=${encodeURIComponent(setKey)}`), retryWrongButton("spelling", missed)));
       return;
     }
     const w = queue[i];
@@ -426,7 +477,8 @@ function renderSpelling(setKey) {
       if (v === correct) {
         feedback.textContent = "答對了！🎉";
         feedback.className = "quiz-feedback quiz-feedback--correct pop";
-        score++; streak++;
+        if (!missed.has(w)) score++;
+        streak++;
         recordWord(w, true);
         dingCorrect();
         speakWord(w);
@@ -436,6 +488,7 @@ function renderSpelling(setKey) {
         feedback.className = "quiz-feedback quiz-feedback--wrong";
         streak = 0;
         recordWord(w, false);
+        missed.add(w);
         pushWrongBack(queue, i, w);
         setTimeout(() => { i++; render(); }, 1500);
       } else {

@@ -8,12 +8,13 @@ function renderEmpty(back, msg) {
   ));
   return root;
 }
-function renderResultBlock(score, emoji, btnText, onClick) {
+function renderResultBlock(score, emoji, btnText, onClick, extra = null) {
   return el("div", { class: "result pop" },
     el("div", { class: "result__emoji" }, emoji),
     el("div", { class: "result__score" }, score),
     el("div", { class: "result__msg" }, t("你好棒！繼續加油 💪")),
     el("div", { style: "display: grid; gap: 10px; max-width: 320px; margin: 0 auto;" },
+      extra,
       el("button", { class: "btn btn--accent", onclick: onClick }, typeof btnText === "string" ? t(btnText) : btnText),
       el("button", { class: "btn btn--ghost", onclick: () => navigate("#/") }, t("🏠 回首頁"))
     )
