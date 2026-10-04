@@ -1370,3 +1370,96 @@ body.focus .app { padding-top: 8px; }
 .unit-pick__item { background: white !important; border: 2px solid var(--candy-2); box-shadow: none; }
 .unit-pick__item.checked { background: #effaf5 !important; border-color: var(--success); }
 .pick-tab { font-size: calc(16px * var(--font-scale)); }
+
+/* =====================================================================
+   記憶練習功能（v4）
+   ===================================================================== */
+/* 拆音節：兩種顏色交替 */
+.syl__part--0 { color: inherit; }
+.syl__part--1 { color: var(--primary); }
+
+/* 下次考試卡 */
+.exam-card {
+  margin-top: 18px; padding: 16px; border-radius: var(--radius-lg);
+  background: #fff7e6; border: 3px solid #ffc861;
+}
+.exam-card__head { display: flex; gap: 10px; align-items: center; }
+.exam-card__icon { font-size: 34px; }
+.exam-card__title { font-weight: 900; font-size: calc(20px * var(--font-scale)); }
+.exam-card__sub { color: var(--ink-soft); font-weight: 700; font-size: calc(14px * var(--font-scale)); }
+.exam-card__count { margin: 10px 0 6px; font-weight: 800; font-size: calc(15px * var(--font-scale)); }
+.exam-card__btn { margin-top: 12px; background: #ffb020; color: white; }
+
+/* 今天要複習 */
+.due-banner {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  margin-bottom: 10px; padding: 14px; border-radius: var(--radius);
+  background: var(--primary); color: white; text-align: left;
+}
+.due-banner__icon { font-size: 30px; }
+.due-banner__text { flex: 1; }
+.due-banner__title { font-weight: 900; font-size: calc(18px * var(--font-scale)); }
+.due-banner__sub { font-size: calc(14px * var(--font-scale)); opacity: 0.9; }
+.due-banner__go { font-size: 28px; font-weight: 900; }
+.due-banner .zh-bopo { color: rgba(255,255,255,0.85); }
+
+/* 字母拼拼樂 */
+.spell-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 18px 0 8px; }
+.spell-gap { width: 18px; }
+.spell-slot {
+  width: 44px; height: 54px; border-radius: 12px;
+  border: 3px dashed var(--primary-soft); background: white;
+  font-size: 28px; font-weight: 900; font-family: "Comic Sans MS", "Marker Felt", sans-serif;
+}
+.spell-slot--filled { border-style: solid; border-color: var(--primary); background: var(--candy-2); }
+.spell-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 14px 0; }
+.spell-tile {
+  width: 56px; height: 60px; border-radius: 14px;
+  background: #fff3c4; border: 2px solid #ffd96a; box-shadow: 0 3px 0 #f0c23c;
+  font-size: 30px; font-weight: 900; font-family: "Comic Sans MS", "Marker Felt", sans-serif;
+}
+.spell-tile:active { transform: translateY(2px); box-shadow: 0 1px 0 #f0c23c; }
+.spell-tile--used { visibility: hidden; }
+@media (max-width: 400px) {
+  .spell-slot { width: 40px; height: 48px; font-size: 24px; }
+  .spell-tile { width: 48px; height: 54px; font-size: 26px; }
+}
+
+/* 翻牌配對 */
+.match-hint { text-align: center; color: var(--ink-soft); font-weight: 700; margin: 4px 0 12px; }
+.match-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 600px) { .match-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.match-card {
+  position: relative; min-height: 104px; border-radius: var(--radius);
+  background: var(--primary); color: white; padding: 6px;
+}
+.match-card__back { font-size: 34px; }
+.match-card__face { display: none; }
+.match-card--open { background: white; color: var(--ink); border: 3px solid var(--primary-soft); }
+.match-card--open .match-card__back { display: none; }
+.match-card--open .match-card__face { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 100%; }
+.match-card__face--en { font-weight: 900; font-size: calc(18px * var(--font-scale)); word-break: break-word; }
+.match-card__emoji { font-size: 30px; }
+.match-card__zh { font-weight: 800; font-size: calc(15px * var(--font-scale)); }
+.match-card--done { border-color: var(--success); background: #effaf5; }
+
+/* 跟著念 */
+.speak-word { font-size: calc(40px * var(--font-scale)); font-weight: 900; margin-top: 6px; }
+.speak-step { text-align: center; font-weight: 800; margin: 14px 0 8px; }
+.speak-mic {
+  display: block; margin: 0 auto; width: 96px; height: 96px; border-radius: 50%;
+  background: var(--accent); color: white; font-size: 44px; box-shadow: var(--shadow);
+}
+.speak-mic--on { animation: pulse 1s infinite; background: #ff3d7f; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.speak-heard { text-align: center; color: var(--ink-soft); margin-top: 8px; min-height: 22px; }
+
+/* 手寫：步驟說明＋默寫狀態 */
+.write-step { font-weight: 800; margin: 2px 0 8px; color: var(--ink-soft); }
+.write-speak { width: 48px; height: 48px; font-size: 22px; margin: 0 auto 8px; }
+.write-guide--show { color: var(--ink); }
+.write-guide--check { color: rgba(78, 201, 168, 0.55); }
+.write-canvas-wrap--look { background: white; }
+
+.pick-tabs--3 { grid-template-columns: repeat(3, 1fr); margin-bottom: 14px; }
+.quiz-prompt > .icon-btn { margin-left: auto; margin-right: auto; display: grid; }

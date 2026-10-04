@@ -43,12 +43,16 @@ function setupCanvas(canvas) {
   };
 }
 
+// 兩種寫法：
+// - 描寫：底下有淡淡的字，照著描
+// - 默寫：看 → 遮 → 寫 → 對（先看字念出來，字蓋起來憑記憶寫，再打開對答案）
 function renderHandwrite(setKey) {
   const words = resolveSet(setKey);
   if (!words.length) return renderEmpty(`#/`, "沒有單字");
   const queue = withSpacedRepetition(words);
   const total = words.length;
   let i = 0, doneCount = 0, streak = 0;
+  let style = STORE.settings.writeStyle === "recall" ? "recall" : "trace";
 
   const root = el("div", {});
   const header = renderHeader(`✍️ ${setLabel(setKey)}`, { back: backHashFor(setKey) });
@@ -56,6 +60,12 @@ function renderHandwrite(setKey) {
   const progressLabel = $(".header__progress", header);
   const app = el("main", { class: "app" });
   root.appendChild(app);
+
+  const styleTabs = () => el("div", { class: "pick-tabs pick-tabs--2", style: "margin-bottom: 10px;" },
+    [["trace", "✏️ 描寫"], ["recall", "🙈 默寫"]].map(([id, label]) =>
+      el("button", { class: `pick-tab ${style === id ? "pick-tab--on" : ""}`, onclick: () => { style = id; STORE.settings.writeStyle = id; saveStore(); render(); } }, t(label))));
+
+  const goNext = () => setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 700);
 
   function render() {
     if (i >= queue.length) {
@@ -67,40 +77,67 @@ function renderHandwrite(setKey) {
     const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
     progressLabel.textContent = `${i + 1}/${queue.length}`;
 
-    const promptCard = el("div", { class: "write-card" });
+    const card = el("div", { class: "write-card" });
     const promptRow = el("div", { class: "write-prompt" });
     promptRow.appendChild(document.createTextNode(`${info.emoji} `));
     promptRow.appendChild(rubyEl(info.zh || "", info.bopo || "", "span"));
-    promptCard.appendChild(promptRow);
-    promptCard.appendChild(el("div", { style: "color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); margin-bottom: 8px;" }, "用手指描寫底下的字 ✍️"));
-    promptCard.appendChild(el("button", { class: "icon-btn icon-btn--big icon-btn--accent", onclick: () => speakWord(w), "aria-label": "念出" }, "🔊"));
+    const stepText = el("div", { class: "write-step" });
+    const speakBtn = el("button", { class: "icon-btn icon-btn--accent write-speak", onclick: () => speakWord(w), "aria-label": "念出" }, "🔊");
+    card.append(promptRow, stepText, speakBtn);
 
     const wrap = el("div", { class: "write-canvas-wrap" });
     const canvas = el("canvas", { class: "write-canvas" });
-    const guideClass = w.length > 7 ? "write-guide write-guide--small" : "write-guide";
-    const guide = el("div", { class: guideClass }, w);
-    wrap.appendChild(guide);
-    wrap.appendChild(canvas);
-    promptCard.appendChild(wrap);
-
+    const guide = el("div", { class: w.length > 7 ? "write-guide write-guide--small" : "write-guide" }, w);
+    wrap.append(guide, canvas);
+    card.appendChild(wrap);
     const actions = el("div", { class: "write-actions" });
-    const clearBtn = el("button", { class: "btn btn--ghost" }, "🧹 清除重寫");
-    const doneBtn = el("button", { class: "btn btn--success" }, "✅ 寫好了！");
-    actions.appendChild(clearBtn);
-    actions.appendChild(doneBtn);
-    promptCard.appendChild(actions);
-
-    app.replaceChildren(promptCard);
+    card.appendChild(actions);
+    app.replaceChildren(styleTabs(), card);
     const pen = setupCanvas(canvas);
-    clearBtn.addEventListener("click", () => pen.clear());
-    doneBtn.addEventListener("click", () => {
-      doneCount++; streak++;
-      setMastered(w, true);
-      dingCorrect();
-      speakWord(w);
-      setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 800);
-    });
-    setTimeout(() => { pen.resize(); speakWord(w); }, 100);
+    const btn = (cls, label, fn) => { const b = el("button", { class: `btn ${cls}` }, t(label)); b.addEventListener("click", fn); return b; };
+
+    if (style === "trace") {
+      stepText.replaceChildren(t("用手指描寫底下的字 ✍️"));
+      actions.replaceChildren(
+        btn("btn--ghost", "🧹 清除重寫", () => pen.clear()),
+        btn("btn--success", "✅ 寫好了！", () => { doneCount++; streak++; setMastered(w, true); dingCorrect(); speakWord(w); goNext(); }));
+    } else {
+      // 1. 看：大字＋拆音節，念出來
+      const look = () => {
+        wrap.classList.add("write-canvas-wrap--look");
+        guide.replaceChildren(syllableEl(w));
+        guide.classList.add("write-guide--show");
+        canvas.style.pointerEvents = "none";
+        stepText.replaceChildren(t("① 看：看清楚、念出來，記住怎麼拼"));
+        actions.replaceChildren(btn("btn--accent btn--full", "② 記住了，蓋起來 🙈", cover));
+        speakWord(w);
+      };
+      // 2. 遮＋寫：字蓋起來，憑記憶寫
+      const cover = () => {
+        wrap.classList.remove("write-canvas-wrap--look");
+        guide.classList.remove("write-guide--show");
+        guide.style.visibility = "hidden";
+        canvas.style.pointerEvents = "";
+        pen.clear();
+        stepText.replaceChildren(t("③ 寫：不看答案，自己寫寫看"));
+        actions.replaceChildren(
+          btn("btn--ghost", "🧹 清除", () => pen.clear()),
+          btn("btn--accent", "④ 寫好了，對答案 👀", check));
+      };
+      // 3. 對：答案疊在自己寫的字上面
+      const check = () => {
+        guide.style.visibility = "";
+        guide.replaceChildren(syllableEl(w));
+        guide.classList.add("write-guide--check");
+        stepText.replaceChildren(t("④ 對：跟答案一樣嗎？"));
+        speakWord(w);
+        actions.replaceChildren(
+          btn("btn--ghost", "🔁 不太對，再一次", () => { recordWord(w, false); guide.classList.remove("write-guide--check"); look(); pen.clear(); }),
+          btn("btn--success", "✅ 寫對了！", () => { doneCount++; streak++; recordWord(w, true); dingCorrect(); goNext(); }));
+      };
+      setTimeout(look, 0);
+    }
+    setTimeout(() => { pen.resize(); if (style === "trace") speakWord(w); }, 100);
   }
   render();
   return root;

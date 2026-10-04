@@ -404,6 +404,7 @@ function route() {
   }
   else if (path[0] === "exam") view = renderExam();
   else if (path[0] === "words") view = renderWordsPage();
+  else if (path[0] === "practice" && path[1]) view = renderListPage(decodeURIComponent(path[1]));
   else if (path[0] === "week" && path[1]) view = renderListPage(`week-${path[1]}`);
   else if (path[0] === "category" && path[1]) view = renderListPage(`category-${path[1]}`);
   else if (path[0] === "sentences") view = renderSentences();
@@ -415,6 +416,8 @@ function route() {
     else if (path[1] === "listening") view = renderListening(setKey);
     else if (path[1] === "spelling") view = renderSpelling(setKey);
     else if (path[1] === "handwrite") view = renderHandwrite(setKey);
+    else if (path[1] === "match") view = renderMatch(setKey);
+    else if (path[1] === "speak") view = renderSpeak(setKey);
     else if (path[1] === "sentence-card") view = renderSentenceCard(week);
     else if (path[1] === "sentence-listen") view = renderSentenceListen(week);
     else if (path[1] === "sentence-blank") view = renderSentenceBlank(week);
