@@ -232,7 +232,7 @@ function renderFlashcard(setKey) {
     const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
     front.replaceChildren(
       el("div", { class: "flashcard__emoji" }, info.emoji),
-      el("div", { class: "flashcard__en" }, w),
+      syllableEl(w, "div", { class: "flashcard__en" }),
       el("div", { class: "flashcard__hint" }, t("點卡片看中文"))
     );
     back.replaceChildren(
@@ -435,7 +435,8 @@ function renderListening(setKey) {
   return root;
 }
 
-// === Spelling mode ===
+// === Spelling mode：點字母方塊排出單字（平板不用鍵盤）===
+// 空白會自動留好；點方塊放進下一格，點格子把字母拿回來；排滿自動對答案
 function renderSpelling(setKey) {
   const words = resolveSet(setKey);
   if (!words.length) return renderEmpty(`#/`, "沒有單字");
@@ -445,7 +446,7 @@ function renderSpelling(setKey) {
   const missed = new Set();
 
   const root = el("div", {});
-  const header = renderHeader(`✏️ ${setLabel(setKey)}`, { back: backHashFor(setKey) });
+  const header = renderHeader(`🔤 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
   const app = el("main", { class: "app" });
@@ -460,15 +461,50 @@ function renderSpelling(setKey) {
     const w = queue[i];
     const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
     progressLabel.textContent = `${i + 1}/${queue.length}・${score}分`;
+    const chars = [...w];
+    const letterIdx = chars.map((c, k) => (c === " " ? -1 : k)).filter(k => k >= 0);
+    // 方塊：單字裡的字母打亂（避免打亂後剛好是原順序）
+    let tiles = shuffle(letterIdx.map(k => ({ ch: chars[k], used: false })));
+    if (tiles.length > 1 && tiles.map(t => t.ch).join("") === letterIdx.map(k => chars[k]).join("")) tiles.reverse();
+    const filled = letterIdx.map(() => null); // 每一格放哪一個方塊（tiles 的 index）
+    let wrongTries = 0, done = false;
 
-    const input = el("input", { class: "spell-input", type: "text", autocomplete: "off", autocapitalize: "none", spellcheck: "false", placeholder: "在這裡輸入英文" });
-    const hint = el("div", { class: "spell-hint" }, w.replace(/[a-zA-Z]/g, "_").split("").join(" "));
-    let revealed = false;
+    const feedback = el("div", { class: "quiz-feedback" }, "");
+    const slotsWrap = el("div", { class: "spell-slots" });
+    const tilesWrap = el("div", { class: "spell-tiles" });
 
-    const submit = () => {
-      const v = input.value.trim().toLowerCase().replace(/\s+/g, " ");
-      const correct = w.toLowerCase().replace(/\s+/g, " ");
-      if (v === correct) {
+    const draw = () => {
+      slotsWrap.replaceChildren();
+      let li = 0;
+      chars.forEach((c, k) => {
+        if (c === " ") { slotsWrap.appendChild(el("span", { class: "spell-gap" })); return; }
+        const slot = li++;
+        const ti = filled[slot];
+        const btn = el("button", { class: `spell-slot ${ti != null ? "spell-slot--filled" : ""}`, "aria-label": "字母格" }, ti != null ? tiles[ti].ch : "");
+        btn.addEventListener("click", () => {
+          if (done || ti == null) return;
+          tiles[ti].used = false; filled[slot] = null; draw();
+        });
+        slotsWrap.appendChild(btn);
+      });
+      tilesWrap.replaceChildren(...tiles.map((t, ti) => {
+        const b = el("button", { class: `spell-tile ${t.used ? "spell-tile--used" : ""}`, disabled: t.used }, t.ch);
+        b.addEventListener("click", () => {
+          if (done || t.used) return;
+          const slot = filled.indexOf(null);
+          if (slot < 0) return;
+          t.used = true; filled[slot] = ti; draw();
+          if (!filled.includes(null)) check();
+        });
+        return b;
+      }));
+    };
+    const answer = () => filled.map(ti => tiles[ti].ch).join("");
+    const target = letterIdx.map(k => chars[k]).join("");
+    const next = (delay) => setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), delay);
+    const check = () => {
+      if (answer().toLowerCase() === target.toLowerCase()) {
+        done = true;
         feedback.textContent = "答對了！🎉";
         feedback.className = "quiz-feedback quiz-feedback--correct pop";
         if (!missed.has(w)) score++;
@@ -476,54 +512,184 @@ function renderSpelling(setKey) {
         recordWord(w, true);
         dingCorrect();
         speakWord(w);
-        setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 1100);
-      } else if (revealed) {
-        feedback.textContent = `正確：${w}`;
-        feedback.className = "quiz-feedback quiz-feedback--wrong";
-        streak = 0;
-        recordWord(w, false);
-        missed.add(w);
-        pushWrongBack(queue, i, w);
-        setTimeout(() => { i++; render(); }, 1500);
+        next(1200);
       } else {
-        feedback.textContent = "再試一次！";
-        feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-        input.classList.add("shake");
-        setTimeout(() => input.classList.remove("shake"), 400);
+        wrongTries++;
+        if (wrongTries === 1) { recordWord(w, false); missed.add(w); }
+        streak = 0;
         buzzWrong();
+        feedback.textContent = wrongTries >= 2 ? "再試一次！可以按「提示」" : "再試一次！";
+        feedback.className = "quiz-feedback quiz-feedback--wrong shake";
+        // 把放錯位置的字母退回去，對的留著
+        filled.forEach((ti, slot) => { if (ti != null && tiles[ti].ch.toLowerCase() !== target[slot].toLowerCase()) { tiles[ti].used = false; filled[slot] = null; } });
+        setTimeout(draw, 350);
       }
     };
-    const reveal = () => {
-      revealed = true;
-      input.value = w;
-      hint.textContent = w.split("").join(" ");
-      speakWord(w);
+    // 提示：把下一個正確字母放進第一個空格
+    const hint = () => {
+      if (done) return;
+      const slot = filled.findIndex((ti, k) => ti == null || tiles[ti].ch.toLowerCase() !== target[k].toLowerCase());
+      if (slot < 0) return;
+      if (filled[slot] != null) { tiles[filled[slot]].used = false; filled[slot] = null; }
+      const ti = tiles.findIndex(t => !t.used && t.ch.toLowerCase() === target[slot].toLowerCase());
+      if (ti < 0) return;
+      tiles[ti].used = true; filled[slot] = ti;
+      if (!missed.has(w)) { recordWord(w, false); missed.add(w); }
+      draw();
+      if (!filled.includes(null)) check();
     };
-    const showHint = () => {
-      hint.textContent = w[0] + " " + w.slice(1).replace(/[a-zA-Z]/g, "_").split("").join(" ");
-    };
-
-    input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
-    const feedback = el("div", { class: "quiz-feedback" }, "");
+    const clearAll = () => { if (done) return; tiles.forEach(t => (t.used = false)); filled.fill(null); draw(); };
 
     const promptBox = el("div", { class: "quiz-prompt" });
     promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, info.emoji));
     promptBox.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" }));
     promptBox.appendChild(el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 8px;", onclick: () => speakWord(w), "aria-label": "重聽" }, "🔊"));
-    promptBox.appendChild(el("div", { class: "quiz-prompt__hint" }, `共 ${w.length} 個字元（含空白）`));
 
     app.replaceChildren(
       promptBox,
-      input,
-      hint,
+      slotsWrap,
+      tilesWrap,
       el("div", { class: "spell-actions" },
-        el("button", { class: "btn btn--ghost", onclick: showHint }, "💡 提示首字"),
-        el("button", { class: "btn btn--ghost", onclick: reveal }, "👀 看答案")
+        el("button", { class: "btn btn--ghost", onclick: hint }, t("💡 提示")),
+        el("button", { class: "btn btn--ghost", onclick: clearAll }, t("🧹 重排"))
       ),
-      el("button", { class: "btn btn--full", style: "margin-top: 12px;", onclick: submit }, "送出"),
       feedback
     );
-    setTimeout(() => { input.focus(); speakWord(w); }, 100);
+    draw();
+    setTimeout(() => speakWord(w), 150);
+  }
+  render();
+  return root;
+}
+
+// === 翻牌配對：英文卡和圖片+中文卡配成一對 ===
+function renderMatch(setKey) {
+  const all = resolveSet(setKey);
+  if (all.length < 2) return renderEmpty(`#/`, "單字太少，無法配對");
+  const PAIRS = Math.min(6, all.length);
+  let round = 0, moves = 0, found = 0, first = null, lock = false;
+
+  const root = el("div", {});
+  const header = renderHeader(`🧩 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
+  root.appendChild(header);
+  const progressLabel = $(".header__progress", header);
+  const app = el("main", { class: "app" });
+  root.appendChild(app);
+  const pool = shuffle(all);
+
+  function render() {
+    const words = pool.slice(round * PAIRS, round * PAIRS + PAIRS);
+    const picked = words.length >= 2 ? words : shuffle(all).slice(0, PAIRS);
+    found = 0; moves = 0; first = null; lock = false;
+    const cards = shuffle(picked.flatMap(w => [{ w, side: "en" }, { w, side: "zh" }]));
+    const grid = el("div", { class: `match-grid ${cards.length > 8 ? "match-grid--4" : ""}` });
+    const update = () => { progressLabel.textContent = `${found}/${picked.length} 對`; };
+    cards.forEach(c => {
+      const info = WORDS[c.w] || {};
+      const face = c.side === "en"
+        ? el("div", { class: "match-card__face match-card__face--en" }, c.w)
+        : el("div", { class: "match-card__face" }, el("div", { class: "match-card__emoji" }, info.emoji || ""), rubyEl(info.zh || "", info.bopo || "", "div", { class: "match-card__zh" }));
+      const card = el("button", { class: "match-card", "data-w": c.w }, el("div", { class: "match-card__back" }, "❓"), face);
+      card.addEventListener("click", () => {
+        if (lock || card.classList.contains("match-card--open")) return;
+        card.classList.add("match-card--open");
+        if (c.side === "en") speakWord(c.w);
+        if (!first) { first = { c, card }; return; }
+        moves++;
+        if (first.c.w === c.w) {
+          card.classList.add("match-card--done"); first.card.classList.add("match-card--done");
+          found++; first = null; dingCorrect(); update();
+          if (found === picked.length) setTimeout(finish, 600);
+        } else {
+          lock = true; buzzWrong();
+          const prev = first; first = null;
+          setTimeout(() => { card.classList.remove("match-card--open"); prev.card.classList.remove("match-card--open"); lock = false; }, 900);
+        }
+      });
+      grid.appendChild(card);
+    });
+    app.replaceChildren(el("p", { class: "match-hint" }, "翻兩張牌，英文和圖配成一對 🧩"), grid);
+    update();
+  }
+  function finish() {
+    const more = (round + 1) * PAIRS < pool.length;
+    p_stars();
+    app.replaceChildren(renderResultBlock(`配完了！翻了 ${moves} 次`, moves <= PAIRS + 2 ? "🌟" : "🎉",
+      more ? "下一組 →" : "再玩一次", () => { if (more) round++; else round = 0; render(); }));
+  }
+  function p_stars() { const p = getProfile(); if (p) { p.stars = (p.stars || 0) + 1; saveStore(); } }
+  render();
+  return root;
+}
+
+// === 跟著念：聽發音 → 按麥克風念出來 → 網站聽聽看念得對不對 ===
+function renderSpeak(setKey) {
+  const words = resolveSet(setKey);
+  if (!words.length) return renderEmpty(`#/`, "沒有單字");
+  if (!SPEECH_RECOG) return renderEmpty(backHashFor(setKey), "這台裝置的瀏覽器不支援語音辨識，請改用其他練習");
+  const queue = shuffle(words);
+  let i = 0, score = 0;
+
+  const root = el("div", {});
+  const header = renderHeader(`🎤 ${setLabel(setKey)}`, { back: backHashFor(setKey) });
+  root.appendChild(header);
+  const progressLabel = $(".header__progress", header);
+  const app = el("main", { class: "app" });
+  root.appendChild(app);
+  const norm = s => s.toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
+
+  function render() {
+    if (i >= queue.length) {
+      app.replaceChildren(renderResultBlock(`念對 ${score} / ${queue.length}`, score === queue.length ? "🌟" : "🎉", "再來一次", () => navigate(`#/play/speak?set=${encodeURIComponent(setKey)}`)));
+      return;
+    }
+    const w = queue[i];
+    const info = WORDS[w] || {};
+    progressLabel.textContent = `${i + 1}/${queue.length}・${score}分`;
+    const target = norm(WORDS[w]?.speak ?? w);
+    const feedback = el("div", { class: "quiz-feedback" }, "");
+    const heard = el("div", { class: "speak-heard" }, "");
+    const mic = el("button", { class: "speak-mic", "aria-label": "按我念" }, "🎤");
+    let tries = 0, listening = false;
+    mic.addEventListener("click", () => {
+      if (listening) return;
+      const rec = new SPEECH_RECOG();
+      rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 5;
+      listening = true; mic.classList.add("speak-mic--on");
+      feedback.textContent = "請念出來…"; feedback.className = "quiz-feedback";
+      rec.onresult = (e) => {
+        const alts = [...e.results[0]].map(a => norm(a.transcript));
+        heard.textContent = `聽到：${e.results[0][0].transcript}`;
+        if (alts.some(a => a === target || a.split(" ").includes(target) || a.includes(target))) {
+          feedback.textContent = "念得很好！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
+          if (tries === 0) score++;
+          dingCorrect();
+          setTimeout(() => { i++; render(); }, 1200);
+        } else {
+          tries++;
+          feedback.textContent = tries >= 2 ? "再聽一次，慢慢念～（也可以按「下一個」）" : "再試一次！";
+          feedback.className = "quiz-feedback quiz-feedback--wrong shake";
+          buzzWrong();
+        }
+      };
+      rec.onerror = (e) => {
+        feedback.textContent = e.error === "not-allowed" ? "需要允許使用麥克風喔" : "沒有聽清楚，再按一次 🎤";
+        feedback.className = "quiz-feedback quiz-feedback--wrong";
+      };
+      rec.onend = () => { listening = false; mic.classList.remove("speak-mic--on"); };
+      try { rec.start(); } catch { listening = false; mic.classList.remove("speak-mic--on"); }
+    });
+    app.replaceChildren(
+      el("div", { class: "quiz-prompt" },
+        el("div", { class: "quiz-prompt__emoji" }, info.emoji || ""),
+        syllableEl(w, "div", { class: "speak-word" }),
+        rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__hint" }),
+        el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 10px;", onclick: () => speakWord(w), "aria-label": "聽發音" }, "🔊")),
+      el("div", { class: "speak-step" }, t("先按🔊聽，再按🎤念出來")),
+      mic, heard, feedback,
+      el("button", { class: "btn btn--ghost btn--full", style: "margin-top: 12px;", onclick: () => { i++; render(); } }, t("下一個 →"))
+    );
+    setTimeout(() => speakWord(w), 200);
   }
   render();
   return root;

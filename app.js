@@ -70,11 +70,11 @@ function touchProfileVisit() {
   p.lastVisit = new Date().toISOString();
   saveStore();
 }
-function createProfile(name) {
+function createProfile(name, grade) {
   if (!name) return;
   const isNew = !STORE.profiles[name];
   STORE.profiles[name] = ensureProfileFields(STORE.profiles[name] || {});
-  if (isNew) STORE.profiles[name].grade = CURRENT_GRADE; // 新使用者沿用目前畫面的年級
+  if (isNew) STORE.profiles[name].grade = GRADES[grade] ? grade : CURRENT_GRADE; // 沒指定就沿用目前畫面的年級
   STORE.active = name;
   saveStore();
   reloadIfGradeChanged();
@@ -121,8 +121,103 @@ function recordWord(w, hit) {
     if (r.streak >= MASTER_STREAK) r.mastered = true;
   }
   if (hit === false) { r.wrong += 1; r.streak = 0; r.mastered = false; }
+  scheduleReview(r, hit);
   p.progress[w] = r;
   saveStore();
+}
+
+// === 隔天再複習（間隔重複，Leitner 盒子）===
+// 每個字有 box 0-5；一天內第一次答對 → 升一盒，隔 REVIEW_DAYS[box] 天再出現；答錯 → 回到第 0 盒、今天再練
+const REVIEW_DAYS = [0, 1, 3, 7, 14, 30];
+const dayISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return dayISO(d); };
+function scheduleReview(r, hit) {
+  const today = dayISO();
+  if (hit === false) { r.box = 0; r.due = today; r.lastDay = today; return; }
+  if (hit !== true) return;
+  if (r.lastDay === today && r.due) return; // 同一天重複答對不再升級，避免一天內就跳到很久以後
+  r.box = Math.min((r.box || 0) + 1, REVIEW_DAYS.length - 1);
+  r.due = addDays(REVIEW_DAYS[r.box]);
+  r.lastDay = today;
+}
+// 今天該複習的字：已經練過、而且到期了（依到期日、盒子排序）
+const dueWords = (profile = getProfile()) => {
+  const today = dayISO();
+  return Object.entries(profile?.progress || {})
+    .filter(([w, r]) => WORDS[w] && r.due && r.due <= today)
+    .sort(([, a], [, b]) => (a.due < b.due ? -1 : a.due > b.due ? 1 : (a.box || 0) - (b.box || 0)))
+    .map(([w]) => w);
+};
+
+// === 下次考試範圍 ===
+// 從本週往後找第一個寫 Quiz / Midterm / Final 的週；"Unit 1 Quiz 1" → Unit 1，"(Unit 1-2)" → Unit 1 到 2
+function nextExam() {
+  const cw = getCurrentWeek();
+  const wk = WEEKS.find(w => w.num >= cw.num && /quiz|midterm|final|exam/i.test(w.progress));
+  if (!wk) return null;
+  let from, to;
+  const range = wk.progress.match(/Unit\s*(\d+)\s*-\s*(\d+)/i);
+  const single = wk.progress.match(/Unit\s*(\d+)/i);
+  if (range) { from = +range[1]; to = +range[2]; }
+  else if (single) { from = to = +single[1]; }
+  else return null;
+  const ids = [];
+  for (let n = from; n <= to; n++) if (UNITS.find(u => u.id === `unit-${n}`)) ids.push(`unit-${n}`);
+  if (!ids.length) return null;
+  const setKey = "units-" + ids.join(",");
+  return { week: wk, setKey, words: resolveSet(setKey), title: wk.progress, isThisWeek: wk.num === cw.num };
+}
+
+// === 拆音節 ===
+// 多音節的字用 · 分段，畫面上用兩種顏色交替顯示，一次記一小段
+const SYLLABLES = {
+  seven: "sev·en", eleven: "e·lev·en", thirteen: "thir·teen", fourteen: "four·teen", fifteen: "fif·teen",
+  sixteen: "six·teen", seventeen: "sev·en·teen", eighteen: "eigh·teen", nineteen: "nine·teen", twenty: "twen·ty",
+  number: "num·ber", uncle: "un·cle", cousin: "cous·in", reading: "read·ing", counting: "count·ing",
+  coloring: "col·or·ing", cutting: "cut·ting", writing: "writ·ing", drawing: "draw·ing", gluing: "glu·ing",
+  talking: "talk·ing", erasing: "e·ras·ing", listening: "lis·ten·ing", using: "us·ing", marker: "mark·er",
+  notebook: "note·book", scissors: "scis·sors", paintbrush: "paint·brush", sunny: "sun·ny", cloudy: "cloud·y",
+  rainy: "rain·y", windy: "wind·y", snowy: "snow·y", raincoat: "rain·coat", sweater: "sweat·er",
+  jacket: "jack·et", wearing: "wear·ing", "bathing suit": "bath·ing suit", sneakers: "sneak·ers",
+  umbrella: "um·brel·la", Monday: "Mon·day", Tuesday: "Tues·day", Wednesday: "Wednes·day",
+  Thursday: "Thurs·day", Friday: "Fri·day", Saturday: "Sat·ur·day", Sunday: "Sun·day", today: "to·day",
+  basketball: "bas·ket·ball", baseball: "base·ball", soccer: "soc·cer", rollerblade: "roll·er·blade",
+  skateboard: "skate·board", boring: "bor·ing", playground: "play·ground", shower: "show·er",
+  microwave: "mi·cro·wave", bookcase: "book·case", armchair: "arm·chair", fireplace: "fire·place",
+  above: "a·bove", behind: "be·hind", under: "un·der", between: "be·tween", window: "win·dow",
+  refrigerator: "re·frig·er·a·tor", inside: "in·side", outside: "out·side", welcome: "wel·come",
+  different: "dif·fer·ent", people: "peo·ple", visit: "vis·it", favorite: "fa·vor·ite", furniture: "fur·ni·ture",
+  special: "spe·cial", really: "re·al·ly", artist: "art·ist", children: "chil·dren", weather: "weath·er",
+  "put away": "put a·way",
+  Hello: "Hel·lo", classroom: "class·room", computer: "com·put·er", pencil: "pen·cil", eraser: "e·ras·er",
+  crayon: "cray·on", paper: "pa·per", picture: "pic·ture", color: "col·or", mountain: "moun·tain",
+  river: "riv·er", ocean: "o·cean", flower: "flow·er", butterfly: "but·ter·fly", family: "fam·i·ly",
+  photo: "pho·to", parents: "par·ents", father: "fa·ther", mother: "moth·er", brother: "broth·er",
+  sister: "sis·ter", baby: "ba·by", grandma: "grand·ma", grandpa: "grand·pa", bedroom: "bed·room",
+  bathroom: "bath·room", kitchen: "kitch·en", "living room": "liv·ing room", "dining room": "din·ing room",
+  eating: "eat·ing", sleeping: "sleep·ing", cooking: "cook·ing", cleaning: "clean·ing",
+  "watching TV": "watch·ing TV", "taking a bath": "tak·ing a bath", mirror: "mir·ror",
+};
+// 單字 → 分段的 DOM（沒有分段資料就原樣顯示）
+function syllableEl(w, tag = "span", attrs = {}) {
+  const parts = (SYLLABLES[w] || w).split("·");
+  const node = el(tag, { ...attrs, class: `syl ${attrs.class || ""}` });
+  parts.forEach((p, i) => node.appendChild(el("span", { class: `syl__part syl__part--${i % 2}` }, p)));
+  return node;
+}
+
+// === 同字尾的字（-ing、-y …），一起練找規律 ===
+const WORD_ENDINGS = [
+  ["ing", "-ing 正在做"], ["day", "-day 星期"], ["teen", "-teen 十幾"], ["y", "-y 結尾"], ["er", "-er"],
+  ["room", "-room 房間"], ["ball", "-ball 球類"],
+];
+function wordFamilies() {
+  const used = new Set();
+  return WORD_ENDINGS.map(([end, label]) => {
+    const words = Object.keys(WORDS).filter(w => !used.has(w) && /^[a-z]+$/i.test(w) && w.length > end.length + 1 && w.toLowerCase().endsWith(end));
+    words.forEach(w => used.add(w));
+    return { end, label, words };
+  }).filter(f => f.words.length >= 3);
 }
 function setMastered(w, val) {
   const p = getProfile(); if (!p) return;
@@ -317,7 +412,8 @@ const parseHash = () => {
   }
   return { path, query };
 };
-const navigate = h => { location.hash = h; };
+// 跳到同一頁時網址不變、不會觸發 hashchange，所以直接重畫
+const navigate = h => { if (location.hash === h) route(); else location.hash = h; };
 
 // === Helpers ===
 const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
@@ -371,6 +467,7 @@ const resolveSet = (setKey) => {
     return [...new Set(setKey.slice(6).split(",").filter(w => WORDS[w]))];
   }
   if (setKey === "wrong") return wrongWords();
+  if (setKey === "due") return dueWords();
   if (setKey === "unmastered") return unmasteredWords();
   if (setKey === "all") return Object.keys(WORDS);
   return [];
@@ -400,6 +497,7 @@ const setLabel = (setKey) => {
   }
   if (setKey?.startsWith("words-")) return `📝 自選單字（${resolveSet(setKey).length} 個）`;
   if (setKey === "wrong") return "❌ 常錯的字";
+  if (setKey === "due") return "📅 今天要複習";
   if (setKey === "unmastered") return "🌱 還沒學會的字";
   return "全部";
 };
@@ -513,6 +611,7 @@ function renderProfileGate() {
       const pill = el("div", { class: "profile-pill" });
       pill.appendChild(el("span", {}, "👤"));
       pill.appendChild(el("span", {}, name));
+      pill.appendChild(el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name));
       pill.appendChild(el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`));
       const pickBtn = el("button", { onclick: () => { switchProfile(name); location.hash = "#/"; route(); } });
       pickBtn.appendChild(t("選這個"));
@@ -530,10 +629,15 @@ function renderProfileGate() {
 
   const input = el("input", { type: "text", placeholder: "你叫什麼名字？", maxlength: 12 });
   childPanel.appendChild(input);
+  let newGrade = DEFAULT_GRADE;
+  const gradeWrap = el("div", { style: "margin-top: 10px;" });
+  const drawGrade = () => gradeWrap.replaceChildren(rubyEl("幾年級？", null, "div", { style: "font-weight: 700; color: var(--ink-soft); margin-bottom: 6px;" }), gradePicker(newGrade, g => { newGrade = g; drawGrade(); }));
+  drawGrade();
+  childPanel.appendChild(gradeWrap);
   const start = () => {
     const name = (input.value || "").trim();
     if (!name) return;
-    createProfile(name);
+    createProfile(name, newGrade);
     location.hash = "#/";
     route();
   };
@@ -578,12 +682,16 @@ function renderProfileGate() {
 
 // === Home ===
 // 練習方式（週次頁、主題頁、自選複習共用）
+// 跟著念需要瀏覽器的語音辨識（Chrome / iPad Safari 大多支援；不支援就不顯示）
+const SPEECH_RECOG = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 const PRACTICE_MODES = [
   ["flashcard", "🃏", "單字卡"],
+  ["match",     "🧩", "翻牌配對"],
   ["quiz",      "📝", "選擇題"],
   ["listening", "👂", "聽力"],
-  ["spelling",  "✏️", "拼字"],
+  ["spelling",  "🔤", "拼字"],
   ["handwrite", "✍️", "手寫"],
+  ...(SPEECH_RECOG ? [["speak", "🎤", "跟著念"]] : []),
 ];
 function renderModeGrid(setKey) {
   return el("div", { class: "mode-grid" },
@@ -651,9 +759,30 @@ function renderHome() {
   }
   app.appendChild(hero);
 
+  // 下次考試：一鍵練整個考試範圍
+  const exam = nextExam();
+  if (exam) {
+    const learnedExam = exam.words.filter(w => progress[w]?.mastered).length;
+    app.appendChild(el("section", { class: "exam-card" },
+      el("div", { class: "exam-card__head" },
+        el("span", { class: "exam-card__icon" }, "📝"),
+        el("div", {},
+          el("div", { class: "exam-card__title" }, exam.isThisWeek ? "這週要考試！" : "下次考試"),
+          el("div", { class: "exam-card__sub" }, `第 ${exam.week.num} 週（${exam.week.dateRange}）・${exam.title}`))),
+      el("div", { class: "exam-card__count" }, `考試範圍 ${exam.words.length} 個字・已學會 ${learnedExam} 個`),
+      el("div", { class: "progress-bar" }, el("div", { class: "progress-bar__fill", style: `width: ${Math.round(learnedExam * 100 / Math.max(exam.words.length, 1))}%;` })),
+      el("button", { class: "btn btn--full btn--xl exam-card__btn", onclick: () => navigate(`#/practice/${encodeURIComponent(exam.setKey)}`) }, t("📝 考前複習"))
+    ));
+  }
+
   // 複習
+  const nDue = dueWords(profile).length;
   app.appendChild(el("section", { class: "section section--hide-on-focus" },
     el("div", { class: "section__title" }, t("🔁 複習")),
+    nDue ? el("button", { class: "due-banner", onclick: () => navigate("#/practice/due") },
+      el("span", { class: "due-banner__icon" }, "📅"),
+      el("div", { class: "due-banner__text" }, el("div", { class: "due-banner__title" }, `今天要複習 ${nDue} 個字`), el("div", { class: "due-banner__sub" }, "快忘記的字，再練一次記更久")),
+      el("span", { class: "due-banner__go" }, "›")) : null,
     renderReviewPicks(profile)
   ));
 
@@ -663,9 +792,9 @@ function renderHome() {
       el("span", {}, t("🌟 學會")),
       el("span", { class: "progress-head__num" }, `${masteredCount} / ${totalWords}`)),
     el("div", { class: "progress-bar" }, el("div", { class: "progress-bar__fill", style: `width: ${pct}%;` })),
-    el("div", { class: "progress-note" }, `選擇題、聽力、拼字連續答對 ${MASTER_STREAK} 次，就算學會`),
+    el("div", { class: "progress-note" }, `選擇題、聽力、拼字連續答對 ${MASTER_STREAK} 次，就算學會；學過的字會在 1、3、7、14 天後再出現複習`),
     el("div", { class: "home-links" },
-      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/words") }, t("📖 全部單字（週次・主題）")),
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/words") }, t("📖 全部單字（週次・主題・字尾）")),
       SENTENCES.length ? el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/sentences") }, t("💬 每週一句")) : null
     )
   ));
@@ -685,7 +814,7 @@ function renderWordsPage() {
   const app = el("main", { class: "app" });
   const learnedOf = words => words.filter(w => progress[w]?.mastered).length;
 
-  const tabs = el("div", { class: "pick-tabs pick-tabs--2" });
+  const tabs = el("div", { class: "pick-tabs pick-tabs--3" });
   const body = el("div", {});
   const show = (tab) => {
     WORDS_TAB = tab;
@@ -700,6 +829,16 @@ function renderWordsPage() {
             w.words.length ? el("div", { class: "list-card__words" }, w.words.join(", ")) : null),
           el("div", { class: "list-card__side" }, w.words.length ? `${learnedOf(w.words)}/${w.words.length}` : "📝"));
       })));
+    } else if (tab === "ends") {
+      const fams = wordFamilies();
+      body.replaceChildren(
+        el("p", { class: "match-hint" }, "結尾一樣的字一起記：找到規律，一次記一整組"),
+        fams.length ? el("div", { class: "list-cards" }, fams.map(f =>
+          el("button", { class: "list-card", onclick: () => navigate(`#/practice/${encodeURIComponent(wordsSetKey(f.words))}`) },
+            el("div", { class: "list-card__main" },
+              el("div", { class: "list-card__title" }, f.label),
+              el("div", { class: "list-card__words" }, f.words.map(w => w.slice(0, -f.end.length) + "·" + f.end).join(", "))),
+            el("div", { class: "list-card__side" }, `${learnedOf(f.words)}/${f.words.length}`)))) : el("div", { class: "empty" }, "這個年級沒有同字尾的字組"));
     } else {
       body.replaceChildren(el("div", { class: "list-cards list-cards--grid" }, CATEGORIES.map(c =>
         el("button", { class: "list-card list-card--cat", onclick: () => navigate(`#/category/${c.id}`) },
@@ -709,7 +848,7 @@ function renderWordsPage() {
             el("div", { class: "list-card__sub" }, `${c.nameEn}・學會 ${learnedOf(c.words)}/${c.words.length}`))))));
     }
   };
-  [["weeks", "📅 週次"], ["cats", "🎨 主題"]].forEach(([id, label]) =>
+  [["weeks", "📅 週次"], ["cats", "🎨 主題"], ["ends", "🔤 字尾"]].forEach(([id, label]) =>
     tabs.appendChild(el("button", { class: "pick-tab", "data-tab": id, onclick: () => show(id) }, t(label))));
   app.append(tabs, body);
   show(WORDS_TAB);
@@ -731,6 +870,7 @@ function renderProfilePage() {
     list.appendChild(el("div", { class: "profile-pill" },
       el("span", {}, "👤"),
       el("span", {}, name),
+      el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name),
       el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`),
       el("button", { onclick: () => { switchProfile(name); navigate("#/"); } }, "選這個"),
       el("button", { onclick: () => { if (confirm(`刪除 ${name} 的所有進度？`)) { deleteProfile(name); route(); } } }, "刪")
@@ -739,14 +879,19 @@ function renderProfilePage() {
   card.appendChild(list);
 
   const input = el("input", { type: "text", placeholder: "新增名字", maxlength: 12, style: "margin-top: 16px;" });
+  let newGrade = CURRENT_GRADE;
+  const gradeWrap = el("div", { style: "margin-top: 10px;" });
+  const drawGrade = () => gradeWrap.replaceChildren(gradePicker(newGrade, g => { newGrade = g; drawGrade(); }));
+  drawGrade();
   const add = () => {
     const name = (input.value || "").trim();
     if (!name) return;
-    createProfile(name);
     navigate("#/");
+    createProfile(name, newGrade);
   };
   input.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
   card.appendChild(input);
+  card.appendChild(gradeWrap);
   card.appendChild(el("button", { class: "btn btn--accent btn--full", style: "margin-top: 10px;", onclick: add }, "新增使用者"));
 
   app.appendChild(card);
@@ -790,7 +935,7 @@ function renderListPage(setKey) {
       const row = el("div", { class: "word-row" });
       row.appendChild(el("span", { class: "word-row__emoji" }, info.emoji));
       const text = el("div", { class: "word-row__text" });
-      text.appendChild(el("div", { class: "word-row__en" }, w, r?.mastered ? el("span", { class: "word-row__star" }, " ⭐") : null));
+      text.appendChild(el("div", { class: "word-row__en" }, syllableEl(w), r?.mastered ? el("span", { class: "word-row__star" }, " ⭐") : null));
       text.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "word-row__zh" }));
       row.appendChild(text);
       row.appendChild(el("button", { class: "word-row__speak", onclick: () => speakWord(w), "aria-label": `念 ${w}` }, "🔊"));
