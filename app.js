@@ -605,24 +605,7 @@ function renderProfileGate() {
 
   const existing = Object.keys(STORE.profiles);
   if (existing.length) {
-    const list = el("div", { class: "profile-list" });
-    existing.forEach(name => {
-      const p = STORE.profiles[name];
-      const pill = el("div", { class: "profile-pill" });
-      pill.appendChild(el("span", {}, "👤"));
-      pill.appendChild(el("span", {}, name));
-      pill.appendChild(el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name));
-      pill.appendChild(el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`));
-      const pickBtn = el("button", { onclick: () => { switchProfile(name); location.hash = "#/"; route(); } });
-      pickBtn.appendChild(t("選這個"));
-      pill.appendChild(pickBtn);
-      const delBtn = el("button", {
-        onclick: () => { if (confirm(`刪除 ${name} 的進度？`)) { deleteProfile(name); route(); } }
-      });
-      delBtn.appendChild(t("刪"));
-      pill.appendChild(delBtn);
-      list.appendChild(pill);
-    });
+    const list = renderKidList();
     childPanel.appendChild(list);
     childPanel.appendChild(rubyEl("或新增小孩：", null, "div", { style: "margin-top: 14px; font-weight: 700; color: var(--ink-soft);" }));
   }
@@ -678,6 +661,44 @@ function renderProfileGate() {
 
   root.appendChild(card);
   return root;
+}
+
+// === 選小孩（登入頁、換人頁共用）===
+// 整張卡片都可以點；還沒設定年級的小孩（舊版建立的），第一次選時先問幾年級
+function pickKid(name) {
+  const p = STORE.profiles[name];
+  if (!p) return;
+  const go = () => { switchProfile(name); navigate("#/"); };
+  if (GRADES[p.grade]) return go();
+  const overlay = el("div", { class: "overlay" });
+  overlay.appendChild(el("div", { class: "overlay__card settings-card pop", style: "text-align: center;" },
+    el("div", { class: "settings-card__title" }, `${name} 幾年級？`),
+    el("div", { style: "display: grid; gap: 10px; margin-top: 12px;" },
+      Object.entries(GRADES).map(([g, info]) =>
+        el("button", { class: "btn btn--accent btn--xl btn--full", onclick: () => { p.grade = g; saveStore(); overlay.remove(); go(); } }, `📚 ${info.name}`))),
+    el("button", { class: "btn btn--ghost btn--full", style: "margin-top: 10px;", onclick: () => overlay.remove() }, "取消")));
+  document.body.appendChild(overlay);
+}
+function renderKidList() {
+  const list = el("div", { class: "kid-list" });
+  Object.keys(STORE.profiles).forEach(name => {
+    const p = STORE.profiles[name];
+    const hasGrade = !!GRADES[p.grade];
+    const del = el("button", { class: "kid-pick__del", "aria-label": `刪除 ${name}` }, "✕");
+    del.addEventListener("click", e => {
+      e.stopPropagation();
+      if (confirm(`刪除 ${name} 的所有進度？`)) { deleteProfile(name); route(); }
+    });
+    list.appendChild(el("div", { class: "kid-pick-wrap" },
+      el("button", { class: `kid-pick ${STORE.active === name ? "kid-pick--active" : ""}`, onclick: () => pickKid(name) },
+        el("span", { class: "kid-pick__avatar" }, "👤"),
+        el("span", { class: "kid-pick__info" },
+          el("span", { class: "kid-pick__name" }, name),
+          el("span", { class: "kid-pick__meta" }, hasGrade ? `📚 ${GRADES[p.grade].name}` : "📚 還沒選年級", `　⭐ ${p.stars || 0}`)),
+        el("span", { class: "kid-pick__go" }, "▶")),
+      del));
+  });
+  return list;
 }
 
 // === Home ===
@@ -864,18 +885,7 @@ function renderProfilePage() {
   const card = el("div", { class: "profile-card" });
   card.appendChild(el("h1", {}, "誰要學英文？"));
 
-  const list = el("div", { class: "profile-list" });
-  Object.keys(STORE.profiles).forEach(name => {
-    const p = STORE.profiles[name];
-    list.appendChild(el("div", { class: "profile-pill" },
-      el("span", {}, "👤"),
-      el("span", {}, name),
-      el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name),
-      el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`),
-      el("button", { onclick: () => { switchProfile(name); navigate("#/"); } }, "選這個"),
-      el("button", { onclick: () => { if (confirm(`刪除 ${name} 的所有進度？`)) { deleteProfile(name); route(); } } }, "刪")
-    ));
-  });
+  const list = renderKidList();
   card.appendChild(list);
 
   const input = el("input", { type: "text", placeholder: "新增名字", maxlength: 12, style: "margin-top: 16px;" });
