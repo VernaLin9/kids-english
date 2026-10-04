@@ -70,11 +70,11 @@ function touchProfileVisit() {
   p.lastVisit = new Date().toISOString();
   saveStore();
 }
-function createProfile(name) {
+function createProfile(name, grade) {
   if (!name) return;
   const isNew = !STORE.profiles[name];
   STORE.profiles[name] = ensureProfileFields(STORE.profiles[name] || {});
-  if (isNew) STORE.profiles[name].grade = CURRENT_GRADE; // 新使用者沿用目前畫面的年級
+  if (isNew) STORE.profiles[name].grade = GRADES[grade] ? grade : CURRENT_GRADE; // 沒指定就沿用目前畫面的年級
   STORE.active = name;
   saveStore();
   reloadIfGradeChanged();
@@ -412,7 +412,8 @@ const parseHash = () => {
   }
   return { path, query };
 };
-const navigate = h => { location.hash = h; };
+// 跳到同一頁時網址不變、不會觸發 hashchange，所以直接重畫
+const navigate = h => { if (location.hash === h) route(); else location.hash = h; };
 
 // === Helpers ===
 const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
@@ -610,6 +611,7 @@ function renderProfileGate() {
       const pill = el("div", { class: "profile-pill" });
       pill.appendChild(el("span", {}, "👤"));
       pill.appendChild(el("span", {}, name));
+      pill.appendChild(el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name));
       pill.appendChild(el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`));
       const pickBtn = el("button", { onclick: () => { switchProfile(name); location.hash = "#/"; route(); } });
       pickBtn.appendChild(t("選這個"));
@@ -627,10 +629,15 @@ function renderProfileGate() {
 
   const input = el("input", { type: "text", placeholder: "你叫什麼名字？", maxlength: 12 });
   childPanel.appendChild(input);
+  let newGrade = DEFAULT_GRADE;
+  const gradeWrap = el("div", { style: "margin-top: 10px;" });
+  const drawGrade = () => gradeWrap.replaceChildren(rubyEl("幾年級？", null, "div", { style: "font-weight: 700; color: var(--ink-soft); margin-bottom: 6px;" }), gradePicker(newGrade, g => { newGrade = g; drawGrade(); }));
+  drawGrade();
+  childPanel.appendChild(gradeWrap);
   const start = () => {
     const name = (input.value || "").trim();
     if (!name) return;
-    createProfile(name);
+    createProfile(name, newGrade);
     location.hash = "#/";
     route();
   };
@@ -863,6 +870,7 @@ function renderProfilePage() {
     list.appendChild(el("div", { class: "profile-pill" },
       el("span", {}, "👤"),
       el("span", {}, name),
+      el("span", { class: "profile-pill__grade" }, GRADES[profileGrade(p)].name),
       el("span", { style: "font-size: 14px; color: var(--ink-soft);" }, `⭐${p.stars || 0}`),
       el("button", { onclick: () => { switchProfile(name); navigate("#/"); } }, "選這個"),
       el("button", { onclick: () => { if (confirm(`刪除 ${name} 的所有進度？`)) { deleteProfile(name); route(); } } }, "刪")
@@ -871,14 +879,19 @@ function renderProfilePage() {
   card.appendChild(list);
 
   const input = el("input", { type: "text", placeholder: "新增名字", maxlength: 12, style: "margin-top: 16px;" });
+  let newGrade = CURRENT_GRADE;
+  const gradeWrap = el("div", { style: "margin-top: 10px;" });
+  const drawGrade = () => gradeWrap.replaceChildren(gradePicker(newGrade, g => { newGrade = g; drawGrade(); }));
+  drawGrade();
   const add = () => {
     const name = (input.value || "").trim();
     if (!name) return;
-    createProfile(name);
     navigate("#/");
+    createProfile(name, newGrade);
   };
   input.addEventListener("keydown", e => { if (e.key === "Enter") add(); });
   card.appendChild(input);
+  card.appendChild(gradeWrap);
   card.appendChild(el("button", { class: "btn btn--accent btn--full", style: "margin-top: 10px;", onclick: add }, "新增使用者"));
 
   app.appendChild(card);

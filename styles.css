@@ -1463,3 +1463,32 @@ body.focus .app { padding-top: 8px; }
 
 .pick-tabs--3 { grid-template-columns: repeat(3, 1fr); margin-bottom: 14px; }
 .quiz-prompt > .icon-btn { margin-left: auto; margin-right: auto; display: grid; }
+
+/* === 家長模式：小孩卡片、年級選擇 === */
+.parent-exit {
+  min-height: 44px; padding: 0 14px; border-radius: var(--radius);
+  background: var(--accent-soft); color: var(--accent); font-weight: 900; white-space: nowrap;
+}
+.kid-grid { display: grid; gap: 12px; }
+@media (min-width: 700px) { .kid-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kid-card { background: white; border: 2px solid var(--candy-2); border-radius: var(--radius-lg); padding: 16px; text-align: left; }
+.kid-card--active { border-color: var(--accent); }
+.kid-card__top { display: flex; align-items: center; gap: 8px; }
+.kid-card__now { background: var(--accent); color: white; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 800; }
+.kid-card__label { font-weight: 800; color: var(--ink-soft); margin: 10px 0 6px; font-size: calc(14px * var(--font-scale)); }
+.kid-card__actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-top: 12px; }
+.grade-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.grade-picker__btn {
+  min-height: 48px; border-radius: var(--radius); background: white;
+  border: 2px solid var(--primary-soft); font-weight: 900; font-size: calc(17px * var(--font-scale));
+}
+.grade-picker__btn--on { background: var(--primary); border-color: var(--primary); color: white; }
+.add-kid { background: white; border: 2px solid var(--candy-2); border-radius: var(--radius-lg); padding: 16px; }
+.add-kid input { width: 100%; }
+.profile-pill__grade { background: var(--candy-2); border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 800; }
+.add-kid input {
+  width: 100%; padding: 14px; font-size: 20px; font-weight: 800; font-family: inherit;
+  border-radius: var(--radius); border: 3px solid var(--primary-soft); text-align: center; box-sizing: border-box;
+}
+.add-kid input:focus { outline: none; border-color: var(--primary); }
+.kid-card__actions .btn { white-space: nowrap; }

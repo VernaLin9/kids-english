@@ -27,14 +27,14 @@ let parentLockUntil = 0;          // 連錯後鎖定到何時（timestamp ms）
 let parentTries = 0;
 
 function unitMasteryStats(unitId, profile) {
-  const u = UNITS.find(x => x.id === unitId);
+  const u = GRADES[profileGrade(profile)].data.UNITS.find(x => x.id === unitId);
   if (!u) return { mastered: 0, total: 0, pct: 0 };
   let m = 0;
   u.words.forEach(w => { if (profile?.progress?.[w]?.mastered) m++; });
   return { mastered: m, total: u.words.length, pct: Math.round((m / u.words.length) * 100) };
 }
 function categoryMasteryStats(catId, profile) {
-  const c = CATEGORIES.find(x => x.id === catId);
+  const c = GRADES[profileGrade(profile)].data.CATEGORIES.find(x => x.id === catId);
   if (!c) return { mastered: 0, total: 0, pct: 0 };
   let m = 0;
   c.words.forEach(w => { if (profile?.progress?.[w]?.mastered) m++; });
@@ -43,7 +43,7 @@ function categoryMasteryStats(catId, profile) {
 function struggleList(profile, n = 10) {
   if (!profile?.progress) return [];
   return Object.entries(profile.progress)
-    .filter(([w, r]) => r.wrong > 0 && WORDS[w])
+    .filter(([w, r]) => r.wrong > 0 && gradeWordsOf(profile)[w])
     .map(([w, r]) => ({ word: w, wrong: r.wrong, seen: r.seen, ratio: r.wrong / Math.max(r.seen, 1) }))
     .sort((a, b) => b.ratio - a.ratio || b.wrong - a.wrong)
     .slice(0, n);
@@ -66,18 +66,18 @@ function modeName(m) {
 }
 function exportProfileText(name) {
   const p = STORE.profiles[name]; if (!p) return "";
-  const masteredCount = countMastered(p.progress);
-  const total = Object.keys(WORDS).length;
+  const masteredCount = masteredOf(p);
+  const total = Object.keys(gradeWordsOf(p)).length;
   const att = totalAttempts(p);
   const lines = [];
-  lines.push(`📚 ${name} 的英文學習進度`);
+  lines.push(`📚 ${name}（${GRADES[profileGrade(p)].name}）的英文學習進度`);
   lines.push(`⭐ 星數：${p.stars || 0}`);
   lines.push(`✅ 已學會：${masteredCount} / ${total}（${Math.round(masteredCount * 100 / total)}%）`);
   lines.push(`📊 答對率：${att.pct}%（共 ${att.total} 題）`);
   lines.push(`🕒 最後使用：${fmtDate(p.lastVisit)}`);
   lines.push("");
   lines.push("📝 單元進度：");
-  UNITS.forEach(u => {
+  GRADES[profileGrade(p)].data.UNITS.forEach(u => {
     const s = unitMasteryStats(u.id, p);
     lines.push(`  ${u.emoji} ${u.name}：${s.mastered}/${s.total}（${s.pct}%）`);
   });
@@ -85,7 +85,7 @@ function exportProfileText(name) {
   const sl = struggleList(p, 10);
   if (sl.length) {
     lines.push("💪 需要加強的字（常答錯）：");
-    sl.forEach(s => lines.push(`  ${s.word}（${WORDS[s.word]?.zh || ""}） 答錯 ${s.wrong} 次 / 共 ${s.seen} 次`));
+    sl.forEach(s => lines.push(`  ${s.word}（${gradeWordsOf(p)[s.word]?.zh || ""}） 答錯 ${s.wrong} 次 / 共 ${s.seen} 次`));
   }
   return lines.join("\n");
 }
@@ -167,51 +167,78 @@ function renderParentGate() {
   return root;
 }
 
+// 每個小孩依「自己的年級」計算學會幾個字
+function gradeWordsOf(p) { return GRADES[profileGrade(p)].data.WORDS; }
+function masteredOf(p) { const W = gradeWordsOf(p); return Object.entries(p.progress || {}).filter(([w, r]) => W[w] && r.mastered).length; }
+
+// 年級選擇按鈕（家長頁、新增小孩共用）
+function gradePicker(current, onPick) {
+  return el("div", { class: "grade-picker" },
+    Object.entries(GRADES).map(([g, info]) =>
+      el("button", { class: `grade-picker__btn ${g === current ? "grade-picker__btn--on" : ""}`, onclick: () => onPick(g) }, info.name)));
+}
+
 function renderParentDashboard() {
   const root = el("div", { "data-nobopo": "" });
   const header = el("header", { class: "header" },
     el("button", { class: "header__back", onclick: () => navigate("#/"), "aria-label": "回首頁" }, "←"),
-    el("div", { class: "header__title" }, t("家長模式")),
-    el("button", { class: "header__progress", style: "color: var(--accent); cursor: pointer; font-weight: 800;", onclick: () => { parentSession = false; navigate("#/"); } }, t("登出"))
+    el("div", { class: "header__title" }, "👪 家長模式"),
+    el("button", { class: "parent-exit", onclick: () => { parentSession = false; navigate("#/"); } }, "離開")
   );
   root.appendChild(header);
   const app = el("main", { class: "app" });
 
-  // Per-kid summary cards
   const kidNames = Object.keys(STORE.profiles);
-  if (!kidNames.length) {
-    app.appendChild(el("div", { class: "empty" }, t("還沒有任何小孩的紀錄")));
-  } else {
-    const list = el("div", { class: "kid-grid" });
-    kidNames.forEach(name => {
-      const p = STORE.profiles[name];
-      const masteredCount = countMastered(p.progress);
-      const totalWords = Object.keys(WORDS).length;
-      const pct = Math.round((masteredCount / totalWords) * 100);
-      const att = totalAttempts(p);
-      const card = el("button", { class: "kid-card", onclick: () => navigate(`#/parent/kid/${encodeURIComponent(name)}`) });
-      card.appendChild(el("div", { class: "kid-card__name" }, "👤 " + name));
-      const stats = el("div", { class: "kid-card__stats" });
-      stats.appendChild(el("div", {}, "⭐ " + (p.stars || 0)));
-      stats.appendChild(el("div", {}, `✅ ${masteredCount}/${totalWords}`));
-      stats.appendChild(el("div", {}, `📊 ${att.pct}%`));
-      card.appendChild(stats);
-      const dateRow = el("div", { class: "kid-card__date" });
-      dateRow.appendChild(t("最後使用："));
-      dateRow.appendChild(document.createTextNode(fmtDate(p.lastVisit)));
-      card.appendChild(dateRow);
-      const bar = el("div", { class: "progress-bar", style: "margin-top: 10px;" },
-        el("div", { class: "progress-bar__fill", style: `width: ${pct}%;` }));
-      card.appendChild(bar);
-      list.appendChild(card);
-    });
-    app.appendChild(el("div", { class: "section__title" }, t("👤 小孩列表")));
-    app.appendChild(list);
-  }
+  app.appendChild(el("div", { class: "section__title" }, "👤 小孩"));
+  if (!kidNames.length) app.appendChild(el("div", { class: "empty" }, "還沒有小孩，先在下面新增"));
+  const list = el("div", { class: "kid-grid" });
+  kidNames.forEach(name => {
+    const p = ensureProfileFields(STORE.profiles[name]);
+    const g = profileGrade(p);
+    const total = Object.keys(gradeWordsOf(p)).length;
+    const mastered = masteredOf(p);
+    const att = totalAttempts(p);
+    const isActive = STORE.active === name;
+    list.appendChild(el("div", { class: `kid-card ${isActive ? "kid-card--active" : ""}` },
+      el("div", { class: "kid-card__top" },
+        el("div", { class: "kid-card__name" }, `👤 ${name}`),
+        isActive ? el("span", { class: "kid-card__now" }, "目前") : null),
+      el("div", { class: "kid-card__stats" },
+        el("div", {}, `⭐ ${p.stars || 0}`), el("div", {}, `✅ ${mastered}/${total}`), el("div", {}, `📊 ${att.pct}%`)),
+      el("div", { class: "progress-bar", style: "margin: 8px 0;" }, el("div", { class: "progress-bar__fill", style: `width: ${Math.round(mastered * 100 / Math.max(total, 1))}%;` })),
+      el("div", { class: "kid-card__date" }, `最後使用：${fmtDate(p.lastVisit)}`),
+      el("div", { class: "kid-card__label" }, "年級"),
+      gradePicker(g, (ng) => { p.grade = ng; saveStore(); if (isActive) reloadIfGradeChanged(); else route(); }),
+      el("div", { class: "kid-card__actions" },
+        el("button", { class: "btn btn--accent", onclick: () => { parentSession = false; switchProfile(name); navigate("#/"); route(); } }, `▶ 換 ${name} 練習`),
+        el("button", { class: "btn btn--ghost", onclick: () => navigate(`#/parent/kid/${encodeURIComponent(name)}`) }, "📊 詳細"))
+    ));
+  });
+  app.appendChild(list);
+
+  // 新增小孩（含年級）
+  let newGrade = CURRENT_GRADE;
+  const nameInput = el("input", { type: "text", placeholder: "小孩的名字", maxlength: 12 });
+  const pickerWrap = el("div", {});
+  const drawPicker = () => pickerWrap.replaceChildren(gradePicker(newGrade, g => { newGrade = g; drawPicker(); }));
+  drawPicker();
+  const addKid = () => {
+    const name = (nameInput.value || "").trim();
+    if (!name) { nameInput.focus(); return; }
+    if (STORE.profiles[name]) { alert("已經有這個名字了"); return; }
+    STORE.profiles[name] = ensureProfileFields({ grade: newGrade });
+    if (!STORE.active) STORE.active = name;
+    saveStore();
+    route();
+  };
+  app.appendChild(el("div", { class: "section" },
+    el("div", { class: "section__title" }, "➕ 新增小孩"),
+    el("div", { class: "add-kid" }, nameInput, el("div", { class: "kid-card__label" }, "年級"), pickerWrap,
+      el("button", { class: "btn btn--accent btn--full", style: "margin-top: 10px;", onclick: addKid }, "新增"))));
 
   // Settings
-  app.appendChild(el("div", { class: "section section--hide-on-focus" },
-    el("div", { class: "section__title" }, t("⚙️ 設定")),
+  app.appendChild(el("div", { class: "section" },
+    el("div", { class: "section__title" }, "⚙️ 設定"),
     el("button", {
       class: "btn btn--ghost btn--full",
       onclick: () => {
@@ -223,14 +250,13 @@ function renderParentDashboard() {
         saveStore();
         alert("PIN 已更換");
       }
-    }, t("🔑 更換 PIN"))
+    }, "🔑 更換 PIN")
   ));
 
-  // Export all
   if (kidNames.length) {
-    app.appendChild(el("div", { class: "section section--hide-on-focus" },
+    app.appendChild(el("div", { class: "section" },
       el("button", { class: "btn btn--full", onclick: () => copyToClipboard(kidNames.map(exportProfileText).join("\n\n———\n\n")) },
-        t("📤 複製所有小孩的進度報告"))
+        "📤 複製所有小孩的進度報告")
     ));
   }
 
@@ -241,8 +267,9 @@ function renderParentDashboard() {
 function renderParentKidDetail(name) {
   const p = STORE.profiles[name];
   if (!p) return renderEmpty("#/parent", "找不到這個小孩");
-  const masteredCount = countMastered(p.progress);
-  const totalWords = Object.keys(WORDS).length;
+  const D = GRADES[profileGrade(p)].data;
+  const masteredCount = masteredOf(p);
+  const totalWords = Object.keys(D.WORDS).length;
   const att = totalAttempts(p);
 
   const root = el("div", { "data-nobopo": "" });
@@ -276,7 +303,7 @@ function renderParentKidDetail(name) {
   // Unit progress
   app.appendChild(el("div", { class: "section__title" }, t("📊 單元進度")));
   const unitBox = el("div", { class: "unit-bars" });
-  UNITS.forEach(u => {
+  D.UNITS.forEach(u => {
     const s = unitMasteryStats(u.id, p);
     const row = el("div", { class: "unit-bar" });
     row.appendChild(el("div", { class: "unit-bar__head" },
@@ -294,7 +321,7 @@ function renderParentKidDetail(name) {
   // Category progress
   app.appendChild(el("div", { class: "section__title" }, t("🎨 主題進度")));
   const catBox = el("div", { class: "unit-bars" });
-  CATEGORIES.forEach(c => {
+  D.CATEGORIES.forEach(c => {
     const s = categoryMasteryStats(c.id, p);
     const row = el("div", { class: "unit-bar" });
     row.appendChild(el("div", { class: "unit-bar__head" },
@@ -315,7 +342,7 @@ function renderParentKidDetail(name) {
     app.appendChild(el("div", { class: "section__title" }, t("💪 需要加強")));
     const list = el("div", { style: "display: grid; gap: 6px;" });
     sl.forEach(s => {
-      const info = WORDS[s.word] || {};
+      const info = D.WORDS[s.word] || {};
       const row = el("div", { class: "struggle-row" });
       row.appendChild(el("span", { style: "font-size: 22px;" }, info.emoji || "❓"));
       row.appendChild(el("span", { class: "struggle-row__en" }, s.word));
