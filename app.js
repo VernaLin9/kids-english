@@ -766,15 +766,16 @@ function renderHome() {
     el("div", { class: "status-chip status-chip--star" }, `⭐ ${profile?.stars || 0}`)
   ));
 
-  // 科目：英文 / 國語（這個年級有國語資料才顯示）
-  const subject = ZH && profile?.subject === "zh" ? "zh" : "en";
-  if (ZH) {
-    app.appendChild(el("div", { class: "subject-tabs" },
-      [["en", "🔤 英文"], ["zh", "ㄅ 國語"]].map(([id, label]) =>
+  // 科目：英文 / 國語 / 數學（這個年級有資料的科目才顯示）
+  const subjects = [["en", "🔤 英文"], ...(ZH ? [["zh", "ㄅ 國語"]] : []), ...(MATH ? [["math", "➕ 數學"]] : [])];
+  const subject = subjects.some(([id]) => id === profile?.subject) ? profile.subject : "en";
+  if (subjects.length > 1) {
+    app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
+      subjects.map(([id, label]) =>
         el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
   }
-  if (subject === "zh") {
-    app.appendChild(renderZhHomeSection());
+  if (subject === "zh" || subject === "math") {
+    app.appendChild(subject === "zh" ? renderZhHomeSection() : renderMathHomeSection());
     root.appendChild(app);
     return root;
   }
