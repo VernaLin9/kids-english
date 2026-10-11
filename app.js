@@ -241,6 +241,44 @@ function applySettings() {
 // - 注音直書放在每個漢字右側，與漢字「垂直至中」對齊
 // - 聲調符號（ˊˇˋ）放在頂端右側；輕聲 ˙ 放在頂端中央
 // - 不用 <ruby><rt>（瀏覽器 ruby 預設位置會干擾），改用 span/flex
+// 一個字的注音直欄（台灣課本：輕聲 ˙ 在最上方；ˊˇˋ 在最後一個符號右邊）
+const TONE_MARK_RE = /[ˊˇˋ˙]/;
+function bopoColEl(reading) {
+  let tone = "", bare = reading || "";
+  const m = bare.match(TONE_MARK_RE);
+  if (m) { tone = m[0]; bare = bare.replace(TONE_MARK_RE, ""); }
+  const col = document.createElement("span");
+  col.className = "zh-bopo";
+  const neutral = tone === "˙";
+  if (neutral) {
+    const tn = document.createElement("span");
+    tn.className = "bopo-tone bopo-tone--neutral";
+    tn.textContent = tone;
+    col.appendChild(tn);
+  }
+  const chars = [...bare];
+  chars.forEach(c => {
+    const sp = document.createElement("span");
+    sp.className = "bopo-char";
+    sp.textContent = c;
+    col.appendChild(sp);
+  });
+  if (tone && !neutral) {
+    const tn = document.createElement("span");
+    tn.className = "bopo-tone";
+    tn.textContent = tone;
+    tn.style.gridRow = String(Math.max(chars.length, 1));
+    col.appendChild(tn);
+  }
+  return col;
+}
+// 只有注音（國語注音階段用）：每個字一欄，由左到右排
+function bopoWordEl(bopo, attrs = {}) {
+  const node = el("span", { ...attrs, class: `bopo-word ${attrs.class || ""}` });
+  bopo.split(/\s+/).filter(Boolean).forEach(r => node.appendChild(bopoColEl(r)));
+  return node;
+}
+
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
   if (!STORE.settings.bopomofo) {
@@ -260,34 +298,7 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
       base.className = "zh-base";
       base.textContent = ch;
       pair.appendChild(base);
-      let tone = "";
-      let bare = reading;
-      const m = reading.match(TONE_RE);
-      if (m) { tone = m[0]; bare = reading.replace(TONE_RE, ""); }
-      const bopoCol = document.createElement("span");
-      bopoCol.className = "zh-bopo";
-      // 台灣課本直式注音：輕聲 ˙ 在最上方；ˊˇˋ 在「最後一個注音符號」的右邊
-      const neutral = tone === "˙";
-      if (neutral) {
-        const tn = document.createElement("span");
-        tn.className = "bopo-tone bopo-tone--neutral";
-        tn.textContent = tone;
-        bopoCol.appendChild(tn);
-      }
-      const chars = [...bare];
-      chars.forEach(c => {
-        const s = document.createElement("span");
-        s.className = "bopo-char";
-        s.textContent = c;
-        bopoCol.appendChild(s);
-      });
-      if (tone && !neutral) {
-        const tn = document.createElement("span");
-        tn.className = "bopo-tone";
-        tn.textContent = tone;
-        tn.style.gridRow = String(Math.max(chars.length, 1));
-        bopoCol.appendChild(tn);
-      }
+      const bopoCol = bopoColEl(reading);
       pair.appendChild(bopoCol);
       node.appendChild(pair);
     } else {
@@ -754,6 +765,19 @@ function renderHome() {
     el("button", { class: "status-chip", onclick: openSettingsSheet }, `📚 ${GRADES[CURRENT_GRADE].name}`, el("span", { class: "status-chip__more" }, "›")),
     el("div", { class: "status-chip status-chip--star" }, `⭐ ${profile?.stars || 0}`)
   ));
+
+  // 科目：英文 / 國語（這個年級有國語資料才顯示）
+  const subject = ZH && profile?.subject === "zh" ? "zh" : "en";
+  if (ZH) {
+    app.appendChild(el("div", { class: "subject-tabs" },
+      [["en", "🔤 英文"], ["zh", "ㄅ 國語"]].map(([id, label]) =>
+        el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
+  }
+  if (subject === "zh") {
+    app.appendChild(renderZhHomeSection());
+    root.appendChild(app);
+    return root;
+  }
 
   // 本週：單字 + 一顆大按鈕
   const hero = el("section", { class: "hero" },

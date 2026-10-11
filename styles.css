@@ -1514,3 +1514,89 @@ body.focus .app { padding-top: 8px; }
   width: 40px; height: 40px; border-radius: 50%;
   background: #f3e6ea; color: var(--ink-soft); font-weight: 900;
 }
+
+/* =====================================================================
+   國語（注音階段）
+   ===================================================================== */
+.subject-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.subject-tab {
+  min-height: 52px; border-radius: var(--radius); background: white;
+  border: 3px solid var(--primary-soft); font-weight: 900; font-size: calc(18px * var(--font-scale));
+}
+.subject-tab--on { background: var(--primary); border-color: var(--primary); color: white; }
+.subject-tab--on .zh-bopo { color: rgba(255,255,255,0.85); }
+
+/* 只有注音的詞：每個字一欄 */
+.bopo-word { display: inline-flex; align-items: center; gap: 0.25em; vertical-align: middle; color: var(--ink); }
+.bopo-word .zh-bopo { font-size: 1em; color: inherit; margin-left: 0; }
+.bopo-word--sm { font-size: calc(18px * var(--font-scale)); }
+.bopo-word--lg { font-size: calc(30px * var(--font-scale)); }
+.bopo-word--xl { font-size: calc(44px * var(--font-scale)); gap: 0.35em; }
+.bopo-word--guide { font-size: 64px; gap: 0.4em; }
+.bopo-word .bopo-tone { font-size: 0.9em; }
+
+.zh-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.zh-chip { display: inline-flex; align-items: center; gap: 6px; background: white; border-radius: 14px; padding: 8px 10px; border: 2px solid transparent; }
+.zh-chip--done { border-color: var(--success); }
+.zh-chip__emoji { font-size: 22px; }
+.zh-row__bopo { display: flex; align-items: center; gap: 8px; font-size: calc(22px * var(--font-scale)); }
+.zh-row__no { font-size: calc(14px * var(--font-scale)); color: var(--ink-soft); font-weight: 800; }
+.zh-note { color: var(--accent); font-size: calc(13px * var(--font-scale)); }
+.zh-text { display: grid; gap: 8px; }
+.zh-text__line {
+  text-align: left; padding: 14px 16px; border-radius: var(--radius); background: white;
+  border: 2px solid var(--candy-2); font-size: calc(26px * var(--font-scale)); font-weight: 800;
+}
+.zh-text__line:active { background: var(--candy-2); }
+
+.zh-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  width: 100%; min-height: 340px; border-radius: var(--radius-lg); background: white;
+  box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px;
+}
+.zh-card__emoji { font-size: 72px; line-height: 1; }
+.zh-card__zh { font-size: calc(46px * var(--font-scale)); font-weight: 900; }
+
+.zh-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.zh-opt {
+  min-height: 110px; border-radius: var(--radius); background: white;
+  border: 3px solid var(--primary-soft); display: grid; place-items: center; padding: 8px;
+}
+.zh-opt--ok { border-color: var(--success); background: var(--success-soft); }
+.zh-opt--bad { border-color: var(--danger, #ff6b6b); opacity: 0.5; }
+
+.zh-tone-word { margin: 10px 0 4px; }
+.zh-tone-target { background: #fff3c4; border-radius: 10px; padding: 2px 4px; }
+.zh-tone-target--ask { outline: 3px dashed #ffb020; }
+.zh-tone-target--ok { background: var(--success-soft); }
+.zh-tones { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.zh-tone-btn {
+  min-height: 72px; border-radius: var(--radius); background: white; border: 3px solid var(--primary-soft);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-weight: 800; font-size: calc(14px * var(--font-scale));
+}
+.zh-tone-btn__mark { font-size: 32px; font-weight: 900; line-height: 1; min-height: 32px; }
+.zh-tone-btn--on { background: var(--primary); border-color: var(--primary); color: white; }
+.zh-tone-btn:disabled { opacity: 0.35; }
+.zh-tones--sm .zh-tone-btn { min-height: 60px; }
+
+.zh-spell-done { min-height: 1.2em; margin-top: 10px; }
+.zh-spell-step { text-align: center; font-weight: 900; margin: 14px 0 4px; font-size: calc(18px * var(--font-scale)); }
+.zh-spell-label { text-align: center; font-weight: 800; color: var(--ink-soft); margin-top: 6px; }
+.zh-slots { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 8px 0; }
+.zh-slots .spell-slot { width: 60px; height: 56px; font-size: 32px; }
+.zh-tone-slot {
+  display: grid; place-items: center; width: 60px; height: 40px; border-radius: 12px;
+  border: 3px dashed #ffd96a; font-weight: 800; color: var(--ink-soft); font-size: 14px;
+}
+.zh-tone-slot.spell-slot--filled { border-style: solid; font-size: 28px; color: var(--ink); }
+
+.zh-write-canvas { height: 360px; }
+.zh-write-guide { align-items: center; }
+.zh-missed { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.zh-missed__title { width: 100%; font-weight: 800; color: var(--ink-soft); }
+.zh-word-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.zh-word-list .zh-row__bopo { font-size: calc(20px * var(--font-scale)); flex-wrap: wrap; }
+.zh-write-guide .bopo-word { color: inherit; }
+.zh-write-guide.write-guide--show { color: var(--ink); }
+.zh-tone-slot { font-size: 24px; }
