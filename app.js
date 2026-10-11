@@ -769,6 +769,20 @@ function renderHome() {
   // 科目：英文 / 國語 / 數學（這個年級有資料的科目才顯示）
   const subjects = [["en", "🔤 英文"], ...(ZH ? [["zh", "ㄅ 國語"]] : []), ...(MATH ? [["math", "➕ 數學"]] : [])];
   const subject = subjects.some(([id]) => id === profile?.subject) ? profile.subject : "en";
+  // 國語／數學的考試提醒（資料裡有 exam 且日期在 10 天內）
+  const reminders = [];
+  (ZH?.lessons || []).forEach(l => { if (l.exam) reminders.push({ ...l.exam, subject: "國語", title: l.title, hash: `#/zhplay/${l.exam.mode}?l=${l.id}` }); });
+  (MATH?.units || []).forEach(u => { if (u.exam) reminders.push({ ...u.exam, subject: "數學", title: u.title, hash: `#/mathplay/${u.exam.mode}?u=${u.id}` }); });
+  const today = dayISO();
+  reminders.filter(r => r.date >= today && r.date <= addDays(10)).sort((a, b) => a.date.localeCompare(b.date)).forEach(r => {
+    const d = new Date(r.date + "T00:00:00");
+    const daysLeft = Math.round((d - new Date(today + "T00:00:00")) / 86400000);
+    const when = daysLeft === 0 ? "今天" : daysLeft === 1 ? "明天" : `${daysLeft}天後`;
+    app.appendChild(el("button", { class: "exam-remind", onclick: () => navigate(r.hash) },
+      el("span", { class: "exam-remind__icon" }, "📅"),
+      el("span", { class: "exam-remind__text" }, t(`${d.getMonth() + 1}/${d.getDate()}(${"日一二三四五六"[d.getDay()]})${when}考${r.subject}：${r.label}`)),
+      el("span", { class: "exam-remind__go" }, t("去練習 ›"))));
+  });
   if (subjects.length > 1) {
     app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
       subjects.map(([id, label]) =>
