@@ -1600,3 +1600,27 @@ body.focus .app { padding-top: 8px; }
 .zh-write-guide .bopo-word { color: inherit; }
 .zh-write-guide.write-guide--show { color: var(--ink); }
 .zh-tone-slot { font-size: 24px; }
+
+/* =====================================================================
+   數學（比長短、高矮、厚薄）
+   ===================================================================== */
+.subject-tabs--3 { grid-template-columns: repeat(3, 1fr); }
+.subject-tabs--3 .subject-tab { font-size: calc(16px * var(--font-scale)); padding: 0 4px; white-space: nowrap; }
+.mode-btn__sub { font-size: calc(12px * var(--font-scale)); color: var(--ink-soft); font-weight: 700; }
+.m-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 16px; text-align: center; }
+.m-prompt { font-weight: 900; font-size: calc(24px * var(--font-scale)); line-height: 1.6; margin-bottom: 6px; }
+.m-speak { width: 48px; height: 48px; font-size: 22px; margin: 0 auto 8px; }
+.m-board { width: 100%; height: auto; display: block; max-height: 420px; }
+.m-item { cursor: pointer; }
+.m-hit { fill: transparent; stroke: transparent; stroke-width: 4; }
+.m-item:active .m-hit { fill: rgba(107, 140, 255, 0.08); }
+.m-item--ok .m-hit { stroke: var(--success); fill: rgba(78, 201, 168, 0.12); }
+.m-item--bad .m-hit { stroke: var(--danger); fill: rgba(255, 107, 107, 0.1); }
+.m-item--bad { animation: shake 0.4s; }
+.m-hint { text-align: center; color: var(--ink-soft); font-weight: 700; margin-top: 10px; }
+.m-tf { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.m-tf__btn { min-height: 80px; border-radius: var(--radius); font-weight: 900; font-size: calc(26px * var(--font-scale)); border: 3px solid transparent; }
+.m-tf__btn--yes { background: var(--success-soft); color: #1b7a5a; }
+.m-tf__btn--no { background: var(--danger-soft); color: #b23b3b; }
+.m-tf__btn--ok { border-color: var(--success); }
+.m-tf__btn:disabled { opacity: 0.4; }
