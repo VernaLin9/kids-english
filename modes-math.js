@@ -213,7 +213,7 @@ function renderMathUnit(id) {
   root.appendChild(renderHeader(`${u.emoji} ${u.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
   app.appendChild(el("section", { class: "section" },
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("📄 評量卷原題（22 題）")),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("📄 評量卷原題（第6、7頁）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, "跟學校的評量卷一樣的題目和順序"),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, "每次都不一樣的題目，練熟概念")));
@@ -405,96 +405,174 @@ function wsLineItem(kind) {
 // 虛線（卷子上用來對齊的參考線）
 const dash = (x1, y1, x2, y2) => svg("line", { x1, y1, x2, y2, stroke: "#aaa", "stroke-width": 2, "stroke-dasharray": "6 6" });
 
-// kind: "lc" 直線／曲線兩個按鈕；"pick" 點圖；"tf" ✓✗
-const WORKSHEET_U2 = [
-  { no: "一-1", kind: "lc", prompt: "這一條是直線還是曲線？", h: 130, items: [{ node: () => wsLineItem("wave") }], answer: "曲線" },
-  { no: "一-2", kind: "lc", prompt: "這一條是直線還是曲線？", h: 130, items: [{ node: () => wsLineItem("vert") }], answer: "直線" },
-  { no: "一-3", kind: "lc", prompt: "這一條是直線還是曲線？", h: 130, items: [{ node: () => wsLineItem("diag") }], answer: "直線" },
-  { no: "一-4", kind: "lc", prompt: "這一條是直線還是曲線？", h: 130, items: [{ node: () => wsLineItem("loop") }], answer: "曲線" },
-  { no: "二-1", kind: "pick", prompt: "哪一條繩子比較長？", h: 200, extra: () => [dash(40, 20, 40, 180), dash(360, 20, 360, 180)], items: [{ node: () => wsRope(40, 60, 320, false), correct: false }, { node: () => wsRope(40, 140, 320, true), correct: true }] },
-  { no: "二-2", kind: "pick", prompt: "哪一個迴紋針比較長？", h: 200, items: [{ node: () => wsClip(60, 30, 260, 60), correct: true }, { node: () => wsClip(60, 120, 150, 50), correct: false }] },
-  { no: "二-3", kind: "pick", prompt: "哪一枝鉛筆比較長？", h: 200, extra: () => [dash(40, 20, 40, 180)], items: [{ node: () => drawPencil(40, 50, 300, "#ffb020"), correct: true }, { node: () => drawPencil(40, 130, 170, "#ffb020"), correct: false }] },
-  { no: "二-4", kind: "pick", prompt: "哪一件褲子比較長？", h: 240, extra: () => [svg("rect", { x: 20, y: 20, width: 360, height: 8, rx: 3, fill: WOOD })], items: [{ node: () => wsPants(90, 30, 70, "#6b8cff"), correct: false }, { node: () => wsPants(240, 30, 170, "#4a64c9"), correct: true }] },
-  { no: "三-1", kind: "pick", prompt: "哪一個路標比較高？", h: 240, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsSignpost(130, 230, 190), correct: true }, { node: () => wsSignpost(270, 230, 130), correct: false }] },
-  { no: "三-2", kind: "pick", prompt: "哪一張桌子比較高？", h: 240, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsTable(40, 230, 70, 140), correct: false }, { node: () => wsTable(220, 230, 130, 140), correct: true }] },
-  { no: "三-3", kind: "pick", prompt: "哪一座燈塔比較高？", h: 240, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsLighthouse(130, 230, 140), correct: false }, { node: () => wsLighthouse(270, 230, 200), correct: true }] },
-  { no: "三-4", kind: "pick", prompt: "哪一個花瓶比較高？", h: 240, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsVase(130, 230, 200, "#b388ff"), correct: true }, { node: () => wsVase(270, 230, 140, "#4ec9a8"), correct: false }] },
-  { no: "四-1", kind: "pick", prompt: "哪一片披薩比較薄？", h: 200, items: [{ node: () => wsPizza(40, 40, 34), correct: false }, { node: () => wsPizza(240, 40, 12), correct: true }] },
-  { no: "四-2", kind: "pick", prompt: "哪一塊木板比較薄？", h: 200, items: [{ node: () => drawBook(30, 160, 14, WOOD, 130), correct: true }, { node: () => drawBook(220, 160, 44, WOOD, 130), correct: false }] },
-  { no: "四-3", kind: "pick", prompt: "哪一本書比較薄？", h: 200, items: [{ node: () => drawBook(30, 170, 60, "#6b8cff", 130), correct: false }, { node: () => drawBook(220, 170, 16, "#ff6fa3", 130), correct: true }] },
-  { no: "四-4", kind: "pick", prompt: "哪一個漢堡比較薄？", h: 220, extra: () => [svg("rect", { x: 20, y: 190, width: 360, height: 10, rx: 4, fill: "#ddd" })], items: [{ node: () => wsBurger(120, 190, 3), correct: false }, { node: () => wsBurger(280, 190, 1), correct: true }] },
-  { no: "五-1", kind: "pick", prompt: "哪一枝筆最短？", h: 260, extra: () => [dash(30, 20, 30, 240)], items: [{ node: () => wsStarPencil(30, 40, 210), correct: false }, { node: () => drawPencil(30, 115, 150, "#ffb020"), correct: true }, { node: () => wsPen(30, 195, 330), correct: false }] },
-  { no: "五-2", kind: "pick", prompt: "哪一棵樹最高？", h: 260, extra: () => [dash(20, 245, 380, 245)], items: [{ node: () => drawTree(80, 245, 220, "#4ec9a8"), correct: true }, { node: () => drawTree(200, 245, 150, "#4ec9a8"), correct: false }, { node: () => drawTree(320, 245, 185, "#4ec9a8"), correct: false }] },
-  { no: "五-3", kind: "pick", prompt: "哪一塊吐司最厚？", h: 240, items: [{ node: () => drawBook(15, 210, 90, "#f3c98b", 95), correct: true }, { node: () => drawBook(145, 210, 14, "#f3c98b", 95), correct: false }, { node: () => drawBook(275, 210, 40, "#f3c98b", 95), correct: false }] },
-  { no: "五-4", kind: "pick", prompt: "哪一本書最薄？", h: 240, extra: () => [dash(20, 225, 380, 225)], items: [{ node: () => wsBookUp(40, 225, 70, 170, "#6b8cff"), correct: false }, { node: () => wsBookUp(160, 225, 70, 170, "#4ec9a8"), correct: false }, { node: () => wsBookUp(290, 225, 40, 170, "#ff6fa3"), correct: true }] },
-  { no: "六-1", kind: "tf", prompt: "對不對？「兩枝筆一樣長」", h: 220, tf: false, hint: "斜放的那枝比較長，兩邊對齊不代表一樣長",
-    extra: () => [dash(40, 20, 40, 200), dash(330, 20, 330, 200)], items: [{ node: () => { const g = drawPencil(40, 60, 310, "#ffb020"); g.setAttribute("transform", "rotate(-14 40 71)"); g.bbox = { x: 30, y: 0, w: 330, h: 90 }; return g; } }, { node: () => drawPencil(40, 150, 290, "#ffb020") }] },
-  { no: "六-2", kind: "tf", prompt: "對不對？「小珊比小玉高」", h: 260, tf: true, hint: "小玉是站在椅子上，所以小珊比較高",
-    extra: () => [dash(20, 30, 380, 30), dash(20, 245, 380, 245)], items: [{ node: () => wsKid(140, 245, 215, "#6b8cff", 0) }, { node: () => wsKid(260, 245, 165, "#ff6fa3", 50) }] },
-];
+// 評量卷：每一大題 { no, instr(照卷子的說明), points, how, qs:[...] }
+//   how: "mark2" 在(　)裡打✓或畫○（一）、"paren" 點括弧寫記號（二、四）、"circle" 圈起來（三、五）、"box" 方框打✓✗（六）
+//   小題 { n, prompt?, w?, h, extra?, items:[{ node, correct }], answer? }
+//   paren 記號位置由 items 的 bbox 自動算（parenPos: "right" / "below"）
+const SHEET_U2 = {
+  id: "u2", title: "一上 第3回", sub: "2-1 比長短　2-2 高矮與厚薄",
+  sections: [
+    { no: "一", instr: "哪些是直線？在(　)裡打✓，哪些是曲線？在(　)裡畫○：每題4分，共16分", points: 4, how: "mark2", marks: ["✓", "○"], parenPos: "below", qs: [
+      { n: 1, h: 180, items: [{ node: () => wsLineItem("wave") }], answer: "○" },
+      { n: 2, h: 180, items: [{ node: () => wsLineItem("vert") }], answer: "✓" },
+      { n: 3, h: 180, items: [{ node: () => wsLineItem("diag") }], answer: "✓" },
+      { n: 4, h: 180, items: [{ node: () => wsLineItem("loop") }], answer: "○" },
+    ] },
+    { no: "二", instr: "比一比，比較長的在(　)裡畫○：每題5分，共20分", points: 5, how: "paren", mark: "○", parenPos: "right", qs: [
+      { n: 1, w: 470, h: 200, extra: () => [dash(40, 20, 40, 180), dash(360, 20, 360, 180)], items: [{ node: () => wsRope(40, 60, 320, false), correct: false }, { node: () => wsRope(40, 140, 320, true), correct: true }] },
+      { n: 2, w: 470, h: 200, items: [{ node: () => wsClip(60, 30, 260, 60), correct: true }, { node: () => wsClip(60, 120, 150, 50), correct: false }] },
+      { n: 3, w: 470, h: 200, extra: () => [dash(40, 20, 40, 180)], items: [{ node: () => drawPencil(40, 50, 300, "#ffb020"), correct: true }, { node: () => drawPencil(40, 130, 170, "#ffb020"), correct: false }] },
+      { n: 4, h: 260, parenPos: "below", extra: () => [svg("rect", { x: 20, y: 20, width: 360, height: 8, rx: 3, fill: WOOD })], items: [{ node: () => wsPants(90, 30, 70, "#6b8cff"), correct: false }, { node: () => wsPants(240, 30, 170, "#4a64c9"), correct: true }] },
+    ] },
+    { no: "三", instr: "圈出比較高的物件：每題5分，共20分", points: 5, how: "circle", qs: [
+      { n: 1, h: 250, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsSignpost(130, 230, 190), correct: true }, { node: () => wsSignpost(270, 230, 130), correct: false }] },
+      { n: 2, h: 250, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsTable(40, 230, 70, 140), correct: false }, { node: () => wsTable(220, 230, 130, 140), correct: true }] },
+      { n: 3, h: 250, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsLighthouse(130, 230, 140), correct: false }, { node: () => wsLighthouse(270, 230, 200), correct: true }] },
+      { n: 4, h: 250, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsVase(130, 230, 200, "#b388ff"), correct: true }, { node: () => wsVase(270, 230, 140, "#4ec9a8"), correct: false }] },
+    ] },
+    { no: "四", instr: "哪一個比較薄？在(　)裡打✓：每題5分，共20分", points: 5, how: "paren", mark: "✓", parenPos: "below", qs: [
+      { n: 1, h: 215, items: [{ node: () => wsPizza(40, 40, 34), correct: false }, { node: () => wsPizza(240, 40, 12), correct: true }] },
+      { n: 2, h: 215, items: [{ node: () => drawBook(30, 160, 14, WOOD, 130), correct: true }, { node: () => drawBook(220, 160, 44, WOOD, 130), correct: false }] },
+      { n: 3, h: 225, items: [{ node: () => drawBook(30, 170, 60, "#6b8cff", 130), correct: false }, { node: () => drawBook(220, 170, 16, "#ff6fa3", 130), correct: true }] },
+      { n: 4, h: 245, extra: () => [svg("rect", { x: 20, y: 190, width: 360, height: 10, rx: 4, fill: "#ddd" })], items: [{ node: () => wsBurger(120, 190, 3), correct: false }, { node: () => wsBurger(280, 190, 1), correct: true }] },
+    ] },
+    { no: "五", instr: "比一比，圈圈看：每題5分，共20分", points: 5, how: "circle", qs: [
+      { n: 1, prompt: "哪一枝筆最短？", h: 260, extra: () => [dash(30, 20, 30, 240)], items: [{ node: () => wsStarPencil(30, 40, 210), correct: false }, { node: () => drawPencil(30, 115, 150, "#ffb020"), correct: true }, { node: () => wsPen(30, 195, 330), correct: false }] },
+      { n: 2, prompt: "哪一棵樹最高？", h: 260, extra: () => [dash(20, 245, 380, 245)], items: [{ node: () => drawTree(80, 245, 220, "#4ec9a8"), correct: true }, { node: () => drawTree(200, 245, 150, "#4ec9a8"), correct: false }, { node: () => drawTree(320, 245, 185, "#4ec9a8"), correct: false }] },
+      { n: 3, prompt: "哪一塊吐司最厚？", h: 240, items: [{ node: () => drawBook(15, 210, 90, "#f3c98b", 95), correct: true }, { node: () => drawBook(145, 210, 14, "#f3c98b", 95), correct: false }, { node: () => drawBook(275, 210, 40, "#f3c98b", 95), correct: false }] },
+      { n: 4, prompt: "哪一本書最薄？", h: 240, extra: () => [dash(20, 225, 380, 225)], items: [{ node: () => wsBookUp(40, 225, 70, 170, "#6b8cff"), correct: false }, { node: () => wsBookUp(160, 225, 70, 170, "#4ec9a8"), correct: false }, { node: () => wsBookUp(290, 225, 40, 170, "#ff6fa3"), correct: true }] },
+    ] },
+    { no: "六", instr: "比一比，對的打✓，不對的打✗：每題2分，共4分", points: 2, how: "box", marks: ["✓", "✗"], qs: [
+      { n: 1, prompt: "兩枝筆一樣長", h: 280, answer: "✗", hint: "斜放的那枝比較長，兩邊對齊不代表一樣長",
+        extra: () => [dash(40, 20, 40, 200), dash(330, 20, 330, 200)], items: [{ node: () => { const g = drawPencil(40, 60, 310, "#ffb020"); g.setAttribute("transform", "rotate(-14 40 71)"); g.bbox = { x: 30, y: 0, w: 330, h: 90 }; return g; } }, { node: () => drawPencil(40, 150, 290, "#ffb020") }] },
+      { n: 2, prompt: "小珊比小玉高", h: 320, answer: "✓", hint: "小玉是站在椅子上，所以小珊比較高",
+        extra: () => [dash(20, 30, 380, 30), dash(20, 245, 380, 245)], items: [{ node: () => wsKid(140, 245, 215, "#6b8cff", 0) }, { node: () => wsKid(260, 245, 165, "#ff6fa3", 50) }] },
+    ] },
+  ],
+};
+const SHEETS = { u2: SHEET_U2 };
+const SHEET_TOTAL = s => s.sections.reduce((n, sec) => n + sec.qs.length, 0);
+
+const RED = "#e0393e", GREEN = "#1b9e6a";
+// (　) 括弧：回傳 <g>，有 setMark(text, color)
+function parenSlot(cx, cy) {
+  const g = svg("g", { class: "ws-paren" },
+    svg("rect", { x: cx - 34, y: cy - 24, width: 68, height: 48, rx: 10, class: "ws-paren__hit" }),
+    svg("text", { x: cx, y: cy + 9, "text-anchor": "middle", "font-size": 30, fill: INK, "font-weight": 700 }, document.createTextNode("(　)")));
+  const mark = svg("text", { x: cx, y: cy + 10, "text-anchor": "middle", "font-size": 30, "font-weight": 900, fill: RED });
+  g.appendChild(mark);
+  g.setMark = (txt, color = RED) => { mark.textContent = txt || ""; mark.setAttribute("fill", color); };
+  return g;
+}
+function parenPosFor(b, pos) { return pos === "right" ? { cx: b.x + b.w + 44, cy: b.y + b.h / 2 } : { cx: b.x + b.w / 2, cy: b.y + b.h + 26 }; }
+function circleMark(b, color) {
+  return svg("ellipse", { cx: b.x + b.w / 2, cy: b.y + b.h / 2, rx: b.w / 2 + 10, ry: b.h / 2 + 10, fill: "none", stroke: color, "stroke-width": 5, class: "ws-circle pop" });
+}
 
 function renderMathSheet(unitId) {
   const u = mathUnit(unitId) || MATH?.units[0];
-  const QS = WORKSHEET_U2;
+  const S = SHEETS[u.id] || SHEET_U2;
+  const total = SHEET_TOTAL(S);
   const root = el("div", {});
   const header = renderHeader("📄 評量卷原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
+  const app = el("main", { class: "app ws" });
   root.appendChild(app);
-  let i = 0, score = 0;
-  const wrong = [];
-  function render() {
-    if (i >= QS.length) {
-      app.replaceChildren(renderResultBlock(`答對 ${score} / ${QS.length}`, score === QS.length ? "🌟" : score >= QS.length * 0.8 ? "🎉" : "💪", "再寫一次", () => navigate(`#/mathplay/sheet?u=${u.id}`),
-        wrong.length ? el("div", { class: "zh-missed" }, el("div", { class: "zh-missed__title" }, t("第一次沒答對的題目：")), wrong.map(n => el("span", { class: "zh-chip" }, n))) : null));
-      return;
-    }
-    const q = QS[i];
-    progressLabel.textContent = `${i + 1}/${QS.length}・${score}分`;
-    let locked = false, tries = 0;
-    const feedback = el("div", { class: "quiz-feedback" });
-    const next = () => setTimeout(() => { i++; render(); }, 1200);
-    const finish = (ok) => {
-      if (ok) {
-        feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
-        if (tries === 0) score++; recordMath("sheet", true); dingCorrect(); locked = true; next();
-      } else {
-        tries++; if (tries === 1) wrong.push(q.no); recordMath("sheet", false); buzzWrong();
-        feedback.textContent = q.hint ? `再想想：${q.hint}` : "再看一次，仔細比比看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
+
+  const scoreBox = el("span", { class: "ws-score__num" }, "");
+  app.appendChild(el("div", { class: "ws-title" },
+    el("div", { class: "ws-title__main" }, t(S.title)),
+    el("div", { class: "ws-title__sub" }, t(S.sub)),
+    el("div", { class: "ws-score" }, t("得分"), scoreBox)));
+  app.appendChild(el("div", { class: "ws-howto" }, t("跟考卷一樣寫：點(　)寫記號、點圖把它圈起來。全部寫完按「交卷」")));
+
+  const answered = {}; // key -> 使用者答案
+  const graders = []; // 每小題 { key, points, check(), showAnswer(ok) }
+  let locked = false;
+  const update = () => { progressLabel.textContent = `寫了 ${Object.keys(answered).length}/${total} 題`; };
+
+  S.sections.forEach(sec => {
+    const secEl = el("section", { class: "ws-sec" });
+    secEl.appendChild(el("div", { class: "ws-sec__head" },
+      el("span", { class: "ws-sec__no" }, sec.no),
+      el("div", { class: "ws-sec__instr" }, t(sec.instr)),
+      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(sec.instr.replace(/[(　)]/g, "括弧").replace(/✓/g, "勾").replace(/○/g, "圈").replace(/✗/g, "叉")), "aria-label": "念題目" }, "🔊")));
+    const grid = el("div", { class: "ws-grid" });
+    sec.qs.forEach(q => {
+      const key = `${sec.no}-${q.n}`;
+      const w = q.w || 400;
+      const board = svg("svg", { viewBox: `0 0 ${w} ${q.h}`, class: "ws-board" });
+      (q.extra ? q.extra() : []).forEach(n => board.appendChild(n));
+      const nodes = q.items.map(it => { const node = it.node(); node.classList.add("m-item"); node.insertBefore(svg("rect", { x: node.bbox.x, y: node.bbox.y, width: node.bbox.w, height: node.bbox.h, rx: 14, class: "m-hit" }), node.firstChild); board.appendChild(node); return node; });
+      const badge = el("span", { class: "ws-q__badge" });
+      const card = el("div", { class: "ws-q" }, el("div", { class: "ws-q__head" }, el("span", { class: "ws-q__no" }, `${q.n}.`), q.prompt ? el("span", { class: "ws-q__prompt" }, t(q.prompt)) : null, badge));
+      const marksRow = el("div", { class: "ws-marks" });
+      let correctFn, showAnswer;
+      const pos = q.parenPos || sec.parenPos;
+
+      if (sec.how === "paren") {
+        const slots = q.items.map((it, i) => { const p = parenPosFor(nodes[i].bbox, pos); const s = parenSlot(p.cx, p.cy); board.appendChild(s); return s; });
+        const choose = i => { if (locked) return; slots.forEach((s, j) => s.setMark(j === i ? sec.mark : "")); answered[key] = i; update(); };
+        slots.forEach((s, i) => s.addEventListener("click", () => choose(i)));
+        nodes.forEach((n, i) => n.addEventListener("click", () => choose(i)));
+        correctFn = () => q.items[answered[key]]?.correct === true;
+        showAnswer = ok => { if (!ok) q.items.forEach((it, i) => { if (it.correct) slots[i].setMark(sec.mark, GREEN); }); };
+      } else if (sec.how === "circle") {
+        let ring = null;
+        const choose = i => { if (locked) return; ring?.remove(); ring = circleMark(nodes[i].bbox, RED); board.appendChild(ring); answered[key] = i; update(); };
+        nodes.forEach((n, i) => n.addEventListener("click", () => choose(i)));
+        correctFn = () => q.items[answered[key]]?.correct === true;
+        showAnswer = ok => { if (!ok) q.items.forEach((it, i) => { if (it.correct) board.appendChild(circleMark(nodes[i].bbox, GREEN)); }); };
+      } else { // mark2 / box：一個括弧或方框 + 兩個記號按鈕
+        let slot;
+        if (sec.how === "box") {
+          slot = svg("g", { class: "ws-paren" }, svg("rect", { x: w / 2 - 26, y: q.h - 56, width: 52, height: 52, rx: 8, fill: "#fff", stroke: INK, "stroke-width": 3 }));
+          const mark = svg("text", { x: w / 2, y: q.h - 17, "text-anchor": "middle", "font-size": 36, "font-weight": 900, fill: RED });
+          slot.appendChild(mark); slot.setMark = (txt, color = RED) => { mark.textContent = txt || ""; mark.setAttribute("fill", color); };
+          // 讓圖不要壓到方框：圖已在上方，方框放最下面
+        } else {
+          const b = nodes[0].bbox; const p = parenPosFor(b, "below"); slot = parenSlot(p.cx, p.cy);
+        }
+        board.appendChild(slot);
+        const btns = sec.marks.map(m => el("button", { class: "ws-mark" }, m));
+        const choose = m => { if (locked) return; slot.setMark(m); btns.forEach(b => b.classList.toggle("ws-mark--on", b.textContent === m)); answered[key] = m; update(); };
+        btns.forEach(b => b.addEventListener("click", () => choose(b.textContent)));
+        slot.addEventListener("click", () => { // 點括弧：輪流切換
+          const i = sec.marks.indexOf(answered[key]); choose(sec.marks[(i + 1) % sec.marks.length]);
+        });
+        marksRow.append(...btns);
+        correctFn = () => answered[key] === q.answer;
+        showAnswer = ok => { if (!ok) { slot.setMark(q.answer, GREEN); btns.forEach(b => b.classList.toggle("ws-mark--ok", b.textContent === q.answer)); } };
       }
-    };
-    const board = svg("svg", { viewBox: `0 0 400 ${q.h}`, class: "m-board" });
-    (q.extra ? q.extra() : []).forEach(n => board.appendChild(n));
-    q.items.forEach(it => {
-      const node = it.node(); const b = node.bbox;
-      node.classList.add("m-item");
-      node.insertBefore(svg("rect", { x: b.x, y: b.y, width: b.w, height: b.h, rx: 14, class: "m-hit" }), node.firstChild);
-      board.appendChild(node);
-      if (q.kind !== "pick") return;
-      node.addEventListener("click", () => { if (locked) return; node.classList.add(it.correct ? "m-item--ok" : "m-item--bad"); finish(!!it.correct); });
+      card.appendChild(board);
+      if (marksRow.childElementCount) card.appendChild(marksRow);
+      if (q.hint) { const h = el("div", { class: "ws-q__hint" }, t(`💡 ${q.hint}`)); h.hidden = true; card.appendChild(h); q._hintEl = h; }
+      graders.push({ key, points: sec.points, check: correctFn, show: ok => { showAnswer(ok); badge.textContent = ok ? "⭕" : "❌"; card.classList.add(ok ? "ws-q--ok" : "ws-q--bad"); if (!ok && q._hintEl) q._hintEl.hidden = false; } });
+      grid.appendChild(card);
     });
-    const parts = [el("div", { class: "m-card" },
-      el("div", { class: "m-no" }, `第${q.no.split("-")[0]}大題 第${q.no.split("-")[1]}題`),
-      el("div", { class: "m-prompt" }, q.prompt),
-      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.prompt), "aria-label": "念題目" }, "🔊"),
-      board)];
-    if (q.kind === "lc") {
-      parts.push(el("div", { class: "m-tf" }, ["直線", "曲線"].map(label => {
-        const b = el("button", { class: "m-tf__btn m-tf__btn--neutral" }, t(label));
-        b.addEventListener("click", () => { if (locked) return; if (label === q.answer) { b.classList.add("m-tf__btn--ok"); finish(true); } else { b.disabled = true; finish(false); } });
-        return b;
-      })));
-    } else if (q.kind === "tf") {
-      parts.push(el("div", { class: "m-tf" }, [[true, "✓ 對"], [false, "✗ 不對"]].map(([v, label]) => {
-        const b = el("button", { class: `m-tf__btn ${v ? "m-tf__btn--yes" : "m-tf__btn--no"}` }, t(label));
-        b.addEventListener("click", () => { if (locked) return; if (v === q.tf) { b.classList.add("m-tf__btn--ok"); finish(true); } else { b.disabled = true; finish(false); } });
-        return b;
-      })));
-    } else parts.push(el("div", { class: "m-hint" }, t("點一下你的答案")));
-    app.replaceChildren(...parts, feedback);
-    setTimeout(() => speakZh(q.prompt), 250);
-  }
-  render();
+    secEl.appendChild(grid);
+    app.appendChild(secEl);
+  });
+
+  const result = el("div", { class: "ws-result" });
+  const submit = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
+    const left = total - Object.keys(answered).length;
+    if (left > 0 && !submit.dataset.confirm) { submit.dataset.confirm = "1"; submit.replaceChildren(t(`還有${left}題沒寫，確定要交卷？`)); return; }
+    locked = true; submit.hidden = true;
+    let score = 0, got = 0; const wrong = [];
+    graders.forEach(g => { const ok = g.check(); g.show(ok); if (ok) { score += g.points; got++; } else wrong.push(g.key); recordMath("sheet", ok); });
+    scoreBox.textContent = String(score); scoreBox.classList.add("pop");
+    if (got === total) dingCorrect(); else buzzWrong();
+    result.replaceChildren(
+      el("div", { class: "ws-result__big" }, `${score} 分`),
+      el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} 題，錯的題目看一下綠色的正確答案 💪`)),
+      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("🔁 再寫一次")),
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
+    result.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => app.querySelector(".ws-q--bad")?.scrollIntoView({ behavior: "smooth", block: "center" }), 1200);
+  } }, t("✅ 交卷"));
+  app.appendChild(el("div", { class: "ws-submit" }, submit, result));
+  update();
   return root;
 }

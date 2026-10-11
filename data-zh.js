@@ -7,7 +7,8 @@ const ZH_DATA = {
   g1: {
     lessons: [
       {
-        id: "L6", title: "第六課 謝謝老師", titleBopo: "ㄉㄧˋ ㄌㄧㄡˋ ㄎㄜˋ ㄒㄧㄝˋ ㄒㄧㄝ˙ ㄌㄠˇ ㄕ", emoji: "🌺",
+        id: "L6", exam: { date: "2026-10-16", label: "圈詞聽寫", mode: "spell" },
+        title: "第六課 謝謝老師", titleBopo: "ㄉㄧˋ ㄌㄧㄡˋ ㄎㄜˋ ㄒㄧㄝˋ ㄒㄧㄝ˙ ㄌㄠˇ ㄕ", emoji: "🌺",
         text: [
           { zh: "我要送老師", bopo: "ㄨㄛˇ ㄧㄠˋ ㄙㄨㄥˋ ㄌㄠˇ ㄕ" },
           { zh: "一朵小紅花", bopo: "ㄧˋ ㄉㄨㄛˇ ㄒㄧㄠˇ ㄏㄨㄥˊ ㄏㄨㄚ" },

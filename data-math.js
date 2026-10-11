@@ -6,6 +6,7 @@ const MATH_DATA = {
     units: [
       {
         id: "u2", title: "第3回 比長短・高矮與厚薄", titleBopo: "ㄉㄧˋ ㄙㄢ ㄏㄨㄟˊ ㄅㄧˇ ㄔㄤˊ ㄉㄨㄢˇ ㄍㄠ ㄞˇ ㄩˇ ㄏㄡˋ ㄅㄛˊ", emoji: "📏",
+        exam: { date: "2026-10-13", label: "小考 第6、7頁", mode: "sheet" },
         topics: ["line", "length", "height", "thick", "most", "tf"],
       },
     ],
