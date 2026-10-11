@@ -1624,3 +1624,5 @@ body.focus .app { padding-top: 8px; }
 .m-tf__btn--no { background: var(--danger-soft); color: #b23b3b; }
 .m-tf__btn--ok { border-color: var(--success); }
 .m-tf__btn:disabled { opacity: 0.4; }
+.m-no { font-weight: 800; color: var(--ink-soft); font-size: calc(14px * var(--font-scale)); margin-bottom: 4px; }
+.m-tf__btn--neutral { background: var(--candy-2); color: var(--ink); }
