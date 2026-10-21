@@ -66,13 +66,15 @@ function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
   ZH.lessons.forEach(l => {
-    const learned = l.words.filter(w => prog[w.zh]?.mastered).length;
+    const items = l.kind === "chars" ? l.chars : l.words;
+    const learned = items.filter(w => prog[w.zh]?.mastered).length;
     wrap.appendChild(el("section", { class: "hero" },
       el("div", { class: "hero__head" },
         el("h1", { class: "hero__title" }, `${l.emoji} `, rubyEl(l.title, l.titleBopo, "span")),
-        el("div", { class: "hero__sub" }, `複習 ${l.words.length} 個詞・學會 ${learned} 個`)),
-      el("div", { class: "zh-chips" }, l.words.slice(0, 8).map(w =>
-        el("div", { class: `zh-chip ${prog[w.zh]?.mastered ? "zh-chip--done" : ""}` }, el("span", { class: "zh-chip__emoji" }, w.emoji), bopoWordEl(w.bopo, { class: "bopo-word--sm" })))),
+        el("div", { class: "hero__sub" }, l.kind === "chars" ? `${items.length} 個生字・學會 ${learned} 個` : `複習 ${items.length} 個詞・學會 ${learned} 個`)),
+      el("div", { class: "zh-chips" }, l.kind === "chars"
+        ? l.chars.slice(0, 9).map(c => el("div", { class: `zh-chip ${prog[c.zh]?.mastered ? "zh-chip--done" : ""}` }, rubyEl(c.zh, c.bopo, "span", { class: "zh-chip__char" })))
+        : l.words.slice(0, 8).map(w => el("div", { class: `zh-chip ${prog[w.zh]?.mastered ? "zh-chip--done" : ""}` }, el("span", { class: "zh-chip__emoji" }, w.emoji), bopoWordEl(w.bopo, { class: "bopo-word--sm" })))),
       el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-top: 12px;", onclick: () => navigate(`#/zh/${l.id}`) }, t("▶ 開始複習"))
     ));
   });
@@ -90,6 +92,7 @@ const ZH_MODES = [
 function renderZhLesson(id) {
   const l = zhLesson(id);
   if (!l) return renderEmpty("#/", "找不到這一課");
+  if (l.kind === "chars") return renderZhCharLesson(l);
   const prog = zhProgressOf();
   const root = el("div", {});
   root.appendChild(renderHeader(`${l.emoji} ${l.title}`, { back: "#/" }));
@@ -455,6 +458,7 @@ function renderZhSentence(l) {
 function renderZhPlay(mode, lessonId) {
   const l = zhLesson(lessonId);
   if (!l) return renderEmpty("#/", "找不到這一課");
+  if (l.kind === "chars") return renderZh2Play(mode, l);
   if (mode === "sentence" && !l.sentences) return renderZhLesson(l.id);
   return ({ card: renderZhCard, listen: renderZhListen, tone: renderZhTone, spell: renderZhSpell, write: renderZhWrite, sentence: renderZhSentence })[mode]?.(l) || renderZhLesson(l.id);
 }

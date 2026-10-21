@@ -1458,6 +1458,7 @@ body.focus .app { padding-top: 8px; }
 .write-step { font-weight: 800; margin: 2px 0 8px; color: var(--ink-soft); }
 .write-speak { width: 48px; height: 48px; font-size: 22px; margin: 0 auto 8px; }
 .write-guide--show { color: var(--ink); }
+.write-guide--show .c-guide__zh { color: var(--ink); }
 .write-guide--check { color: rgba(78, 201, 168, 0.55); }
 .write-canvas-wrap--look { background: white; }
 
@@ -1599,6 +1600,7 @@ body.focus .app { padding-top: 8px; }
 .zh-word-list .zh-row__bopo { font-size: calc(20px * var(--font-scale)); flex-wrap: wrap; }
 .zh-write-guide .bopo-word { color: inherit; }
 .zh-write-guide.write-guide--show { color: var(--ink); }
+.write-guide--show .c-guide__zh { color: var(--ink); }
 .zh-tone-slot { font-size: 24px; }
 
 /* =====================================================================
@@ -1676,3 +1678,28 @@ body.focus .app { padding-top: 8px; }
 .zh-sent__part--on { color: #1b7a5a; }
 .zh-sent__blank { display: inline-flex; align-items: center; min-width: 96px; min-height: 44px; padding: 0 12px; border: 2px dashed var(--line); border-radius: 12px; color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
 .zh-sent__blank--now { border-color: #ffb020; color: #b26a00; background: #fff7e6; }
+
+/* ===== 國語（二年級）生字 ===== */
+.c-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 600px) { .c-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.c-cell { background: white; border: 2px solid var(--line); border-radius: 14px; padding: 6px 4px 8px; text-align: center; min-height: 44px; }
+.c-cell--done { border-color: var(--success); }
+.c-cell__top { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); font-weight: 800; padding: 0 2px; }
+.c-cell__zh { font-size: calc(40px * var(--font-scale)); font-weight: 900; line-height: 1.2; margin: 2px 0; }
+.c-cell__word { font-size: calc(13px * var(--font-scale)); font-weight: 700; color: var(--ink-soft); }
+.zh-chip__char { font-size: calc(22px * var(--font-scale)); font-weight: 900; }
+.c-card, .c-qcard { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 18px 16px; text-align: center; }
+.c-card__zh { font-size: calc(96px * var(--font-scale)); font-weight: 900; line-height: 1.25; }
+.c-card__info { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; margin: 8px 0; font-weight: 800; color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
+.c-info { background: var(--candy-2); border-radius: 10px; padding: 6px 10px; }
+.c-card__word, .c-prompt { font-size: calc(30px * var(--font-scale)); font-weight: 900; line-height: 1.5; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px; }
+.c-target .zh-base { color: #d9480f; }
+.c-blank .zh-base { color: #b26a00; background: #fff7e6; border: 2px dashed #ffb020; border-radius: 8px; padding: 0 6px; }
+.c-big .zh-base { font-size: calc(56px * var(--font-scale)); }
+.c-opt__zh { font-size: calc(44px * var(--font-scale)); font-weight: 900; }
+.c-write-wrap { position: relative; }
+.c-write-grid { position: absolute; inset: 0; background-image: linear-gradient(to right, transparent 49.5%, #ddd 49.5%, #ddd 50.5%, transparent 50.5%), linear-gradient(to bottom, transparent 49.5%, #ddd 49.5%, #ddd 50.5%, transparent 50.5%); pointer-events: none; }
+.c-write-guide { display: flex; align-items: center; justify-content: center; }
+.c-guide__zh { font-size: 180px; font-weight: 700; line-height: 1; color: #c9c9d6; }
+.write-guide--check .c-guide__zh { color: rgba(27, 158, 106, 0.55); }
+.c-opt__num { font-size: calc(36px * var(--font-scale)); font-weight: 900; }
