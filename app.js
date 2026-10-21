@@ -771,7 +771,7 @@ function renderHome() {
   const subject = subjects.some(([id]) => id === profile?.subject) ? profile.subject : "en";
   // 國語／數學的考試提醒（資料裡有 exam 且日期在 10 天內）
   const reminders = [];
-  (ZH?.lessons || []).forEach(l => { if (l.exam) reminders.push({ ...l.exam, subject: "國語", title: l.title, hash: `#/zhplay/${l.exam.mode}?l=${l.id}` }); });
+  (ZH?.lessons || []).forEach(l => { if (l.exam) reminders.push({ ...l.exam, subject: "國語", title: l.title, hash: l.exam.mode === "lesson" ? `#/zh/${l.id}` : `#/zhplay/${l.exam.mode}?l=${l.id}` }); });
   (MATH?.units || []).forEach(u => { if (u.exam) reminders.push({ ...u.exam, subject: "數學", title: u.title, hash: `#/mathplay/${u.exam.mode}?u=${u.id}` }); });
   const today = dayISO();
   reminders.filter(r => r.date >= today && r.date <= addDays(10)).sort((a, b) => a.date.localeCompare(b.date)).forEach(r => {

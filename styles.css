@@ -1665,3 +1665,14 @@ body.focus .app { padding-top: 8px; }
 .exam-remind__icon { font-size: 24px; }
 .exam-remind__text { flex: 1; font-weight: 800; font-size: calc(16px * var(--font-scale)); line-height: 1.6; }
 .exam-remind__go { font-weight: 800; color: #b26a00; white-space: nowrap; }
+
+/* ===== 國語 第七課：符號列、連句子 ===== */
+.zh-symbols { display: flex; flex-wrap: wrap; gap: 10px; }
+.zh-symbol { min-width: 56px; min-height: 56px; border-radius: 14px; border: 2px solid var(--line); background: white; font-size: 30px; font-weight: 900; }
+.zh-symbol:active { background: var(--candy-2); }
+.zh-sent__wrap { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 16px; text-align: center; }
+.zh-sent { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 10px; margin: 10px 0; font-size: calc(22px * var(--font-scale)); font-weight: 800; }
+.zh-sent__emoji { font-size: 40px; }
+.zh-sent__part--on { color: #1b7a5a; }
+.zh-sent__blank { display: inline-flex; align-items: center; min-width: 96px; min-height: 44px; padding: 0 12px; border: 2px dashed var(--line); border-radius: 12px; color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
+.zh-sent__blank--now { border-color: #ffb020; color: #b26a00; background: #fff7e6; }

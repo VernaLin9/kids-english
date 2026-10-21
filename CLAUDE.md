@@ -18,13 +18,13 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-math → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔 |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
-| `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第 7 題「數一數」待家長確認） |
+| `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面） |
 | `data-math.js` | 數學 `MATH_DATA`（一年級上 第 3 回：比長短、高矮與厚薄；只列單元與題型，題目由程式隨機畫） |
 | `modes-math.js` | 數學：SVG 畫圖題（直線曲線、比長短、比高矮、比厚薄、三個比一比、對不對）、小考混合 12 題；`MATH_TOPICS` 每個題型一個 `gen()`，回傳 `{ prompt, items:[{node, correct}], tf? }`。`SHEET_U2` 是評量卷原題（p.6-7，六大題 22 小題；老師會考一模一樣的題目，所以版面和作答方式都照原卷：在 (　) 裡打 ✓／畫 ○、把圖圈起來、方框打 ✓✗，寫完按「交卷」照卷子配分算得分），`renderMathSheet()` 一頁顯示整張卷子 |
 | `app.js` | 共用工具、STORE（localStorage `partygo:store:v1`）、注音元件、首頁、設定面板、間隔重複、考前範圍 `nextExam()`、拆音節 `SYLLABLES` |
 | `modes-play.js` | 自選複習、單字卡、選擇題、聽力、字母拼拼樂、翻牌配對、跟著念 |
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |
-| `modes-zh.js` | 國語：注音卡、聽音選注音、加聲調、拼注音（聽寫）、寫注音 |
+| `modes-zh.js` | 國語：注音卡、聽音選注音、加聲調、拼注音（聽寫）、寫注音、連句子（課有 `sentences` 才出現） |
 | `parent.js` | 家長模式（PIN、每個小孩的年級／切換／統計）、router `route()` |
 
 ## 資料格式
