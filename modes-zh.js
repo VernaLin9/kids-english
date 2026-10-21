@@ -66,13 +66,15 @@ function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
   ZH.lessons.forEach(l => {
-    const learned = l.words.filter(w => prog[w.zh]?.mastered).length;
+    const items = l.kind === "chars" ? l.chars : l.words;
+    const learned = items.filter(w => prog[w.zh]?.mastered).length;
     wrap.appendChild(el("section", { class: "hero" },
       el("div", { class: "hero__head" },
         el("h1", { class: "hero__title" }, `${l.emoji} `, rubyEl(l.title, l.titleBopo, "span")),
-        el("div", { class: "hero__sub" }, `複習 ${l.words.length} 個詞・學會 ${learned} 個`)),
-      el("div", { class: "zh-chips" }, l.words.slice(0, 8).map(w =>
-        el("div", { class: `zh-chip ${prog[w.zh]?.mastered ? "zh-chip--done" : ""}` }, el("span", { class: "zh-chip__emoji" }, w.emoji), bopoWordEl(w.bopo, { class: "bopo-word--sm" })))),
+        el("div", { class: "hero__sub" }, l.kind === "chars" ? `${items.length} 個生字・學會 ${learned} 個` : `複習 ${items.length} 個詞・學會 ${learned} 個`)),
+      el("div", { class: "zh-chips" }, l.kind === "chars"
+        ? l.chars.slice(0, 9).map(c => el("div", { class: `zh-chip ${prog[c.zh]?.mastered ? "zh-chip--done" : ""}` }, rubyEl(c.zh, c.bopo, "span", { class: "zh-chip__char" })))
+        : l.words.slice(0, 8).map(w => el("div", { class: `zh-chip ${prog[w.zh]?.mastered ? "zh-chip--done" : ""}` }, el("span", { class: "zh-chip__emoji" }, w.emoji), bopoWordEl(w.bopo, { class: "bopo-word--sm" })))),
       el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-top: 12px;", onclick: () => navigate(`#/zh/${l.id}`) }, t("▶ 開始複習"))
     ));
   });
@@ -90,18 +92,24 @@ const ZH_MODES = [
 function renderZhLesson(id) {
   const l = zhLesson(id);
   if (!l) return renderEmpty("#/", "找不到這一課");
+  if (l.kind === "chars") return renderZhCharLesson(l);
   const prog = zhProgressOf();
   const root = el("div", {});
   root.appendChild(renderHeader(`${l.emoji} ${l.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("🎮 選一種練習")),
-    el("div", { class: "mode-grid" }, ZH_MODES.map(([m, emoji, label]) =>
+    el("div", { class: "mode-grid" }, [...ZH_MODES, ...(l.sentences ? [["sentence", "🔗", "連句子"]] : [])].map(([m, emoji, label]) =>
       el("button", { class: "mode-btn", onclick: () => navigate(`#/zhplay/${m}?l=${l.id}`) }, el("span", { class: "mode-btn__emoji" }, emoji), t(label))))));
+
+  // 這一課練的注音符號（點一個念一個）
+  if (l.symbols) app.appendChild(el("section", { class: "section" },
+    el("div", { class: "section__title" }, t("ㄅ 這課的注音符號（點一個聽一個）")),
+    el("div", { class: "zh-symbols" }, l.symbols.map(sy => el("button", { class: "zh-symbol", onclick: () => speakZh(ZH_SYMBOL_SAY[sy] || sy) }, sy)))));
 
   // 課文：點一句念一句
   app.appendChild(el("section", { class: "section" },
-    el("div", { class: "section__title" }, t("📖 課文（點一句聽一句）")),
+    el("div", { class: "section__title" }, t(l.textTitle || "📖 課文（點一句聽一句）")),
     el("div", { class: "zh-text" }, l.text.map(line =>
       el("button", { class: "zh-text__line", onclick: () => speakZh(line.zh) }, rubyEl(line.zh, line.bopo, "span"))))));
 
@@ -390,8 +398,67 @@ function renderZhWrite(l) {
   return root;
 }
 
+// 注音符號單獨念的時候，用有這個音的字讓 TTS 念得出來
+const ZH_SYMBOL_SAY = { "ㄅ": "ㄅ", "ㄆ": "ㄆ", "ㄇ": "ㄇ", "ㄈ": "ㄈ", "ㄉ": "ㄉ", "ㄊ": "ㄊ", "ㄋ": "ㄋ", "ㄌ": "ㄌ", "ㄍ": "ㄍ", "ㄎ": "ㄎ", "ㄏ": "ㄏ", "ㄐ": "ㄐ", "ㄑ": "ㄑ", "ㄒ": "ㄒ", "ㄓ": "ㄓ", "ㄔ": "ㄔ", "ㄕ": "ㄕ", "ㄖ": "ㄖ", "ㄗ": "ㄗ", "ㄘ": "ㄘ", "ㄙ": "ㄙ", "ㄚ": "啊", "ㄛ": "喔", "ㄜ": "鵝", "ㄝ": "ㄝ", "ㄞ": "哀", "ㄟ": "ㄟ", "ㄠ": "凹", "ㄡ": "歐", "ㄢ": "安", "ㄣ": "恩", "ㄤ": "骯", "ㄥ": "ㄥ", "ㄦ": "兒", "ㄧ": "衣", "ㄨ": "屋", "ㄩ": "迂" };
+
+// === 🔗 連句子（習作 p.68）：誰 → 在哪裡 → 做什麼，照課本的三段選 ===
+function renderZhSentence(l) {
+  const { root, app, progressLabel } = zhShell(l, "🔗 連句子");
+  const qs = shuffle(l.sentences);
+  let i = 0, score = 0;
+  const missed = new Set();
+  const render = () => {
+    if (i >= qs.length) {
+      app.replaceChildren(renderResultBlock(`答對 ${score} / ${qs.length}`, score === qs.length ? "🌟" : score >= qs.length * 0.7 ? "🎉" : "💪", "再來一次", () => navigate(`#/zhplay/sentence?l=${l.id}`),
+        missed.size ? el("div", { class: "zh-missed" }, el("div", { class: "zh-missed__title" }, t("要再練的：")), [...missed].map(zh => el("span", { class: "zh-chip" }, zh))) : null));
+      return;
+    }
+    const q = qs[i];
+    progressLabel.textContent = `${i + 1}/${qs.length}`;
+    let step = 0, wrongHere = false;
+    const picked = [];
+    const line = el("div", { class: "zh-sent" });
+    const opts = el("div", { class: "zh-opts" });
+    const feedback = el("div", { class: "quiz-feedback" });
+    const sayAll = () => speakZh(`${q.who.zh}${picked.map(p => p.zh).join("")}`);
+    const drawLine = () => {
+      line.replaceChildren(el("span", { class: "zh-sent__emoji" }, q.emoji), rubyEl(q.who.zh, q.who.bopo, "span", { class: "zh-sent__part" }),
+        ...["where", "what"].map((k, idx) => picked[idx] ? rubyEl(picked[idx].zh, picked[idx].bopo, "span", { class: "zh-sent__part zh-sent__part--on" }) : el("span", { class: `zh-sent__blank ${step === idx ? "zh-sent__blank--now" : ""}` }, idx === 0 ? "在哪裡？" : "做什麼？")));
+    };
+    const ask = () => {
+      drawLine();
+      if (step > 1) { // 完成
+        feedback.textContent = "連好了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
+        if (!wrongHere) score++; else missed.add(q.who.zh);
+        recordZh(q.who.zh, !wrongHere); dingCorrect(); sayAll();
+        opts.replaceChildren(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { i++; render(); } }, t("下一題 ▶")));
+        return;
+      }
+      const key = step === 0 ? "where" : "what";
+      const answer = q[key];
+      const choices = shuffle(l.sentences.map(s => s[key]));
+      opts.replaceChildren(...choices.map(c => {
+        const b = el("button", { class: "zh-opt" }, rubyEl(c.zh, c.bopo, "span"));
+        b.addEventListener("click", () => {
+          if (c.zh === answer.zh) { b.classList.add("zh-opt--ok"); picked.push(c); step++; speakZh(c.zh); setTimeout(ask, 500); }
+          else { b.classList.add("zh-opt--bad"); b.disabled = true; wrongHere = true; buzzWrong(); feedback.textContent = "再想想，看圖裡的動物在哪裡"; feedback.className = "quiz-feedback quiz-feedback--wrong shake"; }
+        });
+        return b;
+      }));
+    };
+    app.replaceChildren(el("div", { class: "zh-sent__wrap" }, el("div", { class: "m-hint" }, t("照習作第68頁：先選在哪裡，再選做什麼")), line,
+      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.who.zh), "aria-label": "念" }, "🔊")), opts, feedback);
+    ask();
+    setTimeout(() => speakZh(q.who.zh), 250);
+  };
+  render();
+  return root;
+}
+
 function renderZhPlay(mode, lessonId) {
   const l = zhLesson(lessonId);
   if (!l) return renderEmpty("#/", "找不到這一課");
-  return ({ card: renderZhCard, listen: renderZhListen, tone: renderZhTone, spell: renderZhSpell, write: renderZhWrite })[mode]?.(l) || renderZhLesson(l.id);
+  if (l.kind === "chars") return renderZh2Play(mode, l);
+  if (mode === "sentence" && !l.sentences) return renderZhLesson(l.id);
+  return ({ card: renderZhCard, listen: renderZhListen, tone: renderZhTone, spell: renderZhSpell, write: renderZhWrite, sentence: renderZhSentence })[mode]?.(l) || renderZhLesson(l.id);
 }
