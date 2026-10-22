@@ -435,6 +435,8 @@ function route() {
   else if (path[0] === "math" && path[1]) view = renderMathUnit(path[1]);
   else if (path[0] === "mathplay" && path[1]) view = renderMathPlay(path[1], query.u);
   else if (path[0] === "zhplay" && path[1]) view = renderZhPlay(path[1], query.l);
+  else if (path[0] === "games") view = renderGames(query.s);
+  else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s);
   else if (path[0] === "practice" && path[1]) view = renderListPage(decodeURIComponent(path[1]));
   else if (path[0] === "week" && path[1]) view = renderListPage(`week-${path[1]}`);
   else if (path[0] === "category" && path[1]) view = renderListPage(`category-${path[1]}`);
