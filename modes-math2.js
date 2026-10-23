@@ -1,5 +1,5 @@
 // 數學（二年級，南一版二上）：單元 kind:"calc"
-// 第4單元 加減的關係與應用（課本 p.52-65）、第5單元 容量（課本 p.68 起）
+// 第4單元 加減的關係與應用（課本原題 p.54-63）、第5單元 容量（課本 p.68 起）
 // 每題：{ topic, text, visual?, steps:[{ type:"choice", label, options:[{label, ok}] } | { type:"num", label, answer, unit } | { type:"pick3" }], hint }
 // 一題所有步驟第一次就對才算分；答錯會顯示提示，可以再試
 
@@ -228,28 +228,62 @@ const MATH2_TOPICS = {
 
 // === 課本原題（第4單元 p.54-63，題目、數字、順序照課本）===
 const BOOK_U4 = [
-  { page: 54, text: "籃子裡有7個藍色球和5個紅色球，全部有幾個球？", visual: () => barModel([{ label: "藍", val: 7 }, { label: "紅", val: 5 }], { label: "全部", val: null }, "個"), steps: [{ type: "num", label: "7 + 5 = ?", answer: 12, unit: "個" }] },
+  { page: 54, text: "籃子裡有7個藍色球和5個紅色球。①籃子裡全部有幾個球？", visual: () => barModel([{ label: "藍", val: 7 }, { label: "紅", val: 5 }], { label: "全部", val: null }, "個"), steps: [{ type: "num", label: "7 + 5 = ?", answer: 12, unit: "個" }] },
   { page: 54, text: "籃子裡有12個球，拿走5個紅色球後，還有幾個球？", visual: () => bondEl(12, "?", 5, "left"), steps: [{ type: "num", label: "12 − 5 = ?", answer: 7, unit: "個" }] },
   { page: 55, text: "籃子裡有12個球，拿走7個藍色球後，還有幾個球？", visual: () => bondEl(12, 7, "?", "right"), steps: [{ type: "num", label: "12 − 7 = ?", answer: 5, unit: "個" }] },
-  { page: 55, text: "一條長24公分的繩子剪成兩段，一段是8公分，另一段是幾公分？", visual: () => barModel([{ label: "", val: null }, { label: "", val: 8 }], { label: "", val: 24 }, "公分"), steps: [{ type: "num", label: "24 − 8 = ?", answer: 16, unit: "公分" }] },
-  { page: 55, text: "一條長24公分的繩子剪成兩段，一段是16公分，另一段是幾公分？", visual: () => barModel([{ label: "", val: 16 }, { label: "", val: null }], { label: "", val: 24 }, "公分"), steps: [{ type: "num", label: "24 − 16 = ?", answer: 8, unit: "公分" }] },
-  { page: 55, text: "繩子剪成16公分和8公分兩段，原來是幾公分？", visual: () => barModel([{ label: "", val: 16 }, { label: "", val: 8 }], { label: "", val: null }, "公分"), steps: [{ type: "num", label: "16 + 8 = ?", answer: 24, unit: "公分" }] },
+  { page: 55, text: "一條長24公分的繩子剪成兩段。①", visual: () => barModel([{ label: "", val: null }, { label: "", val: 8 }], { label: "", val: 24 }, "公分"), steps: [{ type: "num", label: "24 − 8 = ?", answer: 16, unit: "公分" }] },
+  { page: 55, text: "一條長24公分的繩子剪成兩段。②", visual: () => barModel([{ label: "", val: 16 }, { label: "", val: null }], { label: "", val: 24 }, "公分"), steps: [{ type: "num", label: "24 − 16 = ?", answer: 8, unit: "公分" }] },
+  { page: 55, text: "一條長24公分的繩子剪成兩段。③", visual: () => barModel([{ label: "", val: 16 }, { label: "", val: 8 }], { label: "", val: null }, "公分"), steps: [{ type: "num", label: "16 + 8 = ?", answer: 24, unit: "公分" }, { type: "num", label: "8 + 16 = ?", answer: 24, unit: "公分" }] },
   { page: 56, text: "蒸籠裡有13個肉包和一些菜包，合起來有28個，蒸籠裡有幾個菜包？", visual: () => barModel([{ label: "肉包", val: 13 }, { label: "菜包", val: null }], { label: "合起來", val: 28 }, "個"), steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(28, 13) }, { type: "num", label: "② 28 − 13 = ?", answer: 15, unit: "個" }] },
   { page: 57, text: "袋子裡原有28片餅乾，小悅再放進一些後，全部有34片，小悅放進幾片餅乾？", visual: () => barModel([{ label: "原有", val: 28 }, { label: "再放", val: null }], { label: "全部有", val: 34 }, "片"), steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(34, 28) }, { type: "num", label: "② 34 − 28 = ?", answer: 6, unit: "片" }] },
-  { page: 57, text: "樂樂有65元，最少要再存幾元，才可以買一個90元的蛋糕？", visual: () => barModel([{ label: "有", val: 65 }, { label: "再存", val: null }], { label: "蛋糕", val: 90 }, "元"), steps: [{ type: "choice", label: "① 要用哪一個算式？（大的數減小的數）", options: subEqOptions(90, 65) }, { type: "num", label: "② 90 − 65 = ?", answer: 25, unit: "元" }] },
+  { page: 57, text: "樂樂有65元，最少要再存幾元，才可以買一個90元的蛋糕？", visual: () => barModel([{ label: "有", val: 65 }, { label: "再存", val: null }], { label: "", val: 90 }, "元"), steps: [{ type: "choice", label: "① 要用哪一個算式？（大的數減小的數）", options: subEqOptions(90, 65) }, { type: "num", label: "② 90 − 65 = ?", answer: 25, unit: "元" }] },
   { page: 58, text: "青岳用50元買了一包色紙，找回30元，一包色紙是幾元？", visual: () => barModel([{ label: "色紙", val: null }, { label: "找回", val: 30 }], { label: "原有", val: 50 }, "元"), steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(50, 30) }, { type: "num", label: "② 50 − 30 = ?", answer: 20, unit: "元" }] },
   { page: 59, text: "架子上有58包書套，賣掉一些後，還剩下35包，賣掉的書套有幾包？", visual: () => barModel([{ label: "賣掉", val: null }, { label: "剩下", val: 35 }], { label: "原有", val: 58 }, "包"), steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(58, 35) }, { type: "num", label: "② 答案是多少？", answer: 23, unit: "包" }] },
   { page: 59, text: "芊芊的集點卡有48點，兌換筆記本用掉一些後，還剩下17點，兌換筆記本用掉幾點？", visual: () => barModel([{ label: "用掉", val: null }, { label: "剩下", val: 17 }], { label: "原有", val: 48 }, "點"), steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(48, 17) }, { type: "num", label: "② 答案是多少？", answer: 31, unit: "點" }] },
   { page: 60, text: "洋洋有50元，買餅乾花了38元，還剩下幾元？", visual: () => vertEl(50, "−", 38), steps: [{ type: "num", label: "50 − 38 = ?", answer: 12, unit: "元" }, { type: "choice", label: "驗算：要用哪一個？", options: shuffle([{ label: "12 + 38 = 50", ok: true }, { label: "50 + 38 = 88", ok: false }, { label: "38 − 12 = 26", ok: false }]) }] },
   { page: 61, text: "商店裡有牛奶和果汁共31罐，其中果汁有13罐，牛奶有幾罐？", visual: () => barModel([{ label: "果汁", val: 13 }, { label: "牛奶", val: null }], { label: "共", val: 31 }, "罐"), steps: [{ type: "num", label: "31 − 13 = ?", answer: 18, unit: "罐" }, { type: "choice", label: "驗算：18 + 13 和 13 + 18 都等於 31，兩個人都算對了嗎？", options: [{ label: "✓ 都對", ok: true }, { label: "✗ 只有一個對", ok: false }] }] },
   { page: 61, text: "試試看：先用直式算算看，再驗算。65 − 37 = ?", visual: () => vertEl(65, "−", 37), steps: [{ type: "num", label: "65 − 37 = ?", answer: 28 }, { type: "num", label: "驗算：28 + 37 = ?", answer: 65 }] },
-  { page: 62, text: "小藍抽到7和8。7 + 8 比 12 大還是小？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "7 + 8"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "12")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === ">" })) }] },
-  { page: 62, text: "小綠抽到9和2。9 + 2 比 12 大還是小？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "9 + 2"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "12")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === "<" })) }] },
-  { page: 63, text: "小棕抽到10和5，小藍抽到7和8，誰的總分比較多？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "10 + 5"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "7 + 8")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === "=" })) }] },
-  { page: 63, text: "總分比12大才能進入決賽（小藍7+8、小綠9+2、小棕10+5）。誰可以進入決賽？", visual: null, steps: [{ type: "choice", label: "", options: shuffle([{ label: "小藍和小棕", ok: true }, { label: "小綠和小棕", ok: false }, { label: "三個人都可以", ok: false }]) }] },
+  { page: 62, text: "小藍抽到7和8。小藍的總分比12大還是小？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "7 + 8"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "12")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === ">" })) }] },
+  { page: 62, text: "小綠抽到9和2。小綠的總分比12大還是小？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "9 + 2"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "12")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === "<" })) }] },
+  { page: 63, text: "小棕抽到10和5，小藍抽到7和8。小棕和小藍的總分誰比誰多？", visual: () => el("div", { class: "b2-cmp" }, el("span", {}, "10 + 5"), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, "7 + 8")), steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === "=" })) }] },
+  { page: 63, text: "總分比12大才能進入決賽（小藍7+8、小綠9+2、小棕10+5）。誰可以進入決賽？圈圈看。", visual: null, steps: [{ type: "choice", label: "", options: shuffle([{ label: "小藍和小棕", ok: true }, { label: "小綠和小棕", ok: false }, { label: "三個人都可以", ok: false }]) }] },
   ...[["9 + 8", "18", "<"], ["12 + 14", "25", ">"], ["26 + 17", "43", "="], ["11 + 39", "35 + 15", "="], ["69 − 15", "55", "<"], ["50 − 24", "25", ">"]].map(([l, r, s], i) => ({
     page: 63, text: `試試看 ${["①", "②", "③", "④", "⑤", "⑥"][i]}：在□中填入 >、< 或 =`, visual: () => el("div", { class: "b2-cmp" }, el("span", {}, l), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, r)),
     steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(x => ({ label: x, ok: x === s })) }] })),
+  // 練習四（p.66-67）
+  { page: 66, text: "練習四 1. 看圖填填看。", visual: () => barModel([{ label: "", val: 14 }, { label: "", val: 18 }], { label: "", val: 32 }, ""),
+    steps: [{ type: "num", label: "14 + 18 = ?", answer: 32 }, { type: "num", label: "18 + 14 = ?", answer: 32 }, { type: "num", label: "32 − 18 = ?", answer: 14 }, { type: "num", label: "32 − 14 = ?", answer: 18 }] },
+  ...[["18 + 15", "32", ">"], ["26", "21 + 5", "="], ["17 + 13", "29", ">"], ["37 + 38", "85", "<"]].map(([l, r, s], i) => ({
+    page: 66, text: `練習四 2. 在□中填入 >、< 或 =（${["①", "②", "③", "④"][i]}）`, visual: () => el("div", { class: "b2-cmp" }, el("span", {}, l), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, r)),
+    steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(x => ({ label: x, ok: x === s })) }] })),
+  { page: 66, text: "練習四 3. 用驗算檢查看看，阿力算對了嗎？阿力：34 − 18 = 16", visual: () => el("div", { class: "b2-eq b2-eq--sm" }, "16 + 18 = ?"),
+    steps: [{ type: "num", label: "驗算：16 + 18 = ?", answer: 34 }, { type: "choice", label: "對的畫○，錯的打×", options: [{ label: "○ 算對了", ok: true }, { label: "× 算錯了", ok: false }] }] },
+  { page: 66, text: "練習四 3. 用驗算檢查看看，阿宏算對了嗎？阿宏：65 − 47 = 13", visual: () => el("div", { class: "b2-eq b2-eq--sm" }, "13 + 47 = ?"),
+    steps: [{ type: "num", label: "驗算：13 + 47 = ?", answer: 60 }, { type: "choice", label: "要等於 65 才對，對的畫○，錯的打×", options: [{ label: "○ 算對了", ok: false }, { label: "× 算錯了", ok: true }] }] },
+  { page: 67, text: "練習四 4. 把做法用算式記下來。①袋子裡有草莓果凍和葡萄果凍共33個，其中草莓果凍有23個，葡萄果凍有幾個？", visual: () => barModel([{ label: "草莓", val: 23 }, { label: "葡萄", val: null }], { label: "共", val: 33 }, "個"),
+    steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(33, 23) }, { type: "num", label: "② 33 − 23 = ?", answer: 10, unit: "個" }] },
+  { page: 67, text: "練習四 4. ②鍋子裡原有27顆湯圓，媽媽再放入一些後，共有53顆湯圓，媽媽放入幾顆湯圓？", visual: () => barModel([{ label: "原有", val: 27 }, { label: "放入", val: null }], { label: "共有", val: 53 }, "顆"),
+    steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(53, 27) }, { type: "num", label: "② 53 − 27 = ?", answer: 26, unit: "顆" }] },
+  { page: 67, text: "練習四 4. ③奶奶帶65元去買了一把青菜，剩下20元，一把青菜是幾元？", visual: () => barModel([{ label: "青菜", val: null }, { label: "剩下", val: 20 }], { label: "帶", val: 65 }, "元"),
+    steps: [{ type: "choice", label: "① 要用哪一個算式？", options: subEqOptions(65, 20) }, { type: "num", label: "② 65 − 20 = ?", answer: 45, unit: "元" }] },
+];
+
+// === 課本原題（第5單元 容量 p.71-78，能用文字和數字表達的題目；圖要看課本的題目沒有收）===
+const cupsRow = (n, label) => el("div", { class: "b2-cups" }, el("span", { class: "b2-cups__label" }, t(label)), el("span", { class: "b2-cups__cups", "data-nobopo": "" }, "🥛".repeat(n)), el("span", { class: "b2-cups__n", "data-nobopo": "" }, `${n}`));
+const BOOK_U5 = [
+  { page: 71, text: "把水倒進杯子，杯子已經裝滿了。想想看，這個杯子還能不能再裝水？", visual: null,
+    steps: [{ type: "choice", label: "", options: shuffle([{ label: "不能，再倒會溢出來", ok: true }, { label: "能，還可以再倒", ok: false }]) }] },
+  { page: 74, text: "④ 把甲杯的水倒入乙杯，再把乙杯的水倒回甲杯。水量會減少或增加嗎？", visual: null,
+    steps: [{ type: "choice", label: "", options: shuffle([{ label: "不會，水量一樣多", ok: true }, { label: "會減少", ok: false }, { label: "會增加", ok: false }]) }] },
+  { page: 75, text: "⑥ 有一瓶綠茶和一瓶豆漿，用一樣大的杯子倒倒看，哪一瓶的量比較多？", visual: () => el("div", {}, cupsRow(5, "豆漿"), cupsRow(6, "綠茶")),
+    steps: [{ type: "choice", label: "", options: [{ label: "綠茶", ok: true }, { label: "豆漿", ok: false }] }] },
+  ...[["⚽", "球", false], ["🚿", "澆水壺", true], ["🥤", "紙杯", true], ["🪣", "水桶", true]].map(([e, name, ok]) => ({
+    page: 76, text: `練習五 1. 下面物品，哪些是容器？${e} ${name}是容器嗎？`, visual: null,
+    steps: [{ type: "choice", label: "是容器的打✓，不是的打×", options: [{ label: "✓ 是容器", ok }, { label: "× 不是容器", ok: !ok }] }] })),
+  { page: 77, text: "練習五 4. 看圖填填看。ㄅ瓶的水倒滿3杯，ㄆ瓶的水倒滿6杯。ㄅ瓶的容量比ㄆ瓶的容量（　）。", visual: () => el("div", {}, cupsRow(3, "ㄅ瓶"), cupsRow(6, "ㄆ瓶")),
+    steps: [{ type: "choice", label: "", options: [{ label: "少", ok: true }, { label: "多", ok: false }] }] },
+  { page: 78, text: "加油小站 ① 比一比，容量最多的是哪一個？", visual: () => el("div", {}, cupsRow(5, "澆水壺"), cupsRow(2, "水瓢"), cupsRow(8, "木桶")),
+    steps: [{ type: "choice", label: "", options: shuffle([{ label: "木桶", ok: true }, { label: "澆水壺", ok: false }, { label: "水瓢", ok: false }]) }] },
 ];
 
 // === 數字鍵盤 ===
@@ -415,4 +449,4 @@ function renderMath2Play(topic, u) {
 }
 
 // 課本原題接到單元上（data-math.js 比這個檔先載入）
-(MATH_DATA.g2?.units || []).forEach(u => { if (u.bookId === "u4") u.book = BOOK_U4; });
+(MATH_DATA.g2?.units || []).forEach(u => { if (u.bookId === "u4") u.book = BOOK_U4; if (u.bookId === "u5") u.book = BOOK_U5; });

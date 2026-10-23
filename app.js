@@ -848,7 +848,7 @@ function renderHome() {
   // 🎮 遊樂場（英文、國語都能玩）
   app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
     el("span", { class: "g-home__emoji" }, "🎮"),
-    el("span", { class: "g-home__text" }, t("遊戲"), el("span", { class: "g-home__sub" }, t("陀螺對戰・養寵物・記憶地圖（跟著要考的那一課）"))),
+    el("span", { class: "g-home__text" }, t("遊戲"), el("span", { class: "g-home__sub" }, t("陀螺對戰・養寵物・夜市（跟著要考的那一課）"))),
     el("span", { class: "g-home__go" }, "▶")));
   if (subject === "zh" || subject === "math") {
     app.appendChild(subject === "zh" ? renderZhHomeSection() : renderMathHomeSection());

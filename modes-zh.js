@@ -175,8 +175,13 @@ function renderZhLesson(id) {
   // 課文：點一句念一句（沒有課文就不顯示）
   if (l.text?.length) app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t(l.textTitle || "📖 課文（點一句聽一句）")),
-    el("div", { class: "zh-text" }, l.text.map(line =>
-      el("button", { class: "zh-text__line", onclick: () => speakZh(line.zh) }, rubyEl(line.zh, line.bopo, "span"))))));
+    el("div", { class: "zh-text" }, l.text.map(line => {
+      // bopoOnly：課本只有注音（一年級），照課本只顯示注音；answer：猜謎的答案，點一下才打開
+      const b = el("button", { class: "zh-text__line", onclick: () => { speakZh(line.zh); if (line.answer && !b.querySelector(".zh-answer")) b.append(el("span", { class: "zh-answer" }, t("　答案："), rubyEl(line.answer.zh, line.answer.bopo, "span"))); } },
+        line.bopoOnly ? bopoWordEl(line.bopo, { class: "bopo-word--lg" }) : rubyEl(line.zh, line.bopo, "span"),
+        line.answer ? el("span", { class: "zh-answer__hint" }, t("（點一下看答案）")) : null);
+      return b;
+    }))));
 
   if (l.pending?.length) app.appendChild(el("div", { class: "b2-note" }, l.pending.map(p => el("div", {}, t(`第${p.no}題 `), bopoWordEl(p.bopo, { class: "bopo-word--sm" }), t(`：${p.note}，還沒放進練習`)))));
   app.appendChild(el("section", { class: "section" },
@@ -465,7 +470,7 @@ function renderZhWrite(l) {
 }
 
 // 注音符號單獨念的時候，用有這個音的字讓 TTS 念得出來
-const ZH_SYMBOL_SAY = { "ㄅ": "ㄅ", "ㄆ": "ㄆ", "ㄇ": "ㄇ", "ㄈ": "ㄈ", "ㄉ": "ㄉ", "ㄊ": "ㄊ", "ㄋ": "ㄋ", "ㄌ": "ㄌ", "ㄍ": "ㄍ", "ㄎ": "ㄎ", "ㄏ": "ㄏ", "ㄐ": "ㄐ", "ㄑ": "ㄑ", "ㄒ": "ㄒ", "ㄓ": "ㄓ", "ㄔ": "ㄔ", "ㄕ": "ㄕ", "ㄖ": "ㄖ", "ㄗ": "ㄗ", "ㄘ": "ㄘ", "ㄙ": "ㄙ", "ㄚ": "啊", "ㄛ": "喔", "ㄜ": "鵝", "ㄝ": "ㄝ", "ㄞ": "哀", "ㄟ": "ㄟ", "ㄠ": "凹", "ㄡ": "歐", "ㄢ": "安", "ㄣ": "恩", "ㄤ": "骯", "ㄥ": "ㄥ", "ㄦ": "兒", "ㄧ": "衣", "ㄨ": "屋", "ㄩ": "迂" };
+const ZH_SYMBOL_SAY = { "ㄧㄢ": "煙", "ㄧㄥ": "英", "ㄨㄞ": "歪", "ㄨㄟ": "威", "ㄅ": "ㄅ", "ㄆ": "ㄆ", "ㄇ": "ㄇ", "ㄈ": "ㄈ", "ㄉ": "ㄉ", "ㄊ": "ㄊ", "ㄋ": "ㄋ", "ㄌ": "ㄌ", "ㄍ": "ㄍ", "ㄎ": "ㄎ", "ㄏ": "ㄏ", "ㄐ": "ㄐ", "ㄑ": "ㄑ", "ㄒ": "ㄒ", "ㄓ": "ㄓ", "ㄔ": "ㄔ", "ㄕ": "ㄕ", "ㄖ": "ㄖ", "ㄗ": "ㄗ", "ㄘ": "ㄘ", "ㄙ": "ㄙ", "ㄚ": "啊", "ㄛ": "喔", "ㄜ": "鵝", "ㄝ": "ㄝ", "ㄞ": "哀", "ㄟ": "ㄟ", "ㄠ": "凹", "ㄡ": "歐", "ㄢ": "安", "ㄣ": "恩", "ㄤ": "骯", "ㄥ": "ㄥ", "ㄦ": "兒", "ㄧ": "衣", "ㄨ": "屋", "ㄩ": "迂" };
 
 // === 🔗 連句子（習作 p.68）：誰 → 在哪裡 → 做什麼，照課本的三段選 ===
 function renderZhSentence(l) {

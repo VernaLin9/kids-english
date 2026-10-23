@@ -15,14 +15,14 @@ const MATH_DATA = {
   g2: {
     units: [
       {
-        id: "u4", kind: "calc", bookId: "u4", pages: "54-63",
+        id: "u4", kind: "calc", bookId: "u4", pages: "54-67",
         title: "第4單元 加減的關係與應用", titleBopo: "ㄉㄧˋ ㄙˋ ㄉㄢ ㄩㄢˊ ㄐㄧㄚ ㄐㄧㄢˇ ㄉㄜ˙ ㄍㄨㄢ ㄒㄧˋ ㄩˇ ㄧㄥˋ ㄩㄥˋ", emoji: "➕",
         topics: ["word", "bond", "check", "vert", "cmp", "fifteen"],
       },
       {
-        id: "u5", kind: "calc",
+        id: "u5", kind: "calc", bookId: "u5", pages: "71-78",
         title: "第5單元 容量", titleBopo: "ㄉㄧˋ ㄨˇ ㄉㄢ ㄩㄢˊ ㄖㄨㄥˊ ㄌㄧㄤˋ", emoji: "🫙",
-        note: "課本只拍到第68頁開頭頁，題目是照容量的觀念出的；拍到後面的頁數後會照課本原題補上",
+        note: "題目照課本 p.70-78 容量的題型出（倒水比高低、用杯子量、裝得下裝不下、對不對）",
         topics: ["capPour", "capCups", "capOverflow", "capTF"],
       },
     ],

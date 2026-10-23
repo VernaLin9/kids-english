@@ -15,13 +15,13 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 ## 檔案
 | 檔案 | 內容 |
 |---|---|
-| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
+| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-night → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
 | `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子；第八課〈拔蘿蔔〉聽寫本 18 題，第 8 題 ㄨㄢˇ ㄒㄩㄥˊ 國字待確認放在 `pending`，沒有課文 `text: []`）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，課文照課本分段 `{ para:"一", zh, bopo }`（p.48-50 共四段），便條 `{ note, lines:[{zh,bopo,right?}] }`（p.51 照課本分行）；`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
 | `data-math.js` | 數學 `MATH_DATA`（一年級上 第 3 回：比長短、高矮與厚薄；只列單元與題型，題目由程式隨機畫）。二年級 `MATH_DATA.g2`（南一二上）：第4單元 加減的關係與應用（`bookId:"u4"` 課本原題 p.54-63）、第5單元 容量（只有 p.68 開頭頁，題目照觀念出，待補課本頁）；`kind:"calc"` 的單元交給 modes-math2 |
 | `modes-math.js` | 數學：SVG 畫圖題（直線曲線、比長短、比高矮、比厚薄、三個比一比、對不對）、小考混合 12 題；`MATH_TOPICS` 每個題型一個 `gen()`，回傳 `{ prompt, items:[{node, correct}], tf? }`。`SHEET_U2` 是評量卷原題（p.6-7，六大題 22 小題；老師會考一模一樣的題目，所以版面和作答方式都照原卷：在 (　) 裡打 ✓／畫 ○、把圖圈起來、方框打 ✓✗，寫完按「交卷」照卷子配分算得分），`renderMathSheet()` 一頁顯示整張卷子 |
-| `modes-math2.js` | 二年級數學：題目 `{ text, visual, steps:[choice|num|pick3], hint, topic|page, calc? }`，一題的畫面是 `mountMath2Q(q, container, onDone)`（練習和遊戲共用），數字鍵盤作答、線段圖 `barModel`、分合圖 `bondEl`、直式 `vertEl`。`MATH2_TOPICS`：解題、加減的關係、驗算、直式加減、大於小於等於、神機妙算（3 張湊 15）、容量 4 種。`BOOK_U4` 是課本原題（照頁碼、數字、順序） |
+| `modes-math2.js` | 二年級數學：題目 `{ text, visual, steps:[choice|num|pick3], hint, topic|page, calc? }`，一題的畫面是 `mountMath2Q(q, container, onDone)`（練習和遊戲共用），數字鍵盤作答、線段圖 `barModel`、分合圖 `bondEl`、直式 `vertEl`。`MATH2_TOPICS`：解題、加減的關係、驗算、直式加減、大於小於等於、神機妙算（3 張湊 15）、容量 4 種。`BOOK_U4` 是課本原題（p.54-67，照頁碼、數字、順序、題目文字），`BOOK_U5` 是第5單元容量 p.71-78 能用文字表達的原題 |
 | `app.js` | 共用工具、STORE（localStorage `partygo:store:v1`）、注音元件、首頁、設定面板、間隔重複、考前範圍 `nextExam()`、拆音節 `SYLLABLES` |
 | `modes-play.js` | 自選複習、單字卡、選擇題、聽力、字母拼拼樂、翻牌配對、跟著念 |
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |
@@ -32,6 +32,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `modes-games.js` | 🎮 遊樂場（首頁英文／國語／數學分頁都有入口，`#/games?s=en|zh|math`）：打地鼠、戳氣球、兔子賽跑（計時挑戰，只給英文／國語；數學不放計時遊戲；賽車家長覺得無聊已拿掉）。題目由 `makeQuestionGen(subject)` 產生四選一：英文用本週＋前兩週＋答錯的字，一年級國語用注音詞（`bopoVariants` 當干擾）、二年級用生字（`confuse`），數學用 `makeMathGen()`（一年級 10 以內加減、二年級兩位數加減／大於小於等於／湊 15）。最高分存 `profile.games[gameId][subject]`，分數÷50 換 ⭐，結束畫面依分數給 1-3 顆星（`STAR_LEVELS`）。每個遊戲有自己的場景（草地、天空、跑道、路邊樹），答對冒分數和彩色碎片（`fxHit`），答錯冒 ✗（`fxMiss`）。計時器都用 `gameShell` 的 `every/after/afterPlay`，離開頁面自動停、暫停時不跑。右上 ⏸ 暫停鍵（`pause(on, why)`，答錯教學和暫停鍵分開記）：不擋畫面，只在上面一條提示，點了答案自動繼續。數學比較慢：氣球 22-28 秒、烏龜 130-170 秒跑完、賽車 13-16 秒到門、地鼠待 5 秒 |
 | `modes-learn.js` | 🧠 遊樂場的學習引擎（家長要求：遊戲不能只是考試，要幫助記憶、教記憶方法）：每局只挑 6 個專注組（先挑答錯過、還沒學會的）重複出現；開始前「先學一學」卡片（圖、聲音、記憶小撇步：英文拍手分段念、注音拼一拼、生字拆字 `ZH2_MNEMONIC`、數學算法步驟）；第一次答錯暫停遊戲跳「記一記」卡，2 題後再考同一個；結束畫面列出要再記的並教一招 `MEMORY_TECHNIQUES`。小撇步要白話、短句，每段都有 🔊 朗讀（`tipEl`/`mathStepsEl`/`sayable` 把 +−= 換成字）；數學說明是一行一步的陣列。遊戲用 `makeLearnSession` / `learnFirst` / `teachMiss` / `learnSummary`，`gameShell` 有 `pause()` |
 | `modes-quest.js` | 🎮 遊戲（家長要求：不用時間逼、要跟著每一課、幫助記憶）。`#/games?s=&c=` 先選章節（英文＝週 `week-N`、國語＝課、數學＝單元；預設是要考的那一課），每一課／單元／週的頁面都有「🎮 用遊戲練這一課」（`questEntryBtn`）。題庫 `questDeck(subject, c)`：英文／國語四選一 `mountChoiceCard`（答錯先看圖卡＋小撇步再選），數學直接用單元自己的圖形題（`mountMath2Q`／`mountMathQ`，有 onWrong），錯的 2 題後再出。學習遊戲（不計時）：🌀 陀螺對戰 `#/quest/top`（答對攻擊，第一次答對＝必殺技，改對也有攻擊，贏了解鎖新陀螺 `profile.quest.topWins`）、🐾 養寵物 `#/quest/pet`（教寵物一題餵一次，錯的存 `pet.memory` 明天先問＝間隔重複，請孩子念給寵物聽＝教學者效應，`profile.quest.pet`）、🗺️ 記憶地圖 `#/mindmap`（生字照部首、英文照類別、注音詞照聲調分群，可遮起來考自己）、🧱 積木教室 `#/blocks`（數學加減單元）。計時遊戲放在「練熟了再挑戰」，也只出那一章 |
+| `modes-night.js` | 🏮 夜市遊戲（不計時，`#/night/ring|fish|claw?s=&c=`）：套圈圈、撈金魚（金魚慢慢游、不會游走）、夾娃娃。一輪一題四選一，答對拿彩票（第一次對 2 張、改對 1 張），答錯先看「記一記」（數學是 🧱 積木）再選，錯的 2 輪後再出；10 輪後 3 張彩票換 1 個獎品（`profile.quest.prizes` 獎品櫃）。數學只在加減單元（u4）出現 |
 | `parent.js` | 家長模式（PIN、每個小孩的年級／切換／統計）、router `route()` |
 
 ## 資料格式
@@ -56,6 +57,8 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 - 數學新的單元：二年級在 `MATH_DATA.g2.units` 加 `{ id, kind:"calc", title, titleBopo, emoji, topics }`，題型加在 `MATH2_TOPICS`；一年級在 `MATH_DATA.g1.units` 加 `{ id, title, titleBopo, emoji, topics }`；新題型在 `modes-math.js` 的 `MATH_TOPICS` 加 `gen()`，用 SVG 畫、點圖作答，畫面文字要能查到 `CHAR_BOPO`。
 - 數學／國語進度分別存在 `profile.mathProgress`、`profile.zhProgress`；科目分頁記在 `profile.subject`（en/zh/math）。
 - 中文翻譯是自己配的，交付時要跟家長說明哪些可能需要確認。
+- **多音字、變調、標點、順序一律照家長拍的課本照片**（小孩會跟著學、考試照課本）。一年級國語課本只有注音沒有國字：課文用 `bopoOnly: true` 只顯示注音；聽寫詞的國字是配的，照片上看不到的國字放 `pending`。
+- 照片核對（2026-10-23 全面核對過一次）：上傳照片在對話 uploads，二年級數學課本在 Drive「數學-二上-南一」（IMG_8771＝p.52-53、8772～8781＝p.54～63、8782～8801＝p.64～83）。
 
 ## 測試（沒有建置步驟，也沒有測試框架）
 - `python3 -m http.server 8765` 後用 Playwright（`/opt/node-tools/node_modules/playwright`，Chromium 在 `/opt/pw-browsers/chromium`）開 `http://localhost:8765/index.html`。

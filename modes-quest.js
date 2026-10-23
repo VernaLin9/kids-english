@@ -498,6 +498,9 @@ function renderGames(subjectParam, chapterParam) {
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("🧠 學習遊戲（不計時，慢慢想）")),
     el("div", { class: "g-list" }, learn)));
+  if (typeof NIGHT_BOOTHS !== "undefined" && nightMathOk(subject, c)) app.appendChild(el("section", { class: "section" },
+    el("div", { class: "section__title" }, t("🏮 夜市遊戲（不計時，答對拿彩票換獎品）")),
+    el("div", { class: "g-list g-list--night" }, NIGHT_BOOTHS.map(b => card(b.emoji, b.name, b.desc, `#/night/${b.id}?${q}`, `g-card--${b.color} g-card--small`)))));
   const timedOk = subject !== "math"; // 數學要慢慢想，不放計時遊戲
   if (timedOk) app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("⏱ 練熟了再挑戰（有時間限制）")),
@@ -516,6 +519,6 @@ function renderGames(subjectParam, chapterParam) {
 function questEntryBtn(subject, c) {
   return el("button", { class: "g-home qs-entry", onclick: () => navigate(questBack(subject, c)) },
     el("span", { class: "g-home__emoji" }, "🎮"),
-    el("span", { class: "g-home__text" }, t("用遊戲練這一課"), el("span", { class: "g-home__sub" }, t("陀螺對戰・養寵物・記憶地圖"))),
+    el("span", { class: "g-home__text" }, t("用遊戲練這一課"), el("span", { class: "g-home__sub" }, t("陀螺對戰・養寵物・夜市・記憶地圖"))),
     el("span", { class: "g-home__go" }, "▶"));
 }
