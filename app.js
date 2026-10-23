@@ -1059,3 +1059,21 @@ function renderListPage(setKey) {
   root.appendChild(app);
   return root;
 }
+
+// === 自動更新：平板常常拿到快取的舊網頁。打開時偷偷抓最新的 index.html，
+// 版本號（?v=）不一樣就重新載入一次（同一個版本只重載一次，避免一直重整）===
+(function checkNewVersion() {
+  const mine = (document.querySelector('script[src*="app.js?v="]')?.getAttribute("src") || "").split("?v=")[1];
+  if (!mine || !window.fetch) return;
+  fetch(`${location.pathname}?nocache=${Date.now()}`, { cache: "no-store" })
+    .then(r => r.ok ? r.text() : "")
+    .then(html => {
+      const latest = (html.match(/app\.js\?v=([0-9a-z]+)/) || [])[1];
+      if (!latest || latest === mine) return;
+      let tried = null; try { tried = sessionStorage.getItem("reloadedFor"); } catch (e) {}
+      if (tried === latest) return;
+      try { sessionStorage.setItem("reloadedFor", latest); } catch (e) {}
+      location.reload();
+    })
+    .catch(() => {});
+})();
