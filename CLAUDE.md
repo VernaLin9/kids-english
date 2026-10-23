@@ -36,6 +36,10 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 - 年級存在每個小孩的 `profile.grade`（g1/g2），載入時決定全域 `WORDS/WEEKS/UNITS/SENTENCES/CATEGORIES`，換年級會重新載入頁面。
 - 國語進度存在 `profile.zhProgress`，英文在 `profile.progress`（含間隔重複的 `box/due/lastDay`）。
 
+## 語音
+- 國語語音 `speakZh()`（modes-zh.js）只用台灣聲音（zh-TW／名稱含 Taiwan、臺灣、美佳等），每次重找、找不到就只設 lang=zh-TW，絕不退回大陸聲音。
+- 台灣和大陸讀法不同的字，念之前在 `ZH_TW_READING` 換成台灣讀法的同音字（例：垃圾→樂色，念 ㄌㄜˋ ㄙㄜˋ），畫面文字不變。新增課文遇到讀法不同的字就加進這個表。
+
 ## 新增資料時
 - 新學期／新年級單字表：照 `data-g1.js` 的 IIFE 格式新增，週次日期要對 PDF。
 - 國語新的一課：一年級在 `ZH_DATA.g1.lessons` 加 `{ id, title, titleBopo, emoji, text, words }`；二年級在 `ZH_DATA.g2.lessons` 加 `{ id, kind:"chars", chars, words, text }`，注音、部首、筆畫照課本逐字核對。
