@@ -2,16 +2,24 @@
 // 資料在 data-zh.js 的 ZH；進度存在 profile.zhProgress（跟英文分開）
 
 // 國語發音：用瀏覽器的中文語音念國字（念國字比念注音準）
-let zhVoice = null;
+// 台灣國語發音：只用台灣（zh-TW）的聲音；有些語音引擎即使是台灣聲音也會念大陸讀法，
+// 念之前先換成台灣讀法的同音字（只影響聲音，畫面上的字不變）
+const ZH_TW_READING = [["垃圾", "樂色"], ["垃", "樂"], ["圾", "色"]];
+function zhTwText(text) { return ZH_TW_READING.reduce((s, [a, b]) => s.split(a).join(b), text); }
+function pickZhVoice() {
+  const vs = speechSynthesis.getVoices();
+  const isTW = v => /zh[-_]TW|zh[-_]Hant[-_]TW|cmn[-_]Hant[-_]TW/i.test(v.lang) || /Taiwan|臺灣|台灣|Mei-?Jia|美佳|HsiaoChen|HsiaoYu|曉臻|曉雨|YunJhe|雲哲/i.test(v.name);
+  return vs.find(v => isTW(v) && v.localService) || vs.find(isTW) || null;
+}
 function speakZh(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(zhTwText(text));
   u.lang = "zh-TW";
   u.rate = 0.8;
-  const vs = speechSynthesis.getVoices();
-  zhVoice = zhVoice || vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang)) || null;
-  if (zhVoice) u.voice = zhVoice;
+  // 每次重找：聲音清單常常晚一點才載入，不能記住一開始找到的（可能是大陸的）聲音
+  const v = pickZhVoice();
+  if (v) u.voice = v; // 找不到台灣聲音就不指定，只設定 lang=zh-TW，不會退回大陸聲音
   speechSynthesis.speak(u);
 }
 
