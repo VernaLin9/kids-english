@@ -2431,3 +2431,6 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .l-summary__list > * { min-width: 0; }
 .l-summary__chip .l-card__word, .l-card__word { overflow-wrap: anywhere; }
 .nm-cabinet__items, .nm-got { max-width: 100%; }
+/* 結束畫面淡入（原本的放大動畫會讓手機短暫左右捲動）*/
+.g-over.pop { animation: g-over-in 0.45s ease-out both; }
+@keyframes g-over-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
