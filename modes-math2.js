@@ -68,7 +68,7 @@ function genWord() {
   const w = pick2(WORD_TEMPLATES)();
   const ans = w.op === "add" ? w.A + w.B : w.T - w.A;
   return {
-    topic: "word", text: w.text, visual: barModel(w.parts, w.total, w.unit),
+    topic: "word", text: w.text, visual: barModel(w.parts, w.total, w.unit), calc: w.op === "add" ? { op: "add", a: w.A, b: w.B } : { op: "sub", a: w.T, b: w.A },
     steps: [
       { type: "choice", label: "① 要用哪一個算式？", options: w.op === "add" ? addEqOptions(w.A, w.B) : subEqOptions(w.T, w.A) },
       { type: "num", label: "② 答案是多少？", answer: ans, unit: w.unit },
@@ -88,7 +88,7 @@ function genBond() {
   const hide = pick2(["top", "left", "right"]);
   const answer = hide === "top" ? T : hide === "left" ? A : B;
   const eq = hide === "top" ? `${A} + ${B} = ?` : hide === "left" ? `${T} − ${B} = ?` : `${T} − ${A} = ?`;
-  return { topic: "bond", text: `看分合圖，?是多少？（${eq}）`, visual: bondEl(T, A, B, hide),
+  return { topic: "bond", text: `看分合圖，?是多少？（${eq}）`, visual: bondEl(T, A, B, hide), calc: hide === "top" ? { op: "add", a: A, b: B } : { op: "sub", a: T, b: hide === "left" ? B : A },
     steps: [{ type: "num", label: "?是多少？", answer }], hint: hide === "top" ? "兩個合起來是上面的數，用加法" : "上面的數減掉知道的那一個，就是另一個" };
 }
 // 加減關係：看一個算式，寫出另一個
@@ -101,7 +101,7 @@ function genFamily() {
     [`${T} − ${A} = ${B}`, `${B} + ${A} = ?`, T],
     [`${T} − ${B} = ${A}`, `${A} + ? = ${T}`, B],
   ][k];
-  return { topic: "bond", text: `已經知道「${given}」，`, visual: el("div", { class: "b2-eq" }, ask),
+  return { topic: "bond", text: `已經知道「${given}」，`, visual: el("div", { class: "b2-eq" }, ask), calc: [{ op: "sub", a: T, b: A }, { op: "sub", a: T, b: B }, { op: "add", a: B, b: A }, { op: "sub", a: T, b: A }][k],
     steps: [{ type: "num", label: "?是多少？（不用重算，想想加減的關係）", answer: ans }], hint: "加法和減法是一家人：部分＋部分＝全部，全部−部分＝另一部分" };
 }
 
@@ -109,7 +109,7 @@ function genFamily() {
 function genCheck() {
   if (Math.random() < 0.5) {
     const [T, A] = subPair(); const C = T - A;
-    return { topic: "check", text: `${T} − ${A} = ${C}，要怎麼驗算？`, visual: null,
+    return { topic: "check", text: `${T} − ${A} = ${C}，要怎麼驗算？`, visual: null, calc: { op: "add", a: C, b: A },
       steps: [{ type: "choice", label: "選一個驗算的算式", options: shuffle([{ label: `${C} + ${A} = ${T}`, ok: true }, { label: `${C} − ${A} = ${Math.abs(C - A)}`, ok: false }, { label: `${T} + ${A} = ${T + A}`, ok: false }]) }],
       hint: "減法用加法驗算：答案＋減掉的數，要等於原來的數" };
   }
@@ -129,8 +129,8 @@ function vertEl(a, op, b) {
     el("div", { class: "b2-vert__row" }, el("span", {}, op), el("span", {}, String(b))), el("div", { class: "b2-vert__line" }));
 }
 function genVert() {
-  if (Math.random() < 0.6) { const [T, A] = subPair(); return { topic: "vert", text: `用直式算算看：${T} − ${A}`, visual: vertEl(T, "−", A), steps: [{ type: "num", label: "答案", answer: T - A }], hint: "個位不夠減，要向十位借 1 個十（變成 10）" }; }
-  const [A, B] = addPair(); return { topic: "vert", text: `用直式算算看：${A} + ${B}`, visual: vertEl(A, "+", B), steps: [{ type: "num", label: "答案", answer: A + B }], hint: "個位滿 10 要進位到十位" };
+  if (Math.random() < 0.6) { const [T, A] = subPair(); return { topic: "vert", text: `用直式算算看：${T} − ${A}`, visual: vertEl(T, "−", A), calc: { op: "sub", a: T, b: A }, steps: [{ type: "num", label: "答案", answer: T - A }], hint: "個位不夠減，要向十位借 1 個十（變成 10）" }; }
+  const [A, B] = addPair(); return { topic: "vert", text: `用直式算算看：${A} + ${B}`, visual: vertEl(A, "+", B), calc: { op: "add", a: A, b: B }, steps: [{ type: "num", label: "答案", answer: A + B }], hint: "個位滿 10 要進位到十位" };
 }
 
 // 大於、小於、等於
@@ -144,7 +144,8 @@ function genCmp() {
   const R = rel === "=" ? L : rel === ">" ? L - r2(1, 5) : L + r2(1, 5);
   const [le] = exprOf(L);
   const right = Math.random() < 0.5 ? String(R) : exprOf(R)[0];
-  return { topic: "cmp", text: "在□中填入 >、< 或 =", visual: el("div", { class: "b2-cmp" }, el("span", {}, le), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, right)),
+  const lm = le.match(/(\d+) ([+−]) (\d+)/);
+  return { topic: "cmp", calc: lm ? { op: lm[2] === "+" ? "add" : "sub", a: +lm[1], b: +lm[3] } : null, text: "在□中填入 >、< 或 =", visual: el("div", { class: "b2-cmp" }, el("span", {}, le), el("span", { class: "b2-cmp__box" }, "□"), el("span", {}, right)),
     steps: [{ type: "choice", label: "", sym: true, options: [">", "<", "="].map(s => ({ label: s, ok: s === rel })) }],
     hint: "先把兩邊都算出來，再比大小" };
 }
@@ -290,6 +291,64 @@ function pick3El(onDone) {
   return el("div", { class: "b2-pick3" }, el("div", { class: "b2-pick3__grid" }, cards), sumEl);
 }
 
+// 這一題用到的加減算式（給 🧱 積木圖解用）：題目自己帶 calc，沒有就從步驟的算式找
+function calcOf(q) {
+  if (q.calc) return q.calc;
+  for (const s of [...(q.steps || []).map(x => x.label || ""), q.text || ""]) {
+    const m = s.match(/(\d+)\s*([+−])\s*(\d+)\s*=\s*\?/);
+    if (m) return { op: m[2] === "+" ? "add" : "sub", a: +m[1], b: +m[3] };
+  }
+  return null;
+}
+// 一題（題目卡＋步驟＋回饋）放進 container；全部步驟答對後呼叫 onDone(有沒有錯過)
+// 不限時間；答錯會給提示，可以按「🧱 用積木看」一步一步看怎麼算
+function mountMath2Q(q, container, onDone) {
+  let step = 0, missed = false;
+  const feedback = el("div", { class: "quiz-feedback" });
+  const stepWrap = el("div", { class: "b2-step" });
+  const calc = calcOf(q);
+  const helpBtn = calc ? el("button", { class: "btn btn--ghost btn--full b2-help", onclick: () => openBlocksTeach(calc) }, t("🧱 不會算？用積木一步一步看")) : null;
+  const card = el("div", { class: "m-card b2-card-q" },
+    q.page ? el("div", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
+    el("div", { class: "b2-text" }, t(q.text)),
+    el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.text), "aria-label": "念題目" }, "🔊"),
+    q.visual || null);
+  const fail = () => {
+    missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false);
+    feedback.textContent = q.hint ? `再想想：${q.hint}` : "再算一次看看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
+    if (helpBtn) helpBtn.classList.add("b2-help--hot");
+  };
+  const pass = () => {
+    dingCorrect(); feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
+    step++;
+    if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); onDone(missed); }
+    else setTimeout(showStep, 600);
+  };
+  const showStep = () => {
+    const s = q.steps[step];
+    feedback.textContent = ""; feedback.className = "quiz-feedback";
+    const label = s.label ? el("div", { class: "b2-step__label" }, t(s.label)) : null;
+    if (s.type === "choice") {
+      let locked = false;
+      stepWrap.replaceChildren(label || "", el("div", { class: `b2-opts ${s.sym ? "b2-opts--sym" : ""}` }, s.options.map(o => {
+        const b = el("button", { class: `zh-opt b2-opt ${s.sym ? "b2-opt--sym" : ""}`, "data-nobopo": o.label.length <= 12 && !/[一-鿿]/.test(o.label) ? "1" : null }, /[一-鿿]/.test(o.label) ? t(o.label) : o.label);
+        b.addEventListener("click", () => { if (locked) return; if (o.ok) { locked = true; b.classList.add("zh-opt--ok"); pass(); } else { b.classList.add("zh-opt--bad"); b.disabled = true; fail(); } });
+        return b;
+      })));
+    } else if (s.type === "num") {
+      const pad = numPad((v, reset) => {
+        if (v === s.answer) { pad.flash(true); pass(); } else { pad.flash(false); fail(); setTimeout(reset, 600); }
+      });
+      stepWrap.replaceChildren(label || "", el("div", { class: "b2-num-row" }, s.unit ? el("span", { class: "b2-unit" }, t(`答：□ ${s.unit}`)) : null), pad);
+    } else if (s.type === "pick3") {
+      stepWrap.replaceChildren(pick3El((ok, reset) => { if (ok) pass(); else { fail(); setTimeout(reset, 800); } }));
+    }
+  };
+  container.replaceChildren(card, stepWrap, feedback, helpBtn || "");
+  showStep();
+  setTimeout(() => speakZh(q.text), 250);
+}
+
 // === 共用播放器 ===
 function renderMath2Run(u, title, backHash, againHash, questions) {
   const root = el("div", {});
@@ -310,50 +369,10 @@ function renderMath2Run(u, title, backHash, againHash, questions) {
     }
     const q = questions[i]();
     progressLabel.textContent = `${i + 1}/${questions.length}・${score}分`;
-    let step = 0, missed = false;
-    const feedback = el("div", { class: "quiz-feedback" });
-    const stepWrap = el("div", { class: "b2-step" });
-    const card = el("div", { class: "m-card b2-card-q" },
-      q.page ? el("div", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
-      el("div", { class: "b2-text" }, t(q.text)),
-      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.text), "aria-label": "念題目" }, "🔊"),
-      q.visual || null);
-    const fail = () => {
-      missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false);
-      feedback.textContent = q.hint ? `再想想：${q.hint}` : "再算一次看看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-    };
-    const pass = () => {
-      dingCorrect(); feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
-      step++;
-      if (step >= q.steps.length) {
-        if (!missed) score++; else { if (q.topic) wrongTopics.add(q.topic); if (q.page) wrongPages.push(q.page); }
-        if (q.topic) recordMath(q.topic, true);
-        setTimeout(() => { i++; render(); }, 1100);
-      } else setTimeout(showStep, 600);
-    };
-    const showStep = () => {
-      const s = q.steps[step];
-      feedback.textContent = ""; feedback.className = "quiz-feedback";
-      const label = s.label ? el("div", { class: "b2-step__label" }, t(s.label)) : null;
-      if (s.type === "choice") {
-        let locked = false;
-        stepWrap.replaceChildren(label || "", el("div", { class: `b2-opts ${s.sym ? "b2-opts--sym" : ""}` }, s.options.map(o => {
-          const b = el("button", { class: `zh-opt b2-opt ${s.sym ? "b2-opt--sym" : ""}`, "data-nobopo": o.label.length <= 12 && !/[一-鿿]/.test(o.label) ? "1" : null }, /[一-鿿]/.test(o.label) ? t(o.label) : o.label);
-          b.addEventListener("click", () => { if (locked) return; if (o.ok) { locked = true; b.classList.add("zh-opt--ok"); pass(); } else { b.classList.add("zh-opt--bad"); b.disabled = true; fail(); } });
-          return b;
-        })));
-      } else if (s.type === "num") {
-        const pad = numPad((v, reset) => {
-          if (v === s.answer) { pad.flash(true); pass(); } else { pad.flash(false); fail(); setTimeout(reset, 600); }
-        });
-        stepWrap.replaceChildren(label || "", el("div", { class: "b2-num-row" }, s.unit ? el("span", { class: "b2-unit" }, t(`答：□ ${s.unit}`)) : null), pad);
-      } else if (s.type === "pick3") {
-        stepWrap.replaceChildren(pick3El((ok, reset) => { if (ok) pass(); else { fail(); setTimeout(reset, 800); } }));
-      }
-    };
-    app.replaceChildren(card, stepWrap, feedback);
-    showStep();
-    setTimeout(() => speakZh(q.text), 250);
+    mountMath2Q(q, app, missed => {
+      if (!missed) score++; else { if (q.topic) wrongTopics.add(q.topic); if (q.page) wrongPages.push(q.page); }
+      setTimeout(() => { i++; render(); }, 1100);
+    });
   };
   render();
   return root;
