@@ -279,6 +279,41 @@ function bopoWordEl(bopo, attrs = {}) {
   return node;
 }
 
+
+// === 自動注音：先查詞（多音字照詞念），再查單字，最後處理「一」「不」變調（照課本標法）===
+// PHRASE_BOPO 在 data.js；只影響沒有給注音的介面文字，課文／詞語資料用自己的 bopo
+const SANDHI_SKIP_PREV = "第十百千萬零";
+const NUM_CHARS = "一二三四五六七八九十百千萬零兩";
+const toneOf = r => !r ? null : /ˋ/.test(r) ? 4 : /ˊ/.test(r) ? 2 : /ˇ/.test(r) ? 3 : /˙/.test(r) ? 0 : 1;
+function autoReadings(text) {
+  const CB = typeof CHAR_BOPO !== "undefined" ? CHAR_BOPO : {};
+  const PB = typeof PHRASE_BOPO !== "undefined" ? PHRASE_BOPO : {};
+  const chars = [...text];
+  const isCJK = c => /[\u4e00-\u9fff]/.test(c);
+  const out = new Array(chars.length).fill(null), fixed = new Array(chars.length).fill(false);
+  for (let i = 0; i < chars.length; i++) {
+    if (!isCJK(chars[i]) || out[i]) continue;
+    for (let L = 5; L >= 2; L--) {
+      const w = chars.slice(i, i + L).join("");
+      if (w.length === L && PB[w]) { PB[w].split(" ").forEach((r, k) => { out[i + k] = r; fixed[i + k] = true; }); break; }
+    }
+    if (!out[i]) out[i] = CB[chars[i]] || "";
+  }
+  // 變調：一 ＋ 第四聲（含「個」）→ ㄧˊ；一 ＋ 其他聲 → ㄧˋ；不 ＋ 第四聲 → ㄅㄨˊ
+  for (let i = 0; i < chars.length - 1; i++) {
+    const c = chars[i], n = chars[i + 1];
+    if (fixed[i] || !isCJK(n) || (c !== "一" && c !== "不")) continue;
+    const nextTone = n === "個" ? 4 : toneOf(out[i + 1]);
+    if (nextTone == null || nextTone === 0) continue;
+    if (c === "一") {
+      const prev = chars[i - 1]; // 注意 "".includes 會是 true，開頭的「一」要先判斷有沒有前一個字
+      if ((prev && (SANDHI_SKIP_PREV.includes(prev) || NUM_CHARS.includes(prev))) || NUM_CHARS.includes(n) || "月號年樓聲".includes(n)) continue;
+      out[i] = nextTone === 4 ? "ㄧˊ" : "ㄧˋ";
+    } else out[i] = nextTone === 4 ? "ㄅㄨˊ" : "ㄅㄨˋ";
+  }
+  return out.filter((_, i) => isCJK(chars[i]));
+}
+
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
   if (!STORE.settings.bopomofo) {
@@ -286,11 +321,13 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
     return node;
   }
   const explicit = bopo ? bopo.split(/\s+/).filter(Boolean) : null;
-  let bi = 0;
+  const auto = explicit ? null : autoReadings(text);
+  let bi = 0, ci = -1;
   const TONE_RE = /[ˊˇˋ˙]/;
   for (const ch of text) {
     if (/[一-鿿]/.test(ch)) {
-      const reading = explicit ? (explicit[bi++] || "") : ((typeof CHAR_BOPO !== "undefined" ? CHAR_BOPO[ch] : "") || "");
+      ci++;
+      const reading = explicit ? (explicit[bi++] || "") : (auto[ci] || "");
       // 結構：<span.zh-pair><span.zh-base>漢字</span><span.zh-bopo>注音欄</span></span>
       const pair = document.createElement("span");
       pair.className = "zh-pair";
@@ -351,6 +388,7 @@ if (window.speechSynthesis) {
   speechSynthesis.onvoiceschanged = initVoices;
 }
 const speak = (text) => {
+  if (typeof zhAudio !== "undefined" && zhAudio) zhAudio.pause(); // 英文要念時，先停掉正在念的國語
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);

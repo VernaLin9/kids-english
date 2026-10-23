@@ -37,8 +37,13 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 - 國語進度存在 `profile.zhProgress`，英文在 `profile.progress`（含間隔重複的 `box/due/lastDay`）。
 
 ## 語音
-- 國語語音 `speakZh()`（modes-zh.js）只用台灣聲音（zh-TW／名稱含 Taiwan、臺灣、美佳等），每次重找、找不到就只設 lang=zh-TW，絕不退回大陸聲音。
+- 國語語音 `speakZh()`（modes-zh.js）主要用 Google 翻譯的台灣國語（`translate_tts`、`tl=zh-TW`），長句照標點切段；連不到或播放失敗就退回平板內建的台灣聲音（`speakZhDevice`，只找 zh-TW、絕不退回大陸聲音），一分鐘後再試 Google。iPad 要使用者先點一下畫面才能自動播放（第一次 pointerdown 解鎖）。
 - 台灣和大陸讀法不同的字，念之前在 `ZH_TW_READING` 換成台灣讀法的同音字（例：垃圾→樂色，念 ㄌㄜˋ ㄙㄜˋ），畫面文字不變。新增課文遇到讀法不同的字就加進這個表。
+- 這個環境連不到 Google，測試時要 `page.route('**/translate.google.com/**', r => r.abort())`，console 會出現 ERR_FAILED（正常）。
+
+## 自動注音的多音字與變調
+- `autoReadings()`（app.js）：先查 `PHRASE_BOPO`（data.js，照詞決定多音字，例：比較長 ㄔㄤˊ、長大 ㄓㄤˇ、倒水 ㄉㄠˋ、部分 ㄅㄨˋ ㄈㄣˋ），再查 `CHAR_BOPO` 單字，最後照課本標「一」「不」變調（一個 ㄧˊ、一枝 ㄧˋ、不對 ㄅㄨˊ；第一、一年級、一上、一聲等序數不變）。
+- 課本連接詞「和」讀 ㄏㄢˋ、「個」讀 ˙ㄍㄜ。新增介面文字有多音字時，要在 PHRASE_BOPO 加詞。
 
 ## 新增資料時
 - 新學期／新年級單字表：照 `data-g1.js` 的 IIFE 格式新增，週次日期要對 PDF。
