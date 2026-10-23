@@ -7,7 +7,6 @@ const GAMES = [
   { id: "mole",    emoji: "🐹", name: "打地鼠", desc: "地鼠冒出來，打對的那隻！60 秒拿高分", color: "candy-3" },
   { id: "balloon", emoji: "🎈", name: "戳氣球", desc: "氣球往上飄，戳對的那顆！飄走就少一條命", color: "candy-2" },
   { id: "race",    emoji: "🏁", name: "兔子賽跑", desc: "答對就往前跑，比烏龜先到終點！", color: "candy-1" },
-  { id: "car",     emoji: "🏎️", name: "賽車", desc: "點一條車道，開進對的答案！連續答對會越開越快", color: "candy-3" },
 ];
 
 // === 題目產生器 ===
@@ -417,6 +416,7 @@ function renderGame(id, subject, c) {
   const subjects = gameSubjects();
   const s = subjects.some(([x]) => x === subject) ? subject : "en";
   if (!c) c = questDefaultChapter(s);
+  if (s === "math" || !GAMES.some(g => g.id === id)) return renderGames(s, c); // 數學不玩計時遊戲；賽車已經拿掉
   if (id === "mole") return renderGameMole(s, c);
   if (id === "balloon") return renderGameBalloon(s, c);
   if (id === "race") return renderGameRace(s, c);

@@ -402,7 +402,12 @@ function speakUtterance(u) {
   if (ss.speaking || ss.pending) { ss.cancel(); setTimeout(() => ss.speak(u), 80); }
   else ss.speak(u);
 }
+// 英文：用 Google 的英文聲音（跟國語一樣，每台平板聽起來都一樣）；連不到 Google 才用平板聲音
 const speak = (text) => {
+  if (typeof speakGoogle === "function" && speakGoogle(String(text).replace(/_+/g, " "), "en")) return;
+  speakEnDevice(text);
+};
+function speakEnDevice(text) {
   if (typeof zhAudio !== "undefined" && zhAudio) zhAudio.pause(); // 英文要念時，先停掉正在念的國語
   if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text);
@@ -411,7 +416,7 @@ const speak = (text) => {
   const enVoice = pickEnVoice();
   if (enVoice) u.voice = enVoice; // 找不到正常的就不指定，用系統預設的英文聲音
   speakUtterance(u);
-};
+}
 const speakWord = w => speak(WORDS[w]?.speak ?? w);
 
 // === 音效 sound effects (Web Audio) ===

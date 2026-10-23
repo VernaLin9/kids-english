@@ -498,7 +498,7 @@ function renderGames(subjectParam, chapterParam) {
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("🧠 學習遊戲（不計時，慢慢想）")),
     el("div", { class: "g-list" }, learn)));
-  const timedOk = subject !== "math" || (questMathIsCalc(u) && u.topics.includes("vert"));
+  const timedOk = subject !== "math"; // 數學要慢慢想，不放計時遊戲
   if (timedOk) app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("⏱ 練熟了再挑戰（有時間限制）")),
     el("div", { class: "qs-tip" }, t("先用上面的學習遊戲練熟，再來挑戰速度，比較不會手忙腳亂。")),
