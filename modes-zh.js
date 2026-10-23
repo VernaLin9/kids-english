@@ -108,6 +108,7 @@ function bopoVariants(bopo) {
 function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
+  if (ZH.lessons.some(l => l.kind !== "chars")) wrap.appendChild(renderToneDrillEntry()); // 一年級：聲調位置特訓
   ZH.lessons.forEach(l => {
     const items = l.kind === "chars" ? l.chars : l.words;
     const learned = items.filter(w => prog[w.zh]?.mastered).length;
@@ -131,6 +132,7 @@ const ZH_MODES = [
   ["tone",   "🎵", "加聲調"],
   ["spell",  "🔤", "拼注音"],
   ["write",  "✍️", "寫注音"],
+  ["toneplace", "📍", "聲調位置"],
 ];
 function renderZhLesson(id) {
   const l = zhLesson(id);
@@ -504,5 +506,6 @@ function renderZhPlay(mode, lessonId) {
   if (!l) return renderEmpty("#/", "找不到這一課");
   if (l.kind === "chars") return renderZh2Play(mode, l);
   if (mode === "sentence" && !l.sentences) return renderZhLesson(l.id);
+  if (mode === "toneplace") return renderToneDrill(l.id);
   return ({ card: renderZhCard, listen: renderZhListen, tone: renderZhTone, spell: renderZhSpell, write: renderZhWrite, sentence: renderZhSentence })[mode]?.(l) || renderZhLesson(l.id);
 }

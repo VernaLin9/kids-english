@@ -2063,3 +2063,97 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .l-summary__chip .l-card__char { font-size: calc(40px * var(--font-scale)); }
 .g-app--paused .g-balloon, .g-app--paused .g-balloon__body, .g-app--paused .g-cloud, .g-app--paused .g-road__lines, .g-app--paused .g-roadside { animation-play-state: paused !important; }
 .g-over { max-height: none; }
+
+/* === 📍 聲調放哪裡（modes-tone.js）=== */
+.tp-syl { display: inline-grid; grid-template-columns: auto minmax(0.7em, auto); grid-auto-rows: auto; align-items: center; justify-items: center;
+  font-family: "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif; font-weight: 700; line-height: 1; color: var(--ink); font-size: 52px; }
+.tp-sym { padding: 2px 0; }
+.tp-mark { font-size: 1.05em; font-weight: 900; min-width: 0.6em; min-height: 0.3em; text-align: left; justify-self: start; align-self: center; line-height: 0.8; color: var(--accent); }
+.tp-mark--top { min-height: 0.45em; justify-self: center; text-align: center; line-height: 0.6; }
+.tp-mark--dot { font-size: 1.5em; }
+.tp-syl--sm { font-size: 32px; }
+.tp-syl--xs { font-size: 15px; color: inherit; }
+.tp-syl--ok .tp-mark { color: #1f9e7d; }
+.tp-syl--bad .tp-mark { color: var(--danger); }
+.tp-syl--fixed .tp-mark { color: #1f9e7d; animation: pop 0.4s ease; }
+/* 可以點的虛線框 */
+.tp-syl--slots { gap: 4px 6px; font-size: 56px; }
+.tp-slot { width: 52px; height: 52px; min-height: 44px; border: 3px dashed var(--primary); border-radius: 12px; background: var(--bg-soft);
+  font-size: 48px; font-weight: 900; color: var(--ink); line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; }
+.tp-slot--top { width: 52px; height: 44px; }
+.tp-slot:active { transform: scale(0.95); }
+.tp-slot--ok { border-style: solid; border-color: var(--success); background: var(--success-soft); color: #1f7a62; animation: pop 0.4s ease; }
+.tp-slot--bad { border-style: solid; border-color: var(--danger); background: var(--danger-soft); color: var(--danger); animation: shake 0.4s ease; }
+.tp-slot--hint { border-color: var(--warn); background: var(--warn-soft); animation: pulse 0.9s ease-in-out infinite; }
+.tp-syl--done .tp-slot:not(.tp-slot--ok) { border-color: transparent; background: transparent; }
+
+.tp-card { background: white; border: 2px solid var(--primary-soft); border-radius: var(--radius-lg); padding: 14px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+.tp-retry { font-weight: 900; color: var(--warn); }
+.tp-ask { font-weight: 900; font-size: calc(20px * var(--font-scale)); display: flex; align-items: center; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.tp-ask__emoji { font-size: 26px; }
+.tp-word { display: inline-flex; align-items: center; gap: 8px; min-height: 52px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--candy-2); background: var(--bg-soft); font-size: 22px; font-weight: 900; }
+.tp-word__emoji { font-size: 30px; }
+.tp-word__zh { font-size: 30px; letter-spacing: 2px; }
+.tp-word__hit { color: var(--accent); text-decoration: underline 3px; text-underline-offset: 6px; }
+.tp-place { display: flex; align-items: center; gap: 14px; justify-content: center; }
+.tp-chip { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 16px; background: var(--accent-soft); border: 3px solid var(--accent); font-size: 44px; font-weight: 900; color: var(--accent); }
+.tp-arrow { font-size: 26px; color: var(--ink-soft); }
+.tp-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.tp-opt { min-height: 140px; border-radius: var(--radius); border: 3px solid var(--candy-2); background: var(--bg-soft); display: flex; align-items: center; justify-content: center; padding: 6px; }
+.tp-opt .tp-syl { font-size: 40px; }
+.tp-opt--ok { border-color: var(--success); background: var(--success-soft); animation: pop 0.4s ease; }
+.tp-opt--bad { border-color: var(--danger); background: var(--danger-soft); opacity: 0.7; }
+.tp-find { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.tp-find__col { display: inline-flex; align-items: center; gap: 4px; min-height: 120px; min-width: 76px; padding: 6px 10px; border-radius: var(--radius); border: 3px solid var(--candy-2); background: var(--bg-soft); }
+.tp-find__zh { font-size: 34px; font-weight: 900; color: var(--ink); }
+.tp-find__col--ok { border-color: var(--success); background: var(--success-soft); }
+.tp-find__col--fine { border-color: var(--candy-3); opacity: 0.6; }
+.tp-rule { margin-top: 12px; background: var(--candy-4); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 8px; justify-items: center; }
+.tp-rule__text { font-weight: 900; font-size: calc(17px * var(--font-scale)); }
+.tp-rule__ex, .tp-intro__ex { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.tp-rule__cell { position: relative; display: inline-flex; align-items: center; justify-content: center; background: white; border-radius: 14px; padding: 6px 12px 6px 8px; }
+.tp-rule__tag { position: absolute; right: -6px; top: -8px; width: 24px; height: 24px; border-radius: 50%; font-size: 15px; font-weight: 900; color: white; display: flex; align-items: center; justify-content: center; }
+.tp-rule__tag--ok { background: var(--success); }
+.tp-rule__tag--bad { background: var(--danger); }
+.tp-intro { display: grid; gap: 14px; }
+.tp-intro__title { font-weight: 900; font-size: calc(24px * var(--font-scale)); text-align: center; }
+.tp-intro__rules { display: grid; gap: 12px; }
+.tp-intro__rule { background: white; border: 2px solid var(--primary-soft); border-radius: var(--radius-lg); padding: 14px 10px; display: grid; gap: 10px; justify-items: center; }
+.tp-intro__rule .tp-syl { font-size: 40px; }
+.tp-intro__rule .tp-rule__cell { background: var(--bg-soft); }
+.tp-intro__say { font-weight: 900; font-size: calc(18px * var(--font-scale)); text-align: center; }
+.tp-intro__tip { background: var(--candy-4); border-radius: var(--radius); padding: 10px 12px; font-weight: 700; line-height: 1.8; }
+.tp-missed { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tp-missed__item { display: inline-flex; align-items: center; gap: 4px; min-height: 64px; padding: 4px 10px; border-radius: 14px; border: 2px solid var(--candy-2); background: white; }
+.tp-missed__item .tp-find__zh { font-size: 26px; }
+.tp-home { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; margin: 0 0 12px; padding: 10px 14px; border-radius: var(--radius-lg);
+  background: white; border: 3px solid var(--accent); box-shadow: var(--shadow); text-align: left; color: var(--ink); }
+.tp-home__icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 52px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); }
+.tp-home__text { flex: 1; font-weight: 900; font-size: calc(18px * var(--font-scale)); line-height: 1.4; }
+.tp-home__sub { display: block; font-weight: 700; font-size: calc(13px * var(--font-scale)); color: var(--ink-soft); }
+.tp-home__go { font-weight: 900; font-size: 22px; color: var(--accent); }
+@media (max-width: 380px) {
+  .tp-syl--slots { font-size: 48px; }
+  .tp-opt .tp-syl { font-size: 34px; }
+  .tp-opt { min-height: 120px; }
+}
+
+/* 小撇步 🔊 朗讀按鈕（modes-learn.js tipEl / mathStepsEl / techEl）*/
+.l-say { display: flex; align-items: center; gap: 8px; text-align: left; }
+.l-say__text { flex: 1; min-width: 0; }
+.l-say__btn { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 2px solid #ffd36b; background: white; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 0 rgba(0,0,0,0.06); }
+.l-say__btn:active { transform: scale(0.94); }
+.l-card__hear { display: block; width: 100%; background: none; border: 0; padding: 0; min-height: 44px; color: inherit; font: inherit; }
+.l-steps { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; }
+.l-steps li { padding-left: 2px; }
+.l-steps li::marker { font-weight: 900; color: var(--primary); }
+.l-mathex__steps.l-say { align-items: flex-start; }
+/* ⏸ 遊戲暫停鍵 */
+.g-pause-btn { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 3px solid white; background: #ffd36b; font-size: 22px; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: var(--shadow); }
+.g-pause-btn:active { transform: scale(0.94); }
+.g-pause .g-teach__panel { text-align: center; }
+.g-pause__icon { font-size: 56px; line-height: 1.1; }
+/* 打地鼠：注音標籤不要被切掉（三個符號的字也要看得完整）*/
+.g-mole__label { overflow: visible; flex: none; }
+.g-mole__label .bopo-word--sm { transform: none; font-size: calc(16px * var(--font-scale)); gap: 0.2em; }
+@media (min-width: 600px) { .g-mole__label .bopo-word--sm { font-size: calc(22px * var(--font-scale)); } }
