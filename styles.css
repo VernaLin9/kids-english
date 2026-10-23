@@ -2360,3 +2360,4 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .zh-note { background: #fffdf2; border: 2px dashed #e6c46a; display: grid; gap: 4px; text-align: left; }
 .zh-note__tag { font-weight: 900; color: #b07a00; font-size: calc(14px * var(--font-scale)); }
 .zh-note__line--right { text-align: right; }
+.qt-arena { overflow: hidden; padding-bottom: 4px; }
