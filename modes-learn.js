@@ -152,7 +152,18 @@ function learnQuestion(item, focus, subject) {
 }
 
 // 挑這一局要學的 6 個：先挑答錯過的、再挑還沒學會的，最後隨機補滿
-function pickFocus(subject, n = 6) {
+function pickFocus(subject, n = 6, chapter = null) {
+  // 有指定章節（某一課／某一週）：只從這一章挑，先挑答錯過、還沒學會的
+  if (chapter && subject !== "math" && typeof questItems === "function") {
+    const items = questItems(subject, chapter);
+    if (items.length) {
+      const prog = subject === "en" ? (getProfile()?.progress || {}) : zhProgressOf();
+      const wrong = shuffle(items.filter(it => (prog[it.key]?.wrong || 0) > 0 && !prog[it.key]?.mastered));
+      const todo = shuffle(items.filter(it => !prog[it.key]?.mastered && !wrong.includes(it)));
+      const rest = shuffle(items.filter(it => !wrong.includes(it) && !todo.includes(it)));
+      return [...wrong, ...todo, ...rest].slice(0, n);
+    }
+  }
   if (subject === "en") {
     const prog = getProfile()?.progress || {};
     const pool = gameWordPool();
@@ -178,14 +189,14 @@ function pickFocus(subject, n = 6) {
 }
 
 // === 一局的學習紀錄 ===
-function makeLearnSession(subject) {
+function makeLearnSession(subject, chapter = null) {
   const S = { subject, missed: new Map(), retry: [], asked: 0, taught: new Set() };
   if (subject === "math") {
     const gen = makeMathGen();
     S.focus = [];
     S.next = () => { S.asked++; const due = S.retry.findIndex(r => r.at <= S.asked); if (due >= 0) return S.retry.splice(due, 1)[0].q; return gen(); };
   } else {
-    S.focus = pickFocus(subject);
+    S.focus = pickFocus(subject, 6, chapter);
     let order = [];
     S.next = () => {
       S.asked++;
@@ -217,7 +228,7 @@ function learnFirst(sh, L, start) {
   let body;
   if (L.subject === "math") {
     const ex = L.next(); L.asked = 0; L.retry.unshift({ q: ex, at: 1 }); // 範例題等一下第一題就考
-    body = el("div", { class: "l-mathex" }, el("div", { class: "l-mathex__q", "data-nobopo": "1" }, ex.prompt.cloneNode(true)), mathStepsEl(ex.explain));
+    body = el("div", { class: "l-mathex" }, el("div", { class: "l-mathex__q", "data-nobopo": "1" }, ex.prompt.cloneNode(true)), ex.calc && typeof blocksTeachEl === "function" ? blocksTeachEl(ex.calc, null) : mathStepsEl(ex.explain));
   } else {
     body = el("div", { class: "l-cards" }, L.focus.map(item => {
       const card = el("div", { class: "l-card" });
@@ -243,7 +254,7 @@ function teachMiss(sh, L, q, cont) {
   if (L.subject === "math") {
     const right = q.options.find(o => o.ok);
     body = el("div", { class: "l-mathex" }, el("div", { class: "l-mathex__q", "data-nobopo": "1" }, q.prompt.cloneNode(true)),
-      el("div", { class: "l-mathex__ans" }, t("答案是 "), right.node.cloneNode(true)), mathStepsEl(q.explain));
+      el("div", { class: "l-mathex__ans" }, t("答案是 "), right.node.cloneNode(true)), q.calc && typeof blocksTeachEl === "function" ? blocksTeachEl(q.calc, null) : mathStepsEl(q.explain));
   } else {
     body = el("div", { class: "l-card l-card--big" }, learnCard(q.item), learnTipEl(q.item));
     learnSay(q.item);

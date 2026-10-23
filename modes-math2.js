@@ -302,7 +302,7 @@ function calcOf(q) {
 }
 // 一題（題目卡＋步驟＋回饋）放進 container；全部步驟答對後呼叫 onDone(有沒有錯過)
 // 不限時間；答錯會給提示，可以按「🧱 用積木看」一步一步看怎麼算
-function mountMath2Q(q, container, onDone) {
+function mountMath2Q(q, container, onDone, onWrong) {
   let step = 0, missed = false;
   const feedback = el("div", { class: "quiz-feedback" });
   const stepWrap = el("div", { class: "b2-step" });
@@ -317,6 +317,7 @@ function mountMath2Q(q, container, onDone) {
     missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false);
     feedback.textContent = q.hint ? `再想想：${q.hint}` : "再算一次看看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
     if (helpBtn) helpBtn.classList.add("b2-help--hot");
+    onWrong?.();
   };
   const pass = () => {
     dingCorrect(); feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
@@ -384,6 +385,7 @@ function renderMath2Unit(u) {
   const root = el("div", {});
   root.appendChild(renderHeader(`${u.emoji} ${u.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
+  app.appendChild(questEntryBtn("math", u.id));
   const top = el("section", { class: "section" });
   if (u.book) top.append(
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 課本原題（第${u.pages}頁）`)),

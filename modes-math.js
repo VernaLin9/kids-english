@@ -213,6 +213,7 @@ function renderMathUnit(id) {
   const root = el("div", {});
   root.appendChild(renderHeader(`${u.emoji} ${u.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
+  app.appendChild(questEntryBtn("math", u.id));
   app.appendChild(el("section", { class: "section" },
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("📄 評量卷原題（第6、7頁）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, "跟學校的評量卷一樣的題目和順序"),
@@ -228,6 +229,52 @@ function renderMathUnit(id) {
     }))));
   root.appendChild(app);
   return root;
+}
+
+// 一題（一年級畫圖題）放進 container；答對時呼叫 onDone(第一次就對)；不限時間，答錯可以再選
+function mountMathQ(q, container, onDone, tp = q.topic, onWrong) {
+  let locked = false, tries = 0;
+  const feedback = el("div", { class: "quiz-feedback" });
+  const finish = (ok) => {
+    if (ok) {
+      feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
+      recordMath(tp, true); dingCorrect(); locked = true; onDone(tries === 0);
+    } else {
+      tries++; recordMath(tp, false); buzzWrong();
+      feedback.textContent = "再看一次，仔細比比看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
+      onWrong?.();
+    }
+  };
+  const board = svg("svg", { viewBox: `0 0 400 ${q.h}`, class: "m-board" });
+  q.items.forEach(it => {
+    const b = it.node.bbox;
+    it.node.classList.add("m-item");
+    const hit = svg("rect", { x: b.x, y: b.y, width: b.w, height: b.h, rx: 14, class: "m-hit" });
+    it.node.insertBefore(hit, it.node.firstChild);
+    board.appendChild(it.node);
+    if (q.topic === "tf") return;
+    it.node.addEventListener("click", () => {
+      if (locked) return;
+      if (it.correct) { it.node.classList.add("m-item--ok"); finish(true); }
+      else { it.node.classList.add("m-item--bad"); finish(false); }
+    });
+  });
+  const parts = [el("div", { class: "m-card" }, el("div", { class: "m-prompt" }, q.prompt),
+    el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.prompt), "aria-label": "念題目" }, "🔊"),
+    board)];
+  if (q.topic === "tf") {
+    parts.push(el("div", { class: "m-tf" }, [[true, "✓ 對"], [false, "✗ 不對"]].map(([v, label]) => {
+      const b = el("button", { class: `m-tf__btn ${v ? "m-tf__btn--yes" : "m-tf__btn--no"}` }, t(label));
+      b.addEventListener("click", () => {
+        if (locked) return;
+        if (v === q.tf) { b.classList.add("m-tf__btn--ok"); finish(true); }
+        else { b.disabled = true; finish(false); }
+      });
+      return b;
+    })));
+  } else parts.push(el("div", { class: "m-hint" }, t("點一下你的答案")));
+  container.replaceChildren(...parts, feedback);
+  setTimeout(() => speakZh(q.prompt), 250);
 }
 
 // === 練習：一題一題畫 ===
@@ -260,55 +307,10 @@ function renderMathPlay(topic, unitId) {
     const tp = isMix ? u.topics[i % u.topics.length] : topic;
     const q = MATH_TOPICS[tp].gen();
     progressLabel.textContent = `${i + 1}/${total}・${score}分`;
-    let locked = false, tries = 0;
-    const feedback = el("div", { class: "quiz-feedback" });
-    const next = () => setTimeout(() => { i++; render(); }, 1100);
-    const finish = (ok) => {
-      if (ok) {
-        feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
-        if (tries === 0) score++;
-        recordMath(tp, true); dingCorrect(); locked = true; next();
-      } else {
-        tries++; wrongTopics.add(tp); recordMath(tp, false); buzzWrong();
-        feedback.textContent = "再看一次，仔細比比看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
-      }
-    };
-
-    const board = svg("svg", { viewBox: `0 0 400 ${q.h}`, class: "m-board" });
-    q.items.forEach(it => {
-      const b = it.node.bbox;
-      it.node.classList.add("m-item");
-      const hit = svg("rect", { x: b.x, y: b.y, width: b.w, height: b.h, rx: 14, class: "m-hit" });
-      it.node.insertBefore(hit, it.node.firstChild);
-      board.appendChild(it.node);
-      if (q.topic === "tf") return;
-      it.node.addEventListener("click", () => {
-        if (locked) return;
-        if (it.correct) { it.node.classList.add("m-item--ok"); finish(true); }
-        else { it.node.classList.add("m-item--bad"); finish(false); }
-      });
-    });
-
-    const promptEl = el("div", { class: "m-prompt" }, q.prompt);
-    const parts = [el("div", { class: "m-card" }, promptEl,
-      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.prompt), "aria-label": "念題目" }, "🔊"),
-      board)];
-    if (q.topic === "tf") {
-      const tfRow = el("div", { class: "m-tf" }, [[true, "✓ 對"], [false, "✗ 不對"]].map(([v, label]) => {
-        const b = el("button", { class: `m-tf__btn ${v ? "m-tf__btn--yes" : "m-tf__btn--no"}` }, t(label));
-        b.addEventListener("click", () => {
-          if (locked) return;
-          if (v === q.tf) { b.classList.add("m-tf__btn--ok"); finish(true); }
-          else { b.disabled = true; finish(false); }
-        });
-        return b;
-      }));
-      parts.push(tfRow);
-    } else {
-      parts.push(el("div", { class: "m-hint" }, t("點一下你的答案")));
-    }
-    app.replaceChildren(...parts, feedback);
-    setTimeout(() => speakZh(q.prompt), 250);
+    mountMathQ(q, app, firstTry => {
+      if (firstTry) score++; else wrongTopics.add(tp);
+      setTimeout(() => { i++; render(); }, 1100);
+    }, tp);
   }
   render();
   return root;

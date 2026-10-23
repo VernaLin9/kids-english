@@ -7,7 +7,6 @@ const GAMES = [
   { id: "mole",    emoji: "🐹", name: "打地鼠", desc: "地鼠冒出來，打對的那隻！60 秒拿高分", color: "candy-3" },
   { id: "balloon", emoji: "🎈", name: "戳氣球", desc: "氣球往上飄，戳對的那顆！飄走就少一條命", color: "candy-2" },
   { id: "race",    emoji: "🏁", name: "兔子賽跑", desc: "答對就往前跑，比烏龜先到終點！", color: "candy-1" },
-  { id: "car",     emoji: "🏎️", name: "賽車", desc: "點一條車道，開進對的答案！連續答對會越開越快", color: "candy-3" },
 ];
 
 // === 題目產生器 ===
@@ -26,7 +25,8 @@ function makeMathGen() {
     for (const v of cands) { if (set.size >= 4) break; set.add(v); }
     return shuffle([...set]).map(v => ({ node: el("span", { class: "g-opt__num" }, String(v)), ok: v === ans }));
   };
-  const mk = (text, opts, say, explain) => ({ key: text, subject: "math", explain, prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
+  const calcFrom = text => { const m = text.match(/^(\d+) ([+−]) (\d+)/); return m ? { op: m[2] === "+" ? "add" : "sub", a: +m[1], b: +m[3] } : null; };
+  const mk = (text, opts, say, explain, calc) => ({ key: text, subject: "math", explain, calc: calc || calcFrom(text), prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
   // 算法說明（答錯時教）：一行一步，用小朋友聽得懂的話；可以按 🔊 念出來
   const subSteps = (T, A) => { const t1 = T % 10, a1 = A % 10, t10 = Math.floor(T / 10), a10 = Math.floor(A / 10);
     return t1 < a1 ? [`個位 ${t1} 減 ${a1}，不夠減`, `跟十位借 10 過來：${t1 + 10} − ${a1} = ${t1 + 10 - a1}`, `十位被借走 1，剩 ${t10 - 1}：${t10 - 1} − ${a10} = ${t10 - 1 - a10}`, `合起來就是 ${T - A}`, `檢查：${T - A} + ${A} = ${T} ✓`]
@@ -74,32 +74,10 @@ function gameSaveScore(id, subject, score) {
 }
 
 // === 遊樂場首頁 ===
-function renderGames(subjectParam) {
-  const profile = getProfile();
-  const subjects = gameSubjects();
-  const subject = subjects.some(([id]) => id === subjectParam) ? subjectParam : (subjects.some(([id]) => id === profile?.subject) ? profile.subject : "en");
-  const root = el("div", {});
-  root.appendChild(renderHeader("🎮 遊樂場", { back: "#/" }));
-  const app = el("main", { class: "app" });
-  if (subjects.length > 1) app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
-    subjects.map(([id, label]) => el("button", { class: `subject-tab subject-tab--${id} ${subject === id ? "subject-tab--on" : ""}`, onclick: () => navigate(`#/games?s=${id}`) }, t(label)))));
-  app.appendChild(el("div", { class: "g-intro" }, t(subject === "en" ? "用英文單字來玩！答對加分，連續答對分數更多" : subject === "math" ? "用數學題來玩！答對加分，連續答對分數更多" : "用國語來玩！答對加分，連續答對分數更多")));
-  app.appendChild(el("div", { class: "g-list" }, GAMES.map(g => {
-    const best = gameBest(g.id, subject);
-    return el("button", { class: `g-card g-card--${g.color}`, onclick: () => navigate(`#/game/${g.id}?s=${subject}`) },
-      el("span", { class: "g-card__emoji" }, g.emoji),
-      el("span", { class: "g-card__body" }, el("span", { class: "g-card__name" }, t(g.name)), el("span", { class: "g-card__desc" }, t(g.desc)),
-        el("span", { class: "g-card__best" }, best ? t(`🏆 最高分 ${best}`) : t("還沒玩過"))),
-      el("span", { class: "g-card__go" }, "▶"));
-  })));
-  root.appendChild(app);
-  return root;
-}
-
 // === 共用：遊戲外框（HUD）與結束畫面 ===
-function gameShell(game, subject) {
+function gameShell(game, subject, c = null) {
   const root = el("div", { class: `g-root g-root--${game.id}` });
-  root.appendChild(renderHeader(`${game.emoji} ${game.name}`, { back: `#/games?s=${subject}` }));
+  root.appendChild(renderHeader(`${game.emoji} ${game.name}`, { back: `#/games?s=${subject}${c ? `&c=${encodeURIComponent(c)}` : ""}` }));
   const app = el("main", { class: `app g-app g-app--${game.id}` });
   root.appendChild(app);
   const hud = { score: el("span", { class: "g-hud__num" }, "0"), combo: el("span", { class: "g-hud__combo" }, ""), right: el("span", { class: "g-hud__num g-hud__num--right" }, "") };
@@ -117,20 +95,20 @@ function gameShell(game, subject) {
   // 遊戲時間：暫停的時候不算（例如地鼠暫停時不會躲回去）
   const afterPlay = (ms, fn) => after(ms, function check() { if (paused) after(300, check); else fn(); });
   const stopAll = () => { timers.forEach(id => { clearInterval(id); clearTimeout(id); }); timers.clear(); };
-  // ⏸ 暫停鍵：小朋友想慢慢算、慢慢想的時候按
+  // ⏸ 暫停鍵：小朋友想慢慢算、慢慢想的時候按。不擋住畫面：題目和答案都看得到、可以直接點；點了答案就自動繼續
   const pauseBtn = el("button", { class: "g-pause-btn", "aria-label": "暫停" }, "⏸");
-  pauseBtn.addEventListener("click", () => {
-    if (holds.has("user")) return;
-    pause(true, "user");
-    const ov = el("div", { class: "g-teach g-pause" }, el("div", { class: "g-teach__panel" },
-      el("div", { class: "g-pause__icon" }, "⏸"),
-      el("div", { class: "g-teach__head" }, t("暫停中")),
-      el("div", { class: "g-teach__sub" }, t("慢慢想，想好了再按繼續")),
-      el("button", { class: "btn btn--accent btn--xl btn--full", onclick: () => { ov.remove(); pause(false, "user"); } }, t("▶ 繼續玩"))));
-    root.appendChild(ov);
-  });
+  const pauseBar = el("div", { class: "g-pausebar", hidden: true }, t("⏸ 暫停中：慢慢想，想好了直接點答案，或按 ▶ 繼續"));
+  const setUserPause = on => {
+    pause(on, "user");
+    pauseBtn.textContent = on ? "▶" : "⏸"; pauseBtn.setAttribute("aria-label", on ? "繼續" : "暫停");
+    pauseBtn.classList.toggle("g-pause-btn--on", on);
+    pauseBar.hidden = !on;
+  };
+  pauseBtn.addEventListener("click", () => setUserPause(!holds.has("user")));
+  app.addEventListener("pointerdown", e => { if (holds.has("user") && e.target.closest(".g-balloon, .g-hole, .g-race-opt")) setTimeout(() => setUserPause(false), 250); }, true);
   hudEl.appendChild(pauseBtn);
-  return { root, app, hud, hudEl, every, after, afterPlay, stopAll, alive, pause, isPaused };
+  hudEl.appendChild(pauseBar);
+  return { root, app, hud, hudEl, every, after, afterPlay, stopAll, alive, pause, isPaused, c };
 }
 // === 特效：答對時冒出分數和彩色碎片，答錯時冒出 ✗ ===
 function fxLayer() { let l = document.querySelector(".g-fx"); if (!l) { l = el("div", { class: "g-fx", "aria-hidden": "true" }); document.body.appendChild(l); } return l; }
@@ -178,8 +156,8 @@ function gameOver(sh, game, subject, score, extra) {
     Math.floor(score / 50) > 0 ? el("div", { class: "g-over__stars" }, t(`星星罐 +${Math.floor(score / 50)} ⭐`)) : null,
     sh.learn ? learnSummary(sh.learn) : null,
     el("div", { class: "g-over__btns" },
-      el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/game/${game.id}?s=${subject}`) }, t("🔁 再玩一次")),
-      el("button", { class: "btn btn--ghost", onclick: () => navigate(`#/games?s=${subject}`) }, t("換一個遊戲")))));
+      el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/game/${game.id}?s=${subject}${sh.c ? `&c=${encodeURIComponent(sh.c)}` : ""}`) }, t("🔁 再玩一次")),
+      el("button", { class: "btn btn--ghost", onclick: () => navigate(`#/games?s=${subject}${sh.c ? `&c=${encodeURIComponent(sh.c)}` : ""}`) }, t("換一個遊戲")))));
 }
 // 倒數 3、2、1 再開始
 function countdown(sh, then) {
@@ -199,10 +177,10 @@ function countdown(sh, then) {
 const comboText = c => c >= 2 ? `🔥 x${c}` : "";
 
 // === 🐹 打地鼠 ===
-function renderGameMole(subject) {
+function renderGameMole(subject, c) {
   const game = GAMES[0];
-  const sh = gameShell(game, subject);
-  const L = makeLearnSession(subject); sh.learn = L;
+  const sh = gameShell(game, subject, c);
+  const L = makeLearnSession(subject, c); sh.learn = L;
   const gen = () => L.next();
   const DURATION = subject === "math" ? 90 : 60;
   const MOLE_STAY = subject === "math" ? 5000 : 3000, MOLE_EVERY = subject === "math" ? 1500 : 1100; // 數學要時間算，地鼠待久一點
@@ -261,10 +239,10 @@ function renderGameMole(subject) {
 }
 
 // === 🎈 戳氣球 ===
-function renderGameBalloon(subject) {
+function renderGameBalloon(subject, c) {
   const game = GAMES[1];
-  const sh = gameShell(game, subject);
-  const L = makeLearnSession(subject); sh.learn = L;
+  const sh = gameShell(game, subject, c);
+  const L = makeLearnSession(subject, c); sh.learn = L;
   const gen = () => L.next();
   let score = 0, combo = 0, lives = 3, round = 0, q = null, locked = true;
   const COLORS = ["#ff6fa3", "#6b8cff", "#4ec9a8", "#ffb020", "#b388ff"];
@@ -316,10 +294,10 @@ function renderGameBalloon(subject) {
 }
 
 // === 🏁 兔子賽跑 ===
-function renderGameRace(subject) {
+function renderGameRace(subject, c) {
   const game = GAMES[2];
-  const sh = gameShell(game, subject);
-  const L = makeLearnSession(subject); sh.learn = L;
+  const sh = gameShell(game, subject, c);
+  const L = makeLearnSession(subject, c); sh.learn = L;
   const gen = () => L.next();
   const TRACK = 100, QS = 10;
   let me = 0, rival = 0, qi = 0, score = 0, combo = 0, q = null, qStart = 0, locked = true, stunned = false, finished = false;
@@ -380,10 +358,10 @@ function renderGameRace(subject) {
 
 
 // === 🏎️ 賽車：3 條車道，答案寫在前面的拱門上，點車道把車開進對的拱門 ===
-function renderGameCar(subject) {
+function renderGameCar(subject, c) {
   const game = GAMES.find(g => g.id === "car");
-  const sh = gameShell(game, subject);
-  const L = makeLearnSession(subject); sh.learn = L;
+  const sh = gameShell(game, subject, c);
+  const L = makeLearnSession(subject, c); sh.learn = L;
   const gen = () => L.next();
   const GATES = 15;
   let score = 0, combo = 0, gate = 0, lane = 1, q = null, locked = true, raf = 0, hits = 0;
@@ -434,12 +412,14 @@ function renderGameCar(subject) {
   return sh.root;
 }
 
-function renderGame(id, subject) {
+function renderGame(id, subject, c) {
   const subjects = gameSubjects();
   const s = subjects.some(([x]) => x === subject) ? subject : "en";
-  if (id === "mole") return renderGameMole(s);
-  if (id === "balloon") return renderGameBalloon(s);
-  if (id === "race") return renderGameRace(s);
-  if (id === "car") return renderGameCar(s);
-  return renderGames(s);
+  if (!c) c = questDefaultChapter(s);
+  if (s === "math" || !GAMES.some(g => g.id === id)) return renderGames(s, c); // 數學不玩計時遊戲；賽車已經拿掉
+  if (id === "mole") return renderGameMole(s, c);
+  if (id === "balloon") return renderGameBalloon(s, c);
+  if (id === "race") return renderGameRace(s, c);
+  if (id === "car") return renderGameCar(s, c);
+  return renderGames(s, c);
 }
