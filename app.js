@@ -824,7 +824,7 @@ function renderHome() {
   if (subjects.length > 1) {
     app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
       subjects.map(([id, label]) =>
-        el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
+        el("button", { class: `subject-tab subject-tab--${id} ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
   }
   // 🎮 遊樂場（英文、國語都能玩）
   app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
