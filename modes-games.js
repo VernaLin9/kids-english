@@ -1,5 +1,5 @@
-// 🎮 遊樂場：休閒小遊戲（打地鼠、氣球、賽跑）
-// 題目用現有資料：英文單字（WORDS）、一年級注音詞（ZH 注音課）、二年級生字（ZH kind:"chars"）
+// 🎮 遊樂場：休閒小遊戲（打地鼠、氣球、兔子賽跑、賽車）
+// 題目用現有資料：英文單字（WORDS）、一年級注音詞（ZH 注音課）、二年級生字（ZH kind:"chars"）、數學（一年級10以內加減、二年級第4單元）
 // 每個遊戲都是 { prompt, say, options:[{ node, ok }] } 四選一，差別在玩法、時間與計分
 // 最高分存在 profile.games[gameId][subject]
 
@@ -7,13 +7,42 @@ const GAMES = [
   { id: "mole",    emoji: "🐹", name: "打地鼠", desc: "地鼠冒出來，打對的那隻！60 秒拿高分", color: "candy-3" },
   { id: "balloon", emoji: "🎈", name: "戳氣球", desc: "氣球往上飄，戳對的那顆！飄走就少一條命", color: "candy-2" },
   { id: "race",    emoji: "🏁", name: "兔子賽跑", desc: "答對就往前跑，比烏龜先到終點！", color: "candy-1" },
+  { id: "car",     emoji: "🏎️", name: "賽車", desc: "點一條車道，開進對的答案！連續答對會越開越快", color: "candy-3" },
 ];
 
 // === 題目產生器 ===
 function gameSubjects() {
   const out = [["en", "🔤 英文"]];
   if (typeof ZH !== "undefined" && ZH) out.push(["zh", "ㄅ 國語"]);
+  if (typeof MATH !== "undefined" && MATH) out.push(["math", "➕ 數學"]);
   return out;
+}
+// 數學題：一年級 10 以內加減；二年級 兩位數加減、大於小於等於、湊 15（第4單元）
+function makeMathGen() {
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const numOpts = (ans, spread) => {
+    const set = new Set([ans]);
+    const cands = shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + spread, ans - spread, ans + 3].filter(v => v >= 0 && v !== ans));
+    for (const v of cands) { if (set.size >= 4) break; set.add(v); }
+    return shuffle([...set]).map(v => ({ node: el("span", { class: "g-opt__num" }, String(v)), ok: v === ans }));
+  };
+  const mk = (text, opts, say) => ({ key: text, subject: "math", prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
+  if (CURRENT_GRADE === "g1") {
+    return () => {
+      if (Math.random() < 0.6) { const a = ri(1, 9), b = ri(0, 10 - a); return mk(`${a} + ${b} = ?`, numOpts(a + b, 2)); }
+      const a = ri(2, 10), b = ri(0, a); return mk(`${a} − ${b} = ?`, numOpts(a - b, 2));
+    };
+  }
+  return () => {
+    const k = Math.random();
+    if (k < 0.45) { const T = ri(30, 99), A = ri(10, T - 8); return mk(`${T} − ${A} = ?`, numOpts(T - A, 10)); }
+    if (k < 0.75) { const A = ri(10, 60), B = ri(8, 99 - A); return mk(`${A} + ${B} = ?`, numOpts(A + B, 10)); }
+    if (k < 0.9) {
+      const rel = ["<", ">", "="][ri(0, 2)], a = ri(5, 40), b = ri(5, 40), L = a + b, R = rel === "=" ? L : rel === ">" ? L - ri(1, 4) : L + ri(1, 4);
+      return mk(`${a} + ${b} ◯ ${R}`, ["<", ">", "="].map(x => ({ node: el("span", { class: "g-opt__num" }, x), ok: x === rel })), `${a}加${b}，和${R}比，要填大於、小於，還是等於`);
+    }
+    for (;;) { const a = ri(1, 9), b = ri(1, 9), c = 15 - a - b; if (a !== b && c >= 1 && c <= 9 && c !== a && c !== b) return mk(`${a} + ${b} + ? = 15`, numOpts(c, 3)); }
+  };
 }
 function gameWordPool() {
   // 英文：本週＋前兩週＋答錯／沒學會的字；不夠 8 個就用全部
@@ -23,6 +52,7 @@ function gameWordPool() {
   return pool.length >= 8 ? pool : Object.keys(WORDS);
 }
 function makeQuestionGen(subject) {
+  if (subject === "math") return makeMathGen();
   if (subject === "en") {
     const pool = gameWordPool();
     return () => {
@@ -62,7 +92,7 @@ function makeQuestionGen(subject) {
   };
 }
 function gameRecord(q, ok) {
-  if (q.subject === "en") recordWord(q.key, ok); else recordZh(q.key, ok);
+  if (q.subject === "en") recordWord(q.key, ok); else if (q.subject === "math") recordMath("game", ok); else recordZh(q.key, ok);
 }
 function gameBest(id, subject) { const p = getProfile(); return p?.games?.[id]?.[subject] || 0; }
 function gameSaveScore(id, subject, score) {
@@ -85,7 +115,7 @@ function renderGames(subjectParam) {
   const app = el("main", { class: "app" });
   if (subjects.length > 1) app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
     subjects.map(([id, label]) => el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => navigate(`#/games?s=${id}`) }, t(label)))));
-  app.appendChild(el("div", { class: "g-intro" }, t(subject === "en" ? "用英文單字來玩！答對加分，連續答對分數更多" : "用國語來玩！答對加分，連續答對分數更多")));
+  app.appendChild(el("div", { class: "g-intro" }, t(subject === "en" ? "用英文單字來玩！答對加分，連續答對分數更多" : subject === "math" ? "用數學題來玩！答對加分，連續答對分數更多" : "用國語來玩！答對加分，連續答對分數更多")));
   app.appendChild(el("div", { class: "g-list" }, GAMES.map(g => {
     const best = gameBest(g.id, subject);
     return el("button", { class: `g-card g-card--${g.color}`, onclick: () => navigate(`#/game/${g.id}?s=${subject}`) },
@@ -217,11 +247,11 @@ function renderGameBalloon(subject) {
     q = gen(); round++;
     promptEl.replaceChildren(q.prompt); q.say();
     clearSky();
-    const dur = Math.max(4.5, 8 - round * 0.25); // 越玩越快
+    const dur = Math.max(9, 13 - round * 0.15); // 慢慢飄，越玩稍微快一點（小朋友反應原本太快）
     const slots = shuffle([0, 1, 2, 3]);
     const thisQ = q;
     q.options.forEach((opt, i) => {
-      const b = el("button", { class: "g-balloon", style: `left: ${8 + slots[i] * 23}%; animation-duration: ${dur}s; animation-delay: ${i * 0.35}s; --bc: ${COLORS[(round + i) % COLORS.length]};` },
+      const b = el("button", { class: "g-balloon", style: `left: ${8 + slots[i] * 23}%; animation-duration: ${dur}s; animation-delay: ${i * 0.5}s; --bc: ${COLORS[(round + i) % COLORS.length]};` },
         el("span", { class: "g-balloon__body" }, opt.node), el("span", { class: "g-balloon__string" }));
       b.addEventListener("pointerdown", e => {
         e.preventDefault();
@@ -305,11 +335,61 @@ function renderGameRace(subject) {
   return sh.root;
 }
 
+
+// === 🏎️ 賽車：3 條車道，答案寫在前面的拱門上，點車道把車開進對的拱門 ===
+function renderGameCar(subject) {
+  const game = GAMES.find(g => g.id === "car");
+  const sh = gameShell(game, subject);
+  const gen = makeQuestionGen(subject);
+  const GATES = 15;
+  let score = 0, combo = 0, gate = 0, lane = 1, q = null, locked = true, raf = 0, hits = 0;
+  const promptEl = el("div", { class: "g-prompt" });
+  const speakBtn = el("button", { class: "icon-btn icon-btn--accent g-speak", "aria-label": "念題目", onclick: () => q?.say() }, "🔊");
+  const car = el("div", { class: "g-car" }, "🏎️");
+  const gateRow = el("div", { class: "g-gates" });
+  const laneBtns = [0, 1, 2].map(i => { const b = el("button", { class: "g-lane-btn", "aria-label": `第${i + 1}條車道` }); b.addEventListener("pointerdown", e => { e.preventDefault(); if (!locked) { lane = i; placeCar(); } }); return b; });
+  const road = el("div", { class: "g-road" }, el("div", { class: "g-road__lines" }), gateRow, car, el("div", { class: "g-lane-btns" }, laneBtns));
+  const speedEl = el("div", { class: "g-speed" });
+  sh.hud.right.textContent = `🚩 0/${GATES}`;
+  sh.app.replaceChildren(sh.hudEl, el("div", { class: "g-prompt-row" }, promptEl, speakBtn), road, speedEl);
+  const placeCar = () => { car.style.left = `${lane * 33.33 + 16.66}%`; laneBtns.forEach((b, i) => b.classList.toggle("g-lane-btn--on", i === lane)); };
+  const updateHud = () => { sh.hud.score.textContent = String(score); sh.hud.combo.textContent = comboText(combo); sh.hud.right.textContent = `🚩 ${gate}/${GATES}`; };
+  const travelMs = () => Math.max(4200, 7000 - combo * 450); // 連續答對越開越快，最快 4.2 秒
+  const showSpeed = () => { const lv = Math.round((7000 - travelMs()) / 450); speedEl.replaceChildren(t("速度 "), el("span", { class: "g-speed__bar" }, "▮".repeat(lv + 1) + "▯".repeat(Math.max(0, 7 - lv)))); road.style.setProperty("--road-speed", `${Math.max(0.25, 0.9 - combo * 0.1)}s`); };
+  const nextGate = () => {
+    if (gate >= GATES) { locked = true; gameOver(sh, game, subject, score, el("div", { class: "g-over__msg" }, t(`🏁 跑完了！開進對的答案 ${hits} 次`))); return; }
+    q = gen(); gate++; updateHud(); showSpeed();
+    promptEl.replaceChildren(q.prompt); q.say();
+    const right = q.options.find(o => o.ok), wrongs = shuffle(q.options.filter(o => !o.ok)).slice(0, 2);
+    const opts = shuffle([right, ...wrongs]);
+    gateRow.replaceChildren(...opts.map(o => el("div", { class: "g-gate" }, el("span", { class: "g-gate__label" }, o.node.cloneNode(true)))));
+    const thisQ = q, start = performance.now(), dur = travelMs();
+    const tick = now => {
+      if (!sh.alive() || thisQ !== q) return;
+      const p = Math.min(1, (now - start) / dur);
+      gateRow.style.top = `${-18 + p * 78}%`;
+      if (p < 1) { raf = requestAnimationFrame(tick); return; }
+      const ok = opts[lane] === right;
+      gameRecord(q, ok);
+      const g = gateRow.children[lane];
+      if (ok) { hits++; combo++; score += 10 * Math.min(combo, 5); dingCorrect(); q.sayAnswer?.(); g.classList.add("g-gate--ok"); car.classList.add("g-car--boost"); }
+      else { combo = 0; buzzWrong(); g.classList.add("g-gate--bad"); gateRow.children[opts.indexOf(right)].classList.add("g-gate--ok"); car.classList.add("g-car--crash"); }
+      updateHud();
+      sh.after(ok ? 600 : 1300, () => { car.classList.remove("g-car--boost", "g-car--crash"); nextGate(); });
+    };
+    raf = requestAnimationFrame(tick);
+  };
+  placeCar(); showSpeed();
+  countdown(sh, () => { locked = false; nextGate(); });
+  return sh.root;
+}
+
 function renderGame(id, subject) {
   const subjects = gameSubjects();
   const s = subjects.some(([x]) => x === subject) ? subject : "en";
   if (id === "mole") return renderGameMole(s);
   if (id === "balloon") return renderGameBalloon(s);
   if (id === "race") return renderGameRace(s);
+  if (id === "car") return renderGameCar(s);
   return renderGames(s);
 }

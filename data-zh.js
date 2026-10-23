@@ -95,6 +95,32 @@ const ZH_DATA = {
           { who: { zh: "外婆", bopo: "ㄨㄞˋ ㄆㄛˊ" }, where: { zh: "在門前", bopo: "ㄗㄞˋ ㄇㄣˊ ㄑㄧㄢˊ" }, what: { zh: "澆花", bopo: "ㄐㄧㄠ ㄏㄨㄚ" }, emoji: "👵" },
         ],
       },
+      // 第八課〈拔蘿蔔〉：老師的聽寫本（18 題，只有注音；紅字是訂正，照紅字收）
+      // 第 8 題注音 ㄨㄢˇ ㄒㄩㄥˊ 看得清楚，但不確定是哪兩個國字，先不放進練習，等家長確認
+      {
+        id: "L8", title: "第八課 拔蘿蔔", titleBopo: "ㄉㄧˋ ㄅㄚ ㄎㄜˋ ㄅㄚˊ ㄌㄨㄛˊ ㄅㄛ˙", emoji: "🥕",
+        textTitle: "", text: [],
+        pending: [{ no: 8, bopo: "ㄨㄢˇ ㄒㄩㄥˊ", note: "國字待確認" }],
+        words: [
+          { no: 1, zh: "菜園裡", bopo: "ㄘㄞˋ ㄩㄢˊ ㄌㄧˇ", emoji: "🥬", from: "聽寫" },
+          { no: 2, zh: "長出", bopo: "ㄓㄤˇ ㄔㄨ", emoji: "🌱", from: "聽寫" },
+          { no: 3, zh: "大蘿蔔", bopo: "ㄉㄚˋ ㄌㄨㄛˊ ㄅㄛ˙", emoji: "🥕", from: "聽寫" },
+          { no: 4, zh: "拔不動", bopo: "ㄅㄚˊ ㄅㄨˋ ㄉㄨㄥˋ", emoji: "💪", from: "聽寫" },
+          { no: 5, zh: "大家", bopo: "ㄉㄚˋ ㄐㄧㄚ", emoji: "👨‍👩‍👧", from: "聽寫" },
+          { no: 6, zh: "大象", bopo: "ㄉㄚˋ ㄒㄧㄤˋ", emoji: "🐘", from: "聽寫" },
+          { no: 7, zh: "黃牛", bopo: "ㄏㄨㄤˊ ㄋㄧㄡˊ", emoji: "🐂", from: "聽寫" },
+          { no: 9, zh: "嘿唷", bopo: "ㄏㄟ ㄧㄛ", emoji: "🙌", from: "聽寫" },
+          { no: 10, zh: "好熱鬧", bopo: "ㄏㄠˇ ㄖㄜˋ ㄋㄠˋ", emoji: "🎉", from: "聽寫" },
+          { no: 11, zh: "捲起", bopo: "ㄐㄩㄢˇ ㄑㄧˇ", emoji: "🌀", from: "聽寫" },
+          { no: 12, zh: "袖子", bopo: "ㄒㄧㄡˋ ㄗ˙", emoji: "👕", from: "聽寫" },
+          { no: 13, zh: "紅燒", bopo: "ㄏㄨㄥˊ ㄕㄠ", emoji: "🍲", from: "聽寫", note: "待確認" },
+          { no: 14, zh: "清蒸", bopo: "ㄑㄧㄥ ㄓㄥ", emoji: "🍵", from: "聽寫" },
+          { no: 15, zh: "肉粽", bopo: "ㄖㄡˋ ㄗㄨㄥˋ", emoji: "🍙", from: "聽寫" },
+          { no: 16, zh: "網球", bopo: "ㄨㄤˇ ㄑㄧㄡˊ", emoji: "🎾", from: "聽寫" },
+          { no: 17, zh: "望遠鏡", bopo: "ㄨㄤˋ ㄩㄢˇ ㄐㄧㄥˋ", emoji: "🔭", from: "聽寫" },
+          { no: 18, zh: "泳圈", bopo: "ㄩㄥˇ ㄑㄩㄢ", emoji: "🛟", from: "聽寫" },
+        ],
+      },
     ],
   },
   // 二年級上學期 第六課〈從自己開始〉（課本 p.48-55；p.52「我會寫的字」18 個生字，考部首、筆畫）

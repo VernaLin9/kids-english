@@ -107,12 +107,13 @@ function renderZhLesson(id) {
     el("div", { class: "section__title" }, t("ㄅ 這課的注音符號（點一個聽一個）")),
     el("div", { class: "zh-symbols" }, l.symbols.map(sy => el("button", { class: "zh-symbol", onclick: () => speakZh(ZH_SYMBOL_SAY[sy] || sy) }, sy)))));
 
-  // 課文：點一句念一句
-  app.appendChild(el("section", { class: "section" },
+  // 課文：點一句念一句（沒有課文就不顯示）
+  if (l.text?.length) app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t(l.textTitle || "📖 課文（點一句聽一句）")),
     el("div", { class: "zh-text" }, l.text.map(line =>
       el("button", { class: "zh-text__line", onclick: () => speakZh(line.zh) }, rubyEl(line.zh, line.bopo, "span"))))));
 
+  if (l.pending?.length) app.appendChild(el("div", { class: "b2-note" }, l.pending.map(p => el("div", {}, t(`第${p.no}題 `), bopoWordEl(p.bopo, { class: "bopo-word--sm" }), t(`：${p.note}，還沒放進練習`)))));
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t(`📝 複習詞語（共 ${l.words.length}）`)),
     el("div", { class: "word-list zh-word-list" }, l.words.map(w =>
