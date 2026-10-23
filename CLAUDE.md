@@ -18,7 +18,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-zh2 → modes-games → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔 |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
-| `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
+| `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子；第八課〈拔蘿蔔〉聽寫本 18 題，第 8 題 ㄨㄢˇ ㄒㄩㄥˊ 國字待確認放在 `pending`，沒有課文 `text: []`）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
 | `data-math.js` | 數學 `MATH_DATA`（一年級上 第 3 回：比長短、高矮與厚薄；只列單元與題型，題目由程式隨機畫）。二年級 `MATH_DATA.g2`（南一二上）：第4單元 加減的關係與應用（`bookId:"u4"` 課本原題 p.54-63）、第5單元 容量（只有 p.68 開頭頁，題目照觀念出，待補課本頁）；`kind:"calc"` 的單元交給 modes-math2 |
 | `modes-math.js` | 數學：SVG 畫圖題（直線曲線、比長短、比高矮、比厚薄、三個比一比、對不對）、小考混合 12 題；`MATH_TOPICS` 每個題型一個 `gen()`，回傳 `{ prompt, items:[{node, correct}], tf? }`。`SHEET_U2` 是評量卷原題（p.6-7，六大題 22 小題；老師會考一模一樣的題目，所以版面和作答方式都照原卷：在 (　) 裡打 ✓／畫 ○、把圖圈起來、方框打 ✓✗，寫完按「交卷」照卷子配分算得分），`renderMathSheet()` 一頁顯示整張卷子 |
 | `modes-math2.js` | 二年級數學：題目 `{ text, visual, steps:[choice|num|pick3], hint, topic|page }`，數字鍵盤作答、線段圖 `barModel`、分合圖 `bondEl`、直式 `vertEl`。`MATH2_TOPICS`：解題、加減的關係、驗算、直式加減、大於小於等於、神機妙算（3 張湊 15）、容量 4 種。`BOOK_U4` 是課本原題（照頁碼、數字、順序） |
@@ -27,7 +27,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |
 | `modes-zh.js` | 國語（一年級注音課）：注音卡、聽音選注音、加聲調、拼注音（聽寫）、寫注音、連句子（課有 `sentences` 才出現）；`kind:"chars"` 的課轉給 modes-zh2 |
 | `modes-zh2.js` | 國語（二年級生字課）：生字卡、聽寫國字（看→蓋→寫→對）、選國字（長得像的字四選一，選項用 `data-nobopo` 不自動加注音）、部首、筆畫數（總筆畫＋部首外筆畫）、小考 |
-| `modes-games.js` | 🎮 遊樂場（首頁英文／國語分頁都有入口，`#/games?s=en|zh`）：打地鼠（60 秒）、戳氣球（3 條命、越玩越快）、兔子賽跑（10 題贏烏龜）。題目由 `makeQuestionGen(subject)` 產生四選一：英文用本週＋前兩週＋答錯的字，一年級國語用注音詞（`bopoVariants` 當干擾）、二年級用生字（`confuse`）。最高分存 `profile.games[gameId][subject]`，分數÷50 換 ⭐。計時器都用 `gameShell` 的 `every/after`，離開頁面自動停 |
+| `modes-games.js` | 🎮 遊樂場（首頁英文／國語／數學分頁都有入口，`#/games?s=en|zh|math`）：打地鼠（60 秒）、戳氣球（3 條命，氣球 9-13 秒才飄完，小朋友反應原本太快）、兔子賽跑（10 題贏烏龜）、賽車（15 個拱門，點車道開進對的答案，連續答對變快）。題目由 `makeQuestionGen(subject)` 產生四選一：英文用本週＋前兩週＋答錯的字，一年級國語用注音詞（`bopoVariants` 當干擾）、二年級用生字（`confuse`），數學用 `makeMathGen()`（一年級 10 以內加減、二年級兩位數加減／大於小於等於／湊 15）。最高分存 `profile.games[gameId][subject]`，分數÷50 換 ⭐。計時器都用 `gameShell` 的 `every/after`，離開頁面自動停 |
 | `parent.js` | 家長模式（PIN、每個小孩的年級／切換／統計）、router `route()` |
 
 ## 資料格式
@@ -48,6 +48,10 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 - 每次改動至少檢查：沒有 console 錯誤、375×667 / 390×844 / 768×1024 / 1024×768 不會左右捲動、
   一年級和二年級所有頁面沒有「沒注音的國字」（掃 `.zh-pair` 的空注音與沒包起來的中文字）。
 - 這個環境連不到 `vernalin9.github.io`，線上結果要請家長確認。
+
+## 照片來源
+- 家長把課本照片放在 Google Drive「kids-english」資料夾（`1MvaeRwPrCHFi99sXUIAH_lEas5OerwUq`），底下分「一年級／二年級」→「國語／數學／英文」。
+- iPhone 的 HEIC 照片：環境沒有 HEIC 解碼器、也連不到 pip/npm，用 `tools/heic2jpg.py`（自己解析 HEIF grid，再用 ffmpeg 的 HEVC 解碼拼圖）轉成 JPG。
 
 ## 流程
 - 在 `claude/grade1-to-grade2-vocab-wtgb2j` 分支開發 → push → 開 PR；合併由家長在 GitHub 按（環境不允許自動合併）。

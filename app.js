@@ -789,9 +789,9 @@ function renderHome() {
         el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
   }
   // 🎮 遊樂場（英文、國語都能玩）
-  if (subject !== "math") app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
+  app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
     el("span", { class: "g-home__emoji" }, "🎮"),
-    el("span", { class: "g-home__text" }, t("遊樂場"), el("span", { class: "g-home__sub" }, t("打地鼠・戳氣球・兔子賽跑"))),
+    el("span", { class: "g-home__text" }, t("遊樂場"), el("span", { class: "g-home__sub" }, t("打地鼠・戳氣球・兔子賽跑・賽車"))),
     el("span", { class: "g-home__go" }, "▶")));
   if (subject === "zh" || subject === "math") {
     app.appendChild(subject === "zh" ? renderZhHomeSection() : renderMathHomeSection());
