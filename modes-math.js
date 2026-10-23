@@ -197,7 +197,7 @@ function renderMathHomeSection() {
       el("div", { class: "hero__head" },
         el("h1", { class: "hero__title" }, `${u.emoji} `, rubyEl(u.title, u.titleBopo, "span")),
         el("div", { class: "hero__sub" }, `${u.topics.length} 種題型・已答對 ${done} 題`)),
-      el("div", { class: "zh-chips" }, u.topics.map(tp => el("div", { class: "zh-chip" }, el("span", { class: "zh-chip__emoji" }, MATH_TOPICS[tp].emoji), t(MATH_TOPICS[tp].name)))),
+      el("div", { class: "zh-chips" }, u.topics.map(tp => { const T = (u.kind === "calc" ? MATH2_TOPICS : MATH_TOPICS)[tp]; return el("div", { class: "zh-chip" }, el("span", { class: "zh-chip__emoji" }, T.emoji), t(T.name)); })),
       el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-top: 12px;", onclick: () => navigate(`#/math/${u.id}`) }, t("▶ 開始練習"))
     ));
   });
@@ -208,6 +208,7 @@ function renderMathHomeSection() {
 function renderMathUnit(id) {
   const u = mathUnit(id);
   if (!u) return renderEmpty("#/", "找不到這個單元");
+  if (u.kind === "calc") return renderMath2Unit(u);
   const prog = mathProgressOf();
   const root = el("div", {});
   root.appendChild(renderHeader(`${u.emoji} ${u.title}`, { back: "#/" }));
@@ -233,6 +234,7 @@ function renderMathUnit(id) {
 function renderMathPlay(topic, unitId) {
   const u = mathUnit(unitId) || MATH?.units[0];
   if (!u) return renderEmpty("#/", "找不到這個單元");
+  if (u.kind === "calc") return renderMath2Play(topic, u);
   if (topic === "sheet") return renderMathSheet(u.id);
   const isMix = topic === "mix";
   const total = isMix ? 12 : 8;

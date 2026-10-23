@@ -1792,3 +1792,57 @@ body.focus .app { padding-top: 8px; }
 .g-over__msg { font-weight: 800; font-size: calc(18px * var(--font-scale)); }
 .g-over__stars { font-weight: 800; color: #b26a00; }
 .g-over__btns { display: grid; gap: 10px; max-width: 320px; margin: 8px auto 0; }
+
+/* ===== 二年級數學（modes-math2）===== */
+.b2-card-q { text-align: left; }
+.b2-text { font-weight: 800; font-size: calc(20px * var(--font-scale)); line-height: 1.9; padding-right: 54px; }
+.b2-card-q .m-speak { position: absolute; top: 12px; right: 12px; }
+.b2-card-q { position: relative; }
+.b2 { margin: 14px 0 4px; }
+.b2-row { display: flex; gap: 3px; }
+.b2-seg { min-width: 0; min-height: 46px; padding: 4px 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.b2-seg--0 { background: #ffe7a8; } .b2-seg--1 { background: #bfe0ff; }
+.b2-seg__label { font-weight: 800; font-size: calc(15px * var(--font-scale)); line-height: 1.5; text-align: center; padding: 0 4px; }
+.b2-total { position: relative; margin-top: 6px; text-align: center; }
+.b2-brace { display: block; height: 12px; border: 2px solid var(--ink-soft); border-top: 0; border-radius: 0 0 12px 12px; }
+.b2-total__label { display: inline-block; margin-top: 4px; font-weight: 800; font-size: calc(15px * var(--font-scale)); }
+.b2-v { font-weight: 900; color: var(--ink); }
+.b2-q { display: inline-grid; place-items: center; min-width: 30px; height: 28px; border: 2px dashed #e0952e; border-radius: 6px; color: #b26a00; font-weight: 900; background: #fff7e6; }
+.b2-bond { display: grid; justify-items: center; gap: 0; margin: 10px auto 0; width: 220px; }
+.b2-bond__top, .b2-bond__bottom { display: flex; gap: 60px; }
+.b2-bond__lines { width: 120px; height: 26px; background: linear-gradient(to bottom right, transparent 48%, #999 49%, #999 51%, transparent 52%) left / 50% 100% no-repeat, linear-gradient(to bottom left, transparent 48%, #999 49%, #999 51%, transparent 52%) right / 50% 100% no-repeat; }
+.b2-bond__cell { min-width: 66px; height: 54px; display: grid; place-items: center; border: 3px solid #8aa; border-radius: 12px; background: white; font-size: 28px; font-weight: 900; }
+.b2-bond__top .b2-bond__cell { border-color: #e0952e; }
+.b2-bond__cell--q { border-style: dashed; color: #b26a00; background: #fff7e6; }
+.b2-eq { margin-top: 10px; text-align: center; font-size: calc(32px * var(--font-scale)); font-weight: 900; letter-spacing: 1px; }
+.b2-eq--sm { font-size: calc(26px * var(--font-scale)); }
+.b2-vert { width: 150px; margin: 12px auto 0; font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.b2-vert__row { display: grid; grid-template-columns: 40px 1fr; text-align: right; line-height: 1.25; }
+.b2-vert__line { border-top: 4px solid var(--ink); margin-top: 4px; }
+.b2-cmp { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px; font-size: calc(30px * var(--font-scale)); font-weight: 900; flex-wrap: wrap; }
+.b2-cmp__box { display: inline-grid; place-items: center; width: 54px; height: 54px; border: 3px solid var(--ink-soft); border-radius: 10px; color: var(--ink-soft); }
+.b2-cards { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+.b2-card { display: inline-grid; place-items: center; width: 64px; height: 80px; border-radius: 12px; border: 3px solid #b388ff; background: white; font-size: 36px; font-weight: 900; color: #6b4bd6; }
+.b2-card--mine { background: #f2ebff; }
+.b2-emoji { text-align: center; font-size: 48px; margin-top: 10px; }
+.b2-step { margin-top: 12px; }
+.b2-step__label { font-weight: 800; font-size: calc(17px * var(--font-scale)); margin: 0 0 8px; line-height: 1.8; }
+.b2-opts { display: grid; gap: 10px; }
+.b2-opts--sym { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.b2-opt { min-height: 60px; font-size: calc(24px * var(--font-scale)); font-weight: 900; }
+.b2-opt--sym { min-height: 76px; font-size: 40px; }
+.b2-num-row { text-align: center; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }
+.b2-pad { max-width: 360px; margin: 0 auto; }
+.b2-pad__display { height: 64px; display: grid; place-items: center; background: white; border: 3px solid var(--line); border-radius: 14px; font-size: 40px; font-weight: 900; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.b2-pad__display--ok { border-color: var(--success); background: var(--success-soft); }
+.b2-pad__display--bad { border-color: var(--danger, #ff6b6b); animation: shake 0.3s; }
+.b2-pad__keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.b2-pad__key { min-height: 58px; border-radius: 14px; border: 2px solid var(--line); background: white; font-size: 28px; font-weight: 900; color: var(--ink); touch-action: manipulation; }
+.b2-pad__key:active { background: var(--candy-2); }
+.b2-pad__key--soft { background: #f4f4f8; }
+.b2-pad__key--ok { background: var(--accent); color: white; border-color: var(--accent); }
+.b2-pick3__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 88px)); justify-content: center; gap: 10px; }
+.b2-card--btn { width: 100%; height: 84px; }
+.b2-card--on { background: #b388ff; color: white; }
+.b2-pick3__sum { text-align: center; margin-top: 10px; font-size: 26px; font-weight: 900; }
+.b2-note { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #fff7e6; color: #8a5a00; font-weight: 700; font-size: calc(14px * var(--font-scale)); line-height: 1.7; }
