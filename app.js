@@ -387,16 +387,30 @@ if (window.speechSynthesis) {
   initVoices();
   speechSynthesis.onvoiceschanged = initVoices;
 }
+// iPhone／iPad 的聲音清單裡有很多「搞笑／機器人」聲音（Albert、Bad News、Bells、Zarvox…，還有 Eddy、Flo、Grandma 這類），
+// 排在清單前面，隨便挑第一個就會念得很奇怪 → 一律排除，優先挑正常的聲音
+const ODD_VOICES = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Ralph|Kathy|Princess|Deranged|Hysterical|Pipe Organ|Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Novelty/i;
+function pickEnVoice() {
+  const vs = (window.speechSynthesis?.getVoices?.() || voicesCache).filter(v => !ODD_VOICES.test(v.name));
+  const us = vs.filter(v => /en[-_]US/i.test(v.lang));
+  return us.find(v => /Samantha|Ava|Allison|Susan|Zoe|Nicky|Siri|Google US English|Aria|Jenny/i.test(v.name))
+    || us.find(v => v.localService) || us[0] || vs.find(v => /^en/i.test(v.lang)) || null;
+}
+// iOS Safari：cancel() 之後馬上 speak() 常常會念不出來或念一半 → 有東西在念就等一下再念
+function speakUtterance(u) {
+  const ss = window.speechSynthesis;
+  if (ss.speaking || ss.pending) { ss.cancel(); setTimeout(() => ss.speak(u), 80); }
+  else ss.speak(u);
+}
 const speak = (text) => {
   if (typeof zhAudio !== "undefined" && zhAudio) zhAudio.pause(); // 英文要念時，先停掉正在念的國語
   if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "en-US";
   u.rate = 0.9;
-  const enVoice = voicesCache.find(v => /en[-_]US/i.test(v.lang)) || voicesCache.find(v => /^en/i.test(v.lang));
-  if (enVoice) u.voice = enVoice;
-  speechSynthesis.speak(u);
+  const enVoice = pickEnVoice();
+  if (enVoice) u.voice = enVoice; // 找不到正常的就不指定，用系統預設的英文聲音
+  speakUtterance(u);
 };
 const speakWord = w => speak(WORDS[w]?.speak ?? w);
 
@@ -829,7 +843,7 @@ function renderHome() {
   // 🎮 遊樂場（英文、國語都能玩）
   app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
     el("span", { class: "g-home__emoji" }, "🎮"),
-    el("span", { class: "g-home__text" }, t("遊樂場"), el("span", { class: "g-home__sub" }, t("打地鼠・戳氣球・兔子賽跑・賽車"))),
+    el("span", { class: "g-home__text" }, t("遊戲"), el("span", { class: "g-home__sub" }, t("陀螺對戰・養寵物・記憶地圖（跟著要考的那一課）"))),
     el("span", { class: "g-home__go" }, "▶")));
   if (subject === "zh" || subject === "math") {
     app.appendChild(subject === "zh" ? renderZhHomeSection() : renderMathHomeSection());
@@ -1012,8 +1026,9 @@ function renderListPage(setKey) {
   }
 
   if (words.length) {
+    if (setKey.startsWith("week-")) app.appendChild(questEntryBtn("en", setKey));
     app.appendChild(el("section", { class: "section" },
-      el("div", { class: "section__title" }, t("🎮 選一種練習")),
+      el("div", { class: "section__title" }, t("✏️ 選一種練習")),
       renderModeGrid(setKey)
     ));
 

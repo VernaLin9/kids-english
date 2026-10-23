@@ -20,8 +20,9 @@ function renderZhCharLesson(l) {
   const root = el("div", {});
   root.appendChild(renderHeader(`${l.emoji} ${l.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
+  app.appendChild(questEntryBtn("zh", l.id));
   app.appendChild(el("section", { class: "section" },
-    el("div", { class: "section__title" }, t("🎮 選一種練習")),
+    el("div", { class: "section__title" }, t("✏️ 選一種練習")),
     el("div", { class: "mode-grid" }, ZH2_MODES.map(([m, emoji, label]) =>
       el("button", { class: "mode-btn", onclick: () => navigate(`#/zhplay/${m}?l=${l.id}`) }, el("span", { class: "mode-btn__emoji" }, emoji), t(label))))));
 
@@ -35,9 +36,8 @@ function renderZhCharLesson(l) {
         rubyEl(c.word, c.wordBopo, "div", { class: "c-cell__word" }))))));
 
   if (l.text) app.appendChild(el("section", { class: "section" },
-    el("div", { class: "section__title" }, t(l.textTitle || "📖 課文（點一句聽一句）")),
-    el("div", { class: "zh-text" }, l.text.map(line =>
-      el("button", { class: "zh-text__line", onclick: () => speakZh(line.zh) }, rubyEl(line.zh, line.bopo, "span"))))));
+    el("div", { class: "section__title" }, t(l.textTitle || "📖 課文（照課本分段，點一段聽一段）")),
+    el("div", { class: "zh-text" }, l.text.map(zhTextBlock))));
 
   if (l.words) app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t(`📝 詞語（共 ${l.words.length}）`)),
@@ -48,6 +48,15 @@ function renderZhCharLesson(l) {
         el("button", { class: "word-row__speak", onclick: () => speakZh(w.zh), "aria-label": `念 ${w.zh}` }, "🔊"))))));
   root.appendChild(app);
   return root;
+}
+
+// 課文一段：前面有課本的段落編號（一、二…）；便條照課本分行、放在便條紙上
+function zhTextBlock(line) {
+  if (line.note) return el("button", { class: "zh-text__line zh-note", onclick: () => speakZh(line.zh) },
+    el("div", { class: "zh-note__tag" }, t(`📝 ${line.note}`)),
+    line.lines.map(x => rubyEl(x.zh, x.bopo, "div", { class: `zh-note__line ${x.right ? "zh-note__line--right" : ""}` })));
+  return el("button", { class: "zh-text__line zh-text__para", onclick: () => speakZh(line.zh) },
+    line.para ? el("span", { class: "zh-para", "data-nobopo": "" }, line.para) : null, rubyEl(line.zh, line.bopo, "span"));
 }
 
 // 共用：題目卡（例詞，目標字挖空或顯示）
