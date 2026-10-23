@@ -15,7 +15,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 ## 檔案
 | 檔案 | 內容 |
 |---|---|
-| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-zh2 → modes-games → modes-learn → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁時抓最新 index.html，版本號不同就自動重新載入一次 |
+| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁時抓最新 index.html，版本號不同就自動重新載入一次 |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
 | `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子；第八課〈拔蘿蔔〉聽寫本 18 題，第 8 題 ㄨㄢˇ ㄒㄩㄥˊ 國字待確認放在 `pending`，沒有課文 `text: []`）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
@@ -26,9 +26,10 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `modes-play.js` | 自選複習、單字卡、選擇題、聽力、字母拼拼樂、翻牌配對、跟著念 |
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |
 | `modes-zh.js` | 國語（一年級注音課）：注音卡、聽音選注音、加聲調、拼注音（聽寫）、寫注音、連句子（課有 `sentences` 才出現）；`kind:"chars"` 的課轉給 modes-zh2 |
+| `modes-tone.js` | 📍 聲調放哪裡（一年級特訓，`#/tonedrill`，國語首頁入口＋每課「聲調位置」）：放聲調（點虛線框）、哪個對（三種寫法選一）、抓錯字（詞裡有一個字放錯），一輪 12 題，錯的 2 題後再考，上次錯的下一輪先考；紀錄 `profile.toneDrill` |
 | `modes-zh2.js` | 國語（二年級生字課）：生字卡、聽寫國字（看→蓋→寫→對）、選國字（長得像的字四選一，選項用 `data-nobopo` 不自動加注音）、部首、筆畫數（總筆畫＋部首外筆畫）、小考 |
-| `modes-games.js` | 🎮 遊樂場（首頁英文／國語／數學分頁都有入口，`#/games?s=en|zh|math`）：打地鼠（60 秒）、戳氣球（3 條命，氣球 9-13 秒才飄完，小朋友反應原本太快）、兔子賽跑（10 題贏烏龜）、賽車（15 個拱門，點車道開進對的答案，連續答對變快）。題目由 `makeQuestionGen(subject)` 產生四選一：英文用本週＋前兩週＋答錯的字，一年級國語用注音詞（`bopoVariants` 當干擾）、二年級用生字（`confuse`），數學用 `makeMathGen()`（一年級 10 以內加減、二年級兩位數加減／大於小於等於／湊 15）。最高分存 `profile.games[gameId][subject]`，分數÷50 換 ⭐，結束畫面依分數給 1-3 顆星（`STAR_LEVELS`）。每個遊戲有自己的場景（草地、天空、跑道、路邊樹），答對冒分數和彩色碎片（`fxHit`），答錯冒 ✗（`fxMiss`）。計時器都用 `gameShell` 的 `every/after`，離開頁面自動停、暫停時不跑 |
-| `modes-learn.js` | 🧠 遊樂場的學習引擎（家長要求：遊戲不能只是考試，要幫助記憶、教記憶方法）：每局只挑 6 個專注組（先挑答錯過、還沒學會的）重複出現；開始前「先學一學」卡片（圖、聲音、記憶小撇步：英文拍手分段念、注音拼一拼、生字拆字 `ZH2_MNEMONIC`、數學算法步驟）；第一次答錯暫停遊戲跳「記一記」卡，2 題後再考同一個；結束畫面列出要再記的並教一招 `MEMORY_TECHNIQUES`。遊戲用 `makeLearnSession` / `learnFirst` / `teachMiss` / `learnSummary`，`gameShell` 有 `pause()` |
+| `modes-games.js` | 🎮 遊樂場（首頁英文／國語／數學分頁都有入口，`#/games?s=en|zh|math`）：打地鼠（60 秒）、戳氣球（3 條命，氣球 9-13 秒才飄完，小朋友反應原本太快）、兔子賽跑（10 題贏烏龜）、賽車（15 個拱門，點車道開進對的答案，連續答對變快）。題目由 `makeQuestionGen(subject)` 產生四選一：英文用本週＋前兩週＋答錯的字，一年級國語用注音詞（`bopoVariants` 當干擾）、二年級用生字（`confuse`），數學用 `makeMathGen()`（一年級 10 以內加減、二年級兩位數加減／大於小於等於／湊 15）。最高分存 `profile.games[gameId][subject]`，分數÷50 換 ⭐，結束畫面依分數給 1-3 顆星（`STAR_LEVELS`）。每個遊戲有自己的場景（草地、天空、跑道、路邊樹），答對冒分數和彩色碎片（`fxHit`），答錯冒 ✗（`fxMiss`）。計時器都用 `gameShell` 的 `every/after/afterPlay`，離開頁面自動停、暫停時不跑。右上 ⏸ 暫停鍵（`pause(on, why)`，答錯教學和暫停鍵分開記）。數學比較慢：氣球 22-28 秒、烏龜 130-170 秒跑完、賽車 13-16 秒到門、地鼠待 5 秒 |
+| `modes-learn.js` | 🧠 遊樂場的學習引擎（家長要求：遊戲不能只是考試，要幫助記憶、教記憶方法）：每局只挑 6 個專注組（先挑答錯過、還沒學會的）重複出現；開始前「先學一學」卡片（圖、聲音、記憶小撇步：英文拍手分段念、注音拼一拼、生字拆字 `ZH2_MNEMONIC`、數學算法步驟）；第一次答錯暫停遊戲跳「記一記」卡，2 題後再考同一個；結束畫面列出要再記的並教一招 `MEMORY_TECHNIQUES`。小撇步要白話、短句，每段都有 🔊 朗讀（`tipEl`/`mathStepsEl`/`sayable` 把 +−= 換成字）；數學說明是一行一步的陣列。遊戲用 `makeLearnSession` / `learnFirst` / `teachMiss` / `learnSummary`，`gameShell` 有 `pause()` |
 | `parent.js` | 家長模式（PIN、每個小孩的年級／切換／統計）、router `route()` |
 
 ## 資料格式

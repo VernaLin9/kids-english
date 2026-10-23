@@ -27,17 +27,17 @@ function makeMathGen() {
     return shuffle([...set]).map(v => ({ node: el("span", { class: "g-opt__num" }, String(v)), ok: v === ans }));
   };
   const mk = (text, opts, say, explain) => ({ key: text, subject: "math", explain, prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
-  // 算法說明（答錯時教）
+  // 算法說明（答錯時教）：一行一步，用小朋友聽得懂的話；可以按 🔊 念出來
   const subSteps = (T, A) => { const t1 = T % 10, a1 = A % 10, t10 = Math.floor(T / 10), a10 = Math.floor(A / 10);
-    return t1 < a1 ? `個位 ${t1} 不夠減 ${a1}，向十位借 1 個十：${t1 + 10} − ${a1} = ${t1 + 10 - a1}；十位剩 ${t10 - 1}，${t10 - 1} − ${a10} = ${t10 - 1 - a10}。答案是 ${T - A}。驗算：${T - A} + ${A} = ${T}`
-      : `個位 ${t1} − ${a1} = ${t1 - a1}；十位 ${t10} − ${a10} = ${t10 - a10}。答案是 ${T - A}。驗算：${T - A} + ${A} = ${T}`; };
-  const addSteps = (A, B) => { const s1 = A % 10 + B % 10, s10 = Math.floor(A / 10) + Math.floor(B / 10);
-    return s1 >= 10 ? `個位 ${A % 10} + ${B % 10} = ${s1}，滿 10 進 1 到十位，個位寫 ${s1 - 10}；十位 ${Math.floor(A / 10)} + ${Math.floor(B / 10)} + 1 = ${s10 + 1}。答案是 ${A + B}`
-      : `個位 ${A % 10} + ${B % 10} = ${s1}；十位 ${Math.floor(A / 10)} + ${Math.floor(B / 10)} = ${s10}。答案是 ${A + B}`; };
+    return t1 < a1 ? [`個位 ${t1} 減 ${a1}，不夠減`, `跟十位借 10 過來：${t1 + 10} − ${a1} = ${t1 + 10 - a1}`, `十位被借走 1，剩 ${t10 - 1}：${t10 - 1} − ${a10} = ${t10 - 1 - a10}`, `合起來就是 ${T - A}`, `檢查：${T - A} + ${A} = ${T} ✓`]
+      : [`先算個位：${t1} − ${a1} = ${t1 - a1}`, `再算十位：${t10} − ${a10} = ${t10 - a10}`, `合起來就是 ${T - A}`]; };
+  const addSteps = (A, B) => { const a1 = A % 10, b1 = B % 10, s1 = a1 + b1, A10 = Math.floor(A / 10), B10 = Math.floor(B / 10);
+    return s1 >= 10 ? [`先算個位：${a1} + ${b1} = ${s1}`, `滿 10 了！個位寫 ${s1 - 10}，多的 1 送去十位`, `再算十位：${A10} + ${B10} + 1 = ${A10 + B10 + 1}`, `合起來就是 ${A + B}`]
+      : [`先算個位：${a1} + ${b1} = ${s1}`, `再算十位：${A10} + ${B10} = ${A10 + B10}`, `合起來就是 ${A + B}`]; };
   if (CURRENT_GRADE === "g1") {
     return () => {
-      if (Math.random() < 0.6) { const a = ri(1, 9), b = ri(0, 10 - a); return mk(`${a} + ${b} = ?`, numOpts(a + b, 2), null, `從 ${a} 往上數 ${b} 個，就是 ${a + b}（用手指數數看）`); }
-      const a = ri(2, 10), b = ri(0, a); return mk(`${a} − ${b} = ?`, numOpts(a - b, 2), null, `從 ${a} 往回數 ${b} 個，就是 ${a - b}（用手指數數看）`);
+      if (Math.random() < 0.6) { const a = ri(1, 9), b = ri(0, 10 - a); return mk(`${a} + ${b} = ?`, numOpts(a + b, 2), null, b ? [`先伸出 ${a} 根手指`, `再多伸出 ${b} 根`, `數一數，一共 ${a + b} 根`] : [`加 0 就是什麼都沒加`, `所以還是 ${a}`]); }
+      const a = ri(2, 10), b = ri(0, a); return mk(`${a} − ${b} = ?`, numOpts(a - b, 2), null, b ? [`先伸出 ${a} 根手指`, `收起來 ${b} 根`, `還剩下 ${a - b} 根`] : [`減 0 就是什麼都沒拿走`, `所以還是 ${a}`]);
     };
   }
   return () => {
@@ -47,9 +47,9 @@ function makeMathGen() {
     if (k < 0.9) {
       const rel = ["<", ">", "="][ri(0, 2)], a = ri(5, 40), b = ri(5, 40), L = a + b, R = rel === "=" ? L : rel === ">" ? L - ri(1, 4) : L + ri(1, 4);
       return mk(`${a} + ${b} ◯ ${R}`, ["<", ">", "="].map(x => ({ node: el("span", { class: "g-opt__num" }, x), ok: x === rel })), `${a}加${b}，和${R}比，要填大於、小於，還是等於`,
-        `先算左邊：${a} + ${b} = ${L}，再和 ${R} 比：${L} ${rel} ${R}（開口朝向大的數）`);
+        [`先算左邊：${a} + ${b} = ${L}`, rel === "=" ? `${L} 和 ${R} 一樣大，填 =` : `${L} 和 ${R} 比，${Math.max(L, R)} 比較大`, rel === "=" ? `一樣大就用等號` : `開口開開的那邊對著大的數：${L} ${rel} ${R}`]);
     }
-    for (;;) { const a = ri(1, 9), b = ri(1, 9), c = 15 - a - b; if (a !== b && c >= 1 && c <= 9 && c !== a && c !== b) return mk(`${a} + ${b} + ? = 15`, numOpts(c, 3), null, `${a} + ${b} = ${a + b}，還差多少到 15？15 − ${a + b} = ${c}`); }
+    for (;;) { const a = ri(1, 9), b = ri(1, 9), c = 15 - a - b; if (a !== b && c >= 1 && c <= 9 && c !== a && c !== b) return mk(`${a} + ${b} + ? = 15`, numOpts(c, 3), null, [`先算 ${a} + ${b} = ${a + b}`, `${a + b} 還要再加多少，才會變成 15？`, `15 − ${a + b} = ${c}，答案是 ${c}`]); }
   };
 }
 function gameWordPool() {
@@ -108,13 +108,29 @@ function gameShell(game, subject) {
     el("span", { class: "g-hud__pill g-hud__pill--right" }, hud.right));
   const timers = new Set();
   let paused = false;
+  const holds = new Set(); // 暫停的原因：teach（答錯教學）、user（按了暫停鍵）
   const alive = () => document.body.contains(root);
   const every = (ms, fn) => { const id = setInterval(() => { if (!alive()) { clearInterval(id); return; } if (!paused) fn(); }, ms); timers.add(id); return id; };
-  const pause = on => { paused = on; app.classList.toggle("g-app--paused", on); };
+  const pause = (on, why = "teach") => { if (on) holds.add(why); else holds.delete(why); paused = holds.size > 0; app.classList.toggle("g-app--paused", paused); };
   const isPaused = () => paused;
   const after = (ms, fn) => { const id = setTimeout(() => { if (alive()) fn(); }, ms); timers.add(id); return id; };
+  // 遊戲時間：暫停的時候不算（例如地鼠暫停時不會躲回去）
+  const afterPlay = (ms, fn) => after(ms, function check() { if (paused) after(300, check); else fn(); });
   const stopAll = () => { timers.forEach(id => { clearInterval(id); clearTimeout(id); }); timers.clear(); };
-  return { root, app, hud, hudEl, every, after, stopAll, alive, pause, isPaused };
+  // ⏸ 暫停鍵：小朋友想慢慢算、慢慢想的時候按
+  const pauseBtn = el("button", { class: "g-pause-btn", "aria-label": "暫停" }, "⏸");
+  pauseBtn.addEventListener("click", () => {
+    if (holds.has("user")) return;
+    pause(true, "user");
+    const ov = el("div", { class: "g-teach g-pause" }, el("div", { class: "g-teach__panel" },
+      el("div", { class: "g-pause__icon" }, "⏸"),
+      el("div", { class: "g-teach__head" }, t("暫停中")),
+      el("div", { class: "g-teach__sub" }, t("慢慢想，想好了再按繼續")),
+      el("button", { class: "btn btn--accent btn--xl btn--full", onclick: () => { ov.remove(); pause(false, "user"); } }, t("▶ 繼續玩"))));
+    root.appendChild(ov);
+  });
+  hudEl.appendChild(pauseBtn);
+  return { root, app, hud, hudEl, every, after, afterPlay, stopAll, alive, pause, isPaused };
 }
 // === 特效：答對時冒出分數和彩色碎片，答錯時冒出 ✗ ===
 function fxLayer() { let l = document.querySelector(".g-fx"); if (!l) { l = el("div", { class: "g-fx", "aria-hidden": "true" }); document.body.appendChild(l); } return l; }
@@ -188,7 +204,8 @@ function renderGameMole(subject) {
   const sh = gameShell(game, subject);
   const L = makeLearnSession(subject); sh.learn = L;
   const gen = () => L.next();
-  const DURATION = 60;
+  const DURATION = subject === "math" ? 90 : 60;
+  const MOLE_STAY = subject === "math" ? 5000 : 3000, MOLE_EVERY = subject === "math" ? 1500 : 1100; // 數學要時間算，地鼠待久一點
   let score = 0, combo = 0, left = DURATION, q = null, popsSinceCorrect = 0, locked = true;
   const promptEl = el("div", { class: "g-prompt" });
   const speakBtn = el("button", { class: "icon-btn icon-btn--accent g-speak", "aria-label": "念題目", onclick: () => q?.say() }, "🔊");
@@ -215,7 +232,7 @@ function renderGameMole(subject) {
     const mole = hole.firstChild;
     mole.replaceChildren(el("span", { class: "g-mole__face" }, "🐹"), el("span", { class: "g-mole__label" }, opt.node.cloneNode(true)));
     hole.classList.add("g-hole--up");
-    sh.after(2000, () => { if (hole._opt === opt) hideMole(hole); });
+    sh.afterPlay(MOLE_STAY, () => { if (hole._opt === opt) hideMole(hole); });
   };
   holes.forEach(hole => hole.addEventListener("pointerdown", e => {
     e.preventDefault();
@@ -237,7 +254,7 @@ function renderGameMole(subject) {
   }));
   learnFirst(sh, L, () => countdown(sh, () => {
     locked = false; newQuestion();
-    sh.every(850, pop);
+    sh.every(MOLE_EVERY, pop);
     sh.every(1000, () => { left--; sh.hud.right.textContent = `⏱ ${left}`; if (left <= 10) sh.hud.right.classList.add("g-hud__num--hot"); if (left <= 0) { locked = true; gameOver(sh, game, subject, score); } });
   }));
   return sh.root;
@@ -268,11 +285,12 @@ function renderGameBalloon(subject) {
     q = gen(); round++;
     promptEl.replaceChildren(q.prompt); q.say();
     clearSky();
-    const dur = Math.max(9, 13 - round * 0.15); // 慢慢飄，越玩稍微快一點（小朋友反應原本太快）
+    // 飄的時間（秒）：數學要時間算，固定很慢、不會越來越快；英文／國語也放慢
+    const dur = subject === "math" ? (CURRENT_GRADE === "g1" ? 22 : 28) : Math.max(13, 16 - round * 0.1);
     const slots = shuffle([0, 1, 2, 3]);
     const thisQ = q;
     q.options.forEach((opt, i) => {
-      const b = el("button", { class: "g-balloon", style: `left: ${8 + slots[i] * 23}%; animation-duration: ${dur}s; animation-delay: ${i * 0.5}s; --bc: ${COLORS[(round + i) % COLORS.length]};` },
+      const b = el("button", { class: "g-balloon", style: `left: ${8 + slots[i] * 23}%; animation-duration: ${dur}s; animation-delay: ${(i * 0.5 - dur * 0.18).toFixed(2)}s; --bc: ${COLORS[(round + i) % COLORS.length]};` },
         el("span", { class: "g-balloon__body" }, opt.node), el("span", { class: "g-balloon__string" }));
       b.addEventListener("pointerdown", e => {
         e.preventDefault();
@@ -331,7 +349,7 @@ function renderGameRace(subject) {
       b.addEventListener("click", () => {
         if (locked || stunned || thisQ !== q || finished) return;
         if (opt.ok) {
-          const fast = Date.now() - qStart < 4000;
+          const fast = Date.now() - qStart < (subject === "math" ? 9000 : 5000);
           combo++; const gain = 10 * Math.min(combo, 5) + (fast ? 5 : 0); score += gain;
           me += fast ? 13 : 10; gameRecord(q, true); dingCorrect(); q.sayAnswer?.();
           b.classList.add("zh-opt--ok"); fxHit(b, gain); feedback.textContent = fast ? `好快！+${gain} 🚀` : `+${gain}`; feedback.className = "quiz-feedback quiz-feedback--correct pop";
@@ -353,7 +371,9 @@ function renderGameRace(subject) {
   draw();
   learnFirst(sh, L, () => countdown(sh, () => {
     locked = false; ask();
-    sh.every(700, () => { if (finished) return; rival += 1.6; draw(); if (rival >= TRACK) end(false); });
+    // 烏龜跑完全程的秒數：數學要算，給比較久
+    const turtleSec = subject === "math" ? (CURRENT_GRADE === "g1" ? 130 : 170) : 100;
+    sh.every(700, () => { if (finished) return; rival += TRACK / (turtleSec / 0.7); draw(); if (rival >= TRACK) end(false); });
   }));
   return sh.root;
 }
@@ -379,8 +399,10 @@ function renderGameCar(subject) {
   sh.app.replaceChildren(sh.hudEl, el("div", { class: "g-prompt-row" }, promptEl, speakBtn), road, speedEl);
   const placeCar = () => { car.style.left = `${lane * 33.33 + 16.66}%`; laneBtns.forEach((b, i) => b.classList.toggle("g-lane-btn--on", i === lane)); };
   const updateHud = () => { sh.hud.score.textContent = String(score); sh.hud.combo.textContent = comboText(combo); sh.hud.right.textContent = `🚩 ${gate}/${GATES}`; };
-  const travelMs = () => Math.max(4200, 7000 - combo * 450); // 連續答對越開越快，最快 4.2 秒
-  const showSpeed = () => { const lv = Math.round((7000 - travelMs()) / 450); speedEl.replaceChildren(t("速度 "), el("span", { class: "g-speed__bar" }, "▮".repeat(lv + 1) + "▯".repeat(Math.max(0, 7 - lv)))); road.style.setProperty("--road-speed", `${Math.max(0.25, 0.9 - combo * 0.1)}s`); };
+  // 車子開到答案門的時間：數學要算，慢很多；連續答對才稍微變快
+  const BASE = subject === "math" ? (CURRENT_GRADE === "g1" ? 13000 : 16000) : 9000, MIN = subject === "math" ? BASE - 3000 : 6000, STEP = (BASE - MIN) / 7;
+  const travelMs = () => Math.max(MIN, BASE - combo * STEP);
+  const showSpeed = () => { const lv = Math.round((BASE - travelMs()) / STEP); speedEl.replaceChildren(t("速度 "), el("span", { class: "g-speed__bar" }, "▮".repeat(lv + 1) + "▯".repeat(Math.max(0, 7 - lv)))); road.style.setProperty("--road-speed", `${Math.max(0.25, 0.9 - combo * 0.1)}s`); };
   const nextGate = () => {
     if (gate >= GATES) { locked = true; gameOver(sh, game, subject, score, el("div", { class: "g-over__msg" }, t(`🏁 跑完了！開進對的答案 ${hits} 次`))); return; }
     q = gen(); gate++; updateHud(); showSpeed();
@@ -388,10 +410,13 @@ function renderGameCar(subject) {
     const right = q.options.find(o => o.ok), wrongs = shuffle(q.options.filter(o => !o.ok)).slice(0, 2);
     const opts = shuffle([right, ...wrongs]);
     gateRow.replaceChildren(...opts.map(o => el("div", { class: "g-gate" }, el("span", { class: "g-gate__label" }, o.node.cloneNode(true)))));
-    const thisQ = q, start = performance.now(), dur = travelMs();
+    const thisQ = q, dur = travelMs();
+    let last = performance.now(), elapsed = 0;
     const tick = now => {
       if (!sh.alive() || thisQ !== q) return;
-      const p = Math.min(1, (now - start) / dur);
+      if (!sh.isPaused()) elapsed += Math.min(100, now - last); // 暫停時門不會往下
+      last = now;
+      const p = Math.min(1, elapsed / dur);
       gateRow.style.top = `${-18 + p * 78}%`;
       if (p < 1) { raf = requestAnimationFrame(tick); return; }
       const ok = opts[lane] === right;
