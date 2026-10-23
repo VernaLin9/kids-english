@@ -1062,10 +1062,11 @@ function renderListPage(setKey) {
 
 // === 自動更新：平板常常拿到快取的舊網頁。打開時偷偷抓最新的 index.html，
 // 版本號（?v=）不一樣就重新載入一次（同一個版本只重載一次，避免一直重整）===
+// 自動更新：打開網頁、切回網頁、每 3 分鐘檢查一次；index.html 的版本號不同就重新載入（家長要求：不管在玩什麼都直接換成新版）
 (function checkNewVersion() {
   const mine = (document.querySelector('script[src*="app.js?v="]')?.getAttribute("src") || "").split("?v=")[1];
   if (!mine || !window.fetch) return;
-  fetch(`${location.pathname}?nocache=${Date.now()}`, { cache: "no-store" })
+  const check = () => fetch(`${location.pathname}?nocache=${Date.now()}`, { cache: "no-store" })
     .then(r => r.ok ? r.text() : "")
     .then(html => {
       const latest = (html.match(/app\.js\?v=([0-9a-z]+)/) || [])[1];
@@ -1076,4 +1077,7 @@ function renderListPage(setKey) {
       location.reload();
     })
     .catch(() => {});
+  check();
+  setInterval(check, 3 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
 })();
