@@ -2428,3 +2428,6 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .b2-cups__label { font-weight: 900; min-width: 3.5em; text-align: right; }
 .b2-cups__cups { font-size: 24px; letter-spacing: 2px; }
 .b2-cups__n { font-weight: 900; color: var(--primary); }
+.l-summary__list > * { min-width: 0; }
+.l-summary__chip .l-card__word, .l-card__word { overflow-wrap: anywhere; }
+.nm-cabinet__items, .nm-got { max-width: 100%; }
