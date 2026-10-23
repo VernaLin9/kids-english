@@ -400,7 +400,7 @@ function wsLineItem(kind) {
   const paths = {
     wave: "M 60 60 q 20 -40 40 0 t 40 0 t 40 0 t 40 0",
     vert: "M 200 10 L 200 110",
-    diag: "M 120 20 L 290 110",
+    diag: "M 130 15 L 250 100 Q 268 114 290 80", // 卷子上是斜斜往下、最後往上彎的曲線
     loop: "M 40 70 c 30 -60 70 -60 60 -10 c -10 40 40 40 50 0 c 10 -50 60 -40 80 10",
   };
   const g = svg("g", {}, svg("path", { d: paths[kind], fill: "none", stroke: INK, "stroke-width": 7, "stroke-linecap": "round" }));
@@ -419,7 +419,7 @@ const SHEET_U2 = {
     { no: "一", instr: "哪些是直線？在(　)裡打✓，哪些是曲線？在(　)裡畫○：每題4分，共16分", points: 4, how: "mark2", marks: ["✓", "○"], parenPos: "below", qs: [
       { n: 1, h: 180, items: [{ node: () => wsLineItem("wave") }], answer: "○" },
       { n: 2, h: 180, items: [{ node: () => wsLineItem("vert") }], answer: "✓" },
-      { n: 3, h: 180, items: [{ node: () => wsLineItem("diag") }], answer: "✓" },
+      { n: 3, h: 180, items: [{ node: () => wsLineItem("diag") }], answer: "○" },
       { n: 4, h: 180, items: [{ node: () => wsLineItem("loop") }], answer: "○" },
     ] },
     { no: "二", instr: "比一比，比較長的在(　)裡畫○：每題5分，共20分", points: 5, how: "paren", mark: "○", parenPos: "right", qs: [
@@ -435,7 +435,7 @@ const SHEET_U2 = {
       { n: 4, h: 250, extra: () => [dash(20, 230, 380, 230)], items: [{ node: () => wsVase(130, 230, 200, "#b388ff"), correct: true }, { node: () => wsVase(270, 230, 140, "#4ec9a8"), correct: false }] },
     ] },
     { no: "四", instr: "哪一個比較薄？在(　)裡打✓：每題5分，共20分", points: 5, how: "paren", mark: "✓", parenPos: "below", qs: [
-      { n: 1, h: 215, items: [{ node: () => wsPizza(40, 40, 34), correct: false }, { node: () => wsPizza(240, 40, 12), correct: true }] },
+      { n: 1, h: 215, items: [{ node: () => wsPizza(40, 40, 12), correct: true }, { node: () => wsPizza(240, 40, 34), correct: false }] }, // 卷子：左邊薄、右邊厚
       { n: 2, h: 215, items: [{ node: () => drawBook(30, 160, 14, WOOD, 130), correct: true }, { node: () => drawBook(220, 160, 44, WOOD, 130), correct: false }] },
       { n: 3, h: 225, items: [{ node: () => drawBook(30, 170, 60, "#6b8cff", 130), correct: false }, { node: () => drawBook(220, 170, 16, "#ff6fa3", 130), correct: true }] },
       { n: 4, h: 245, extra: () => [svg("rect", { x: 20, y: 190, width: 360, height: 10, rx: 4, fill: "#ddd" })], items: [{ node: () => wsBurger(120, 190, 3), correct: false }, { node: () => wsBurger(280, 190, 1), correct: true }] },
@@ -450,7 +450,7 @@ const SHEET_U2 = {
       { n: 1, prompt: "兩枝筆一樣長", h: 280, answer: "✗", hint: "斜放的那枝比較長，兩邊對齊不代表一樣長",
         extra: () => [dash(40, 20, 40, 200), dash(330, 20, 330, 200)], items: [{ node: () => { const g = drawPencil(40, 60, 310, "#ffb020"); g.setAttribute("transform", "rotate(-14 40 71)"); g.bbox = { x: 30, y: 0, w: 330, h: 90 }; return g; } }, { node: () => drawPencil(40, 150, 290, "#ffb020") }] },
       { n: 2, prompt: "小珊比小玉高", h: 320, answer: "✓", hint: "小玉是站在椅子上，所以小珊比較高",
-        extra: () => [dash(20, 30, 380, 30), dash(20, 245, 380, 245)], items: [{ node: () => wsKid(140, 245, 215, "#6b8cff", 0) }, { node: () => wsKid(260, 245, 165, "#ff6fa3", 50) }] },
+        extra: () => [dash(20, 30, 380, 30), dash(20, 245, 380, 245), svg("text", { x: 140, y: 300, "text-anchor": "middle", "font-size": 26, "font-weight": 800, fill: INK }, document.createTextNode("小珊")), svg("text", { x: 260, y: 300, "text-anchor": "middle", "font-size": 26, "font-weight": 800, fill: INK }, document.createTextNode("小玉"))], items: [{ node: () => wsKid(140, 245, 215, "#6b8cff", 0) }, { node: () => wsKid(260, 245, 165, "#ff6fa3", 50) }] },
     ] },
   ],
 };

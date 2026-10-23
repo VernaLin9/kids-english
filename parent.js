@@ -441,6 +441,7 @@ function route() {
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);
   else if (path[0] === "quest" && path[1] === "pet") view = renderQuestPet(query.s, query.c);
   else if (path[0] === "mindmap") view = renderMindMap(query.s, query.c);
+  else if (path[0] === "night" && path[1]) view = renderNightBooth(path[1], query.s, query.c);
   else if (path[0] === "blocks") view = renderBlocksClass(query.c);
   else if (path[0] === "practice" && path[1]) view = renderListPage(decodeURIComponent(path[1]));
   else if (path[0] === "week" && path[1]) view = renderListPage(`week-${path[1]}`);
