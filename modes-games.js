@@ -26,22 +26,30 @@ function makeMathGen() {
     for (const v of cands) { if (set.size >= 4) break; set.add(v); }
     return shuffle([...set]).map(v => ({ node: el("span", { class: "g-opt__num" }, String(v)), ok: v === ans }));
   };
-  const mk = (text, opts, say) => ({ key: text, subject: "math", prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
+  const mk = (text, opts, say, explain) => ({ key: text, subject: "math", explain, prompt: el("span", { class: "g-prompt__math", "data-nobopo": "1" }, text), say: () => speakZh(say || text.replace(/−/g, "減").replace(/\+/g, "加").replace("= ?", "等於多少")), sayAnswer: null, options: opts });
+  // 算法說明（答錯時教）
+  const subSteps = (T, A) => { const t1 = T % 10, a1 = A % 10, t10 = Math.floor(T / 10), a10 = Math.floor(A / 10);
+    return t1 < a1 ? `個位 ${t1} 不夠減 ${a1}，向十位借 1 個十：${t1 + 10} − ${a1} = ${t1 + 10 - a1}；十位剩 ${t10 - 1}，${t10 - 1} − ${a10} = ${t10 - 1 - a10}。答案是 ${T - A}。驗算：${T - A} + ${A} = ${T}`
+      : `個位 ${t1} − ${a1} = ${t1 - a1}；十位 ${t10} − ${a10} = ${t10 - a10}。答案是 ${T - A}。驗算：${T - A} + ${A} = ${T}`; };
+  const addSteps = (A, B) => { const s1 = A % 10 + B % 10, s10 = Math.floor(A / 10) + Math.floor(B / 10);
+    return s1 >= 10 ? `個位 ${A % 10} + ${B % 10} = ${s1}，滿 10 進 1 到十位，個位寫 ${s1 - 10}；十位 ${Math.floor(A / 10)} + ${Math.floor(B / 10)} + 1 = ${s10 + 1}。答案是 ${A + B}`
+      : `個位 ${A % 10} + ${B % 10} = ${s1}；十位 ${Math.floor(A / 10)} + ${Math.floor(B / 10)} = ${s10}。答案是 ${A + B}`; };
   if (CURRENT_GRADE === "g1") {
     return () => {
-      if (Math.random() < 0.6) { const a = ri(1, 9), b = ri(0, 10 - a); return mk(`${a} + ${b} = ?`, numOpts(a + b, 2)); }
-      const a = ri(2, 10), b = ri(0, a); return mk(`${a} − ${b} = ?`, numOpts(a - b, 2));
+      if (Math.random() < 0.6) { const a = ri(1, 9), b = ri(0, 10 - a); return mk(`${a} + ${b} = ?`, numOpts(a + b, 2), null, `從 ${a} 往上數 ${b} 個，就是 ${a + b}（用手指數數看）`); }
+      const a = ri(2, 10), b = ri(0, a); return mk(`${a} − ${b} = ?`, numOpts(a - b, 2), null, `從 ${a} 往回數 ${b} 個，就是 ${a - b}（用手指數數看）`);
     };
   }
   return () => {
     const k = Math.random();
-    if (k < 0.45) { const T = ri(30, 99), A = ri(10, T - 8); return mk(`${T} − ${A} = ?`, numOpts(T - A, 10)); }
-    if (k < 0.75) { const A = ri(10, 60), B = ri(8, 99 - A); return mk(`${A} + ${B} = ?`, numOpts(A + B, 10)); }
+    if (k < 0.45) { const T = ri(30, 99), A = ri(10, T - 8); return mk(`${T} − ${A} = ?`, numOpts(T - A, 10), null, subSteps(T, A)); }
+    if (k < 0.75) { const A = ri(10, 60), B = ri(8, 99 - A); return mk(`${A} + ${B} = ?`, numOpts(A + B, 10), null, addSteps(A, B)); }
     if (k < 0.9) {
       const rel = ["<", ">", "="][ri(0, 2)], a = ri(5, 40), b = ri(5, 40), L = a + b, R = rel === "=" ? L : rel === ">" ? L - ri(1, 4) : L + ri(1, 4);
-      return mk(`${a} + ${b} ◯ ${R}`, ["<", ">", "="].map(x => ({ node: el("span", { class: "g-opt__num" }, x), ok: x === rel })), `${a}加${b}，和${R}比，要填大於、小於，還是等於`);
+      return mk(`${a} + ${b} ◯ ${R}`, ["<", ">", "="].map(x => ({ node: el("span", { class: "g-opt__num" }, x), ok: x === rel })), `${a}加${b}，和${R}比，要填大於、小於，還是等於`,
+        `先算左邊：${a} + ${b} = ${L}，再和 ${R} 比：${L} ${rel} ${R}（開口朝向大的數）`);
     }
-    for (;;) { const a = ri(1, 9), b = ri(1, 9), c = 15 - a - b; if (a !== b && c >= 1 && c <= 9 && c !== a && c !== b) return mk(`${a} + ${b} + ? = 15`, numOpts(c, 3)); }
+    for (;;) { const a = ri(1, 9), b = ri(1, 9), c = 15 - a - b; if (a !== b && c >= 1 && c <= 9 && c !== a && c !== b) return mk(`${a} + ${b} + ? = 15`, numOpts(c, 3), null, `${a} + ${b} = ${a + b}，還差多少到 15？15 − ${a + b} = ${c}`); }
   };
 }
 function gameWordPool() {
@@ -50,46 +58,6 @@ function gameWordPool() {
   const recent = WEEKS.filter(w => w.num <= cw.num && w.num >= cw.num - 2).flatMap(w => w.words);
   const pool = [...new Set([...recent, ...wrongWords(), ...unmasteredWords().slice(0, 10)])].filter(w => WORDS[w]);
   return pool.length >= 8 ? pool : Object.keys(WORDS);
-}
-function makeQuestionGen(subject) {
-  if (subject === "math") return makeMathGen();
-  if (subject === "en") {
-    const pool = gameWordPool();
-    return () => {
-      const w = pool[Math.floor(Math.random() * pool.length)];
-      const info = WORDS[w];
-      const ds = distractors(w);
-      const toEn = Math.random() < 0.6;
-      if (toEn) {
-        return { key: w, subject, prompt: el("span", { class: "g-prompt__inner" }, el("span", { class: "g-prompt__emoji" }, info.emoji || ""), rubyEl(info.zh, info.bopo, "span")),
-          say: () => speakZh(info.zh), sayAnswer: () => speak(info.speak || w),
-          options: shuffle([w, ...ds]).map(x => ({ node: el("span", { class: "g-opt__en", "data-nobopo": "1" }, x), ok: x === w })) };
-      }
-      return { key: w, subject, prompt: el("span", { class: "g-prompt__inner" }, el("span", { class: "g-prompt__en", "data-nobopo": "1" }, w)),
-        say: () => speak(info.speak || w), sayAnswer: () => speakZh(info.zh),
-        options: shuffle([w, ...ds]).map(x => ({ node: el("span", { class: "g-opt__zh" }, (WORDS[x].emoji || "") + " ", rubyEl(WORDS[x].zh, WORDS[x].bopo, "span")), ok: x === w })) };
-    };
-  }
-  // 國語
-  const lessons = ZH.lessons;
-  const charLessons = lessons.filter(l => l.kind === "chars");
-  if (charLessons.length) {
-    const chars = charLessons.flatMap(l => l.chars);
-    return () => {
-      const c = chars[Math.floor(Math.random() * chars.length)];
-      const pool = shuffle([...new Set([...c.confuse.split(""), ...chars.map(x => x.zh)])].filter(z => z !== c.zh)).slice(0, 3);
-      return { key: c.zh, subject, prompt: charPromptEl(c, true), say: () => speakZh(c.word), sayAnswer: () => speakZh(`${c.zh}，${c.word}`),
-        options: shuffle([c.zh, ...pool]).map(z => ({ node: el("span", { class: "g-opt__char", "data-nobopo": "1" }, z), ok: z === c.zh })) };
-    };
-  }
-  const words = lessons.flatMap(l => l.words);
-  return () => {
-    const w = words[Math.floor(Math.random() * words.length)];
-    const variants = bopoVariants(w.bopo).slice(0, 3);
-    return { key: w.zh, subject, prompt: el("span", { class: "g-prompt__inner" }, el("span", { class: "g-prompt__emoji" }, w.emoji), el("span", { class: "g-prompt__zhword", "data-nobopo": "1" }, w.zh)),
-      say: () => speakZh(w.zh), sayAnswer: () => speakZh(w.zh),
-      options: shuffle([w.bopo, ...variants]).map(b => ({ node: bopoWordEl(b, { class: "bopo-word--sm" }), ok: b === w.bopo })) };
-  };
 }
 function gameRecord(q, ok) {
   if (q.subject === "en") recordWord(q.key, ok); else if (q.subject === "math") recordMath("game", ok); else recordZh(q.key, ok);
@@ -114,7 +82,7 @@ function renderGames(subjectParam) {
   root.appendChild(renderHeader("🎮 遊樂場", { back: "#/" }));
   const app = el("main", { class: "app" });
   if (subjects.length > 1) app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
-    subjects.map(([id, label]) => el("button", { class: `subject-tab ${subject === id ? "subject-tab--on" : ""}`, onclick: () => navigate(`#/games?s=${id}`) }, t(label)))));
+    subjects.map(([id, label]) => el("button", { class: `subject-tab subject-tab--${id} ${subject === id ? "subject-tab--on" : ""}`, onclick: () => navigate(`#/games?s=${id}`) }, t(label)))));
   app.appendChild(el("div", { class: "g-intro" }, t(subject === "en" ? "用英文單字來玩！答對加分，連續答對分數更多" : subject === "math" ? "用數學題來玩！答對加分，連續答對分數更多" : "用國語來玩！答對加分，連續答對分數更多")));
   app.appendChild(el("div", { class: "g-list" }, GAMES.map(g => {
     const best = gameBest(g.id, subject);
@@ -130,49 +98,96 @@ function renderGames(subjectParam) {
 
 // === 共用：遊戲外框（HUD）與結束畫面 ===
 function gameShell(game, subject) {
-  const root = el("div", { class: "g-root" });
+  const root = el("div", { class: `g-root g-root--${game.id}` });
   root.appendChild(renderHeader(`${game.emoji} ${game.name}`, { back: `#/games?s=${subject}` }));
-  const app = el("main", { class: "app g-app" });
+  const app = el("main", { class: `app g-app g-app--${game.id}` });
   root.appendChild(app);
-  const hud = { score: el("span", { class: "g-hud__num" }, "0"), combo: el("span", { class: "g-hud__combo" }, ""), right: el("span", { class: "g-hud__num" }, "") };
+  const hud = { score: el("span", { class: "g-hud__num" }, "0"), combo: el("span", { class: "g-hud__combo" }, ""), right: el("span", { class: "g-hud__num g-hud__num--right" }, "") };
   const hudEl = el("div", { class: "g-hud" },
-    el("span", { class: "g-hud__item" }, t("分數 "), hud.score), hud.combo, el("span", { class: "g-hud__item g-hud__item--right" }, hud.right));
+    el("span", { class: "g-hud__pill g-hud__pill--score" }, el("span", { class: "g-hud__icon" }, "⭐"), hud.score), hud.combo,
+    el("span", { class: "g-hud__pill g-hud__pill--right" }, hud.right));
   const timers = new Set();
+  let paused = false;
   const alive = () => document.body.contains(root);
-  const every = (ms, fn) => { const id = setInterval(() => { if (!alive()) { clearInterval(id); return; } fn(); }, ms); timers.add(id); return id; };
+  const every = (ms, fn) => { const id = setInterval(() => { if (!alive()) { clearInterval(id); return; } if (!paused) fn(); }, ms); timers.add(id); return id; };
+  const pause = on => { paused = on; app.classList.toggle("g-app--paused", on); };
+  const isPaused = () => paused;
   const after = (ms, fn) => { const id = setTimeout(() => { if (alive()) fn(); }, ms); timers.add(id); return id; };
   const stopAll = () => { timers.forEach(id => { clearInterval(id); clearTimeout(id); }); timers.clear(); };
-  return { root, app, hud, hudEl, every, after, stopAll, alive };
+  return { root, app, hud, hudEl, every, after, stopAll, alive, pause, isPaused };
 }
+// === 特效：答對時冒出分數和彩色碎片，答錯時冒出 ✗ ===
+function fxLayer() { let l = document.querySelector(".g-fx"); if (!l) { l = el("div", { class: "g-fx", "aria-hidden": "true" }); document.body.appendChild(l); } return l; }
+function fxAt(target) { const r = target.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+function fxPop(target, text, bad) {
+  const [x, y] = fxAt(target);
+  const n = el("div", { class: `g-fx__pop ${bad ? "g-fx__pop--bad" : ""}`, style: `left:${x}px; top:${y}px;`, "data-nobopo": "1" }, text);
+  fxLayer().appendChild(n); setTimeout(() => n.remove(), 900);
+}
+function fxBurst(target, count = 12) {
+  const [x, y] = fxAt(target), layer = fxLayer();
+  const bits = ["⭐", "✨", "🎉", "💖", "🌟"];
+  for (let i = 0; i < count; i++) {
+    const a = (Math.PI * 2 * i) / count + Math.random() * 0.4, d = 60 + Math.random() * 60;
+    const n = el("div", { class: "g-fx__bit", style: `left:${x}px; top:${y}px; --dx:${Math.cos(a) * d}px; --dy:${Math.sin(a) * d}px;`, "data-nobopo": "1" }, bits[i % bits.length]);
+    layer.appendChild(n); setTimeout(() => n.remove(), 800);
+  }
+}
+function fxHit(target, gain) { fxPop(target, `+${gain}`); fxBurst(target); }
+function fxMiss(target) { fxPop(target, "✗", true); }
+function confetti(n = 60) {
+  const layer = fxLayer(), colors = ["#ff6fa3", "#6b8cff", "#4ec9a8", "#ffb020", "#b388ff"];
+  for (let i = 0; i < n; i++) {
+    const c = el("div", { class: "g-fx__confetti", style: `left:${Math.random() * 100}vw; background:${colors[i % colors.length]}; animation-delay:${Math.random() * 0.6}s; animation-duration:${1.6 + Math.random() * 1.2}s; --rot:${Math.random() * 720 - 360}deg;` });
+    layer.appendChild(c); setTimeout(() => c.remove(), 3400);
+  }
+}
+// 星星：照分數給 1～3 顆（每個遊戲門檻不同）
+const STAR_LEVELS = { mole: [50, 150, 280], balloon: [40, 120, 240], race: [80, 180, 260], car: [100, 300, 520] };
+const starsFor = (id, score) => (STAR_LEVELS[id] || [50, 150, 300]).filter(v => score >= v).length;
+
 function gameOver(sh, game, subject, score, extra) {
   sh.stopAll();
   const isBest = gameSaveScore(game.id, subject, score);
   const best = gameBest(game.id, subject);
   if (score > 0) dingCorrect();
+  const stars = starsFor(game.id, score);
+  if (stars >= 2 || (isBest && score > 0)) setTimeout(() => confetti(), 200);
   sh.app.replaceChildren(el("div", { class: "g-over pop" },
     el("div", { class: "g-over__emoji" }, isBest && score > 0 ? "🏆" : score > 0 ? "🎉" : "💪"),
+    el("div", { class: "g-over__rating" }, [0, 1, 2].map(i => el("span", { class: `g-over__star ${i < stars ? "g-over__star--on" : ""}`, style: `animation-delay:${0.25 + i * 0.25}s;` }, "★"))),
     el("div", { class: "g-over__score" }, `${score} `, t("分")),
     isBest && score > 0 ? el("div", { class: "g-over__best" }, t("新紀錄！")) : el("div", { class: "g-over__best g-over__best--old" }, t(`最高分 ${best}`)),
     extra || null,
-    el("div", { class: "g-over__stars" }, t(`得到 ${Math.floor(score / 50)} 顆 ⭐`)),
+    Math.floor(score / 50) > 0 ? el("div", { class: "g-over__stars" }, t(`星星罐 +${Math.floor(score / 50)} ⭐`)) : null,
+    sh.learn ? learnSummary(sh.learn) : null,
     el("div", { class: "g-over__btns" },
       el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/game/${game.id}?s=${subject}`) }, t("🔁 再玩一次")),
       el("button", { class: "btn btn--ghost", onclick: () => navigate(`#/games?s=${subject}`) }, t("換一個遊戲")))));
 }
 // 倒數 3、2、1 再開始
 function countdown(sh, then) {
-  const n = el("div", { class: "g-count" }, "3");
+  const num = el("span", { class: "g-count__num" }, "3");
+  const n = el("div", { class: "g-count" }, el("div", { class: "g-count__ring" }, num));
   sh.app.appendChild(n);
   let k = 3;
-  const id = sh.every(700, () => { k--; if (k <= 0) { clearInterval(id); n.remove(); then(); } else { n.textContent = String(k); n.classList.remove("pop"); void n.offsetWidth; n.classList.add("pop"); } });
+  const bump = () => { num.classList.remove("g-count__num--bump"); void num.offsetWidth; num.classList.add("g-count__num--bump"); };
+  bump();
+  const id = sh.every(700, () => {
+    k--;
+    if (k === 0) { num.replaceChildren(t("開始！")); n.classList.add("g-count--go"); bump(); }
+    else if (k < 0) { clearInterval(id); n.remove(); then(); }
+    else { num.textContent = String(k); bump(); }
+  });
 }
-const comboText = c => c >= 2 ? `🔥 連擊 x${c}` : "";
+const comboText = c => c >= 2 ? `🔥 x${c}` : "";
 
 // === 🐹 打地鼠 ===
 function renderGameMole(subject) {
   const game = GAMES[0];
   const sh = gameShell(game, subject);
-  const gen = makeQuestionGen(subject);
+  const L = makeLearnSession(subject); sh.learn = L;
+  const gen = () => L.next();
   const DURATION = 60;
   let score = 0, combo = 0, left = DURATION, q = null, popsSinceCorrect = 0, locked = true;
   const promptEl = el("div", { class: "g-prompt" });
@@ -208,22 +223,23 @@ function renderGameMole(subject) {
     const opt = hole._opt, hq = hole._q;
     if (opt.ok && hq === q) {
       combo++; score += 10 * Math.min(combo, 5); gameRecord(q, true); dingCorrect();
-      hole.classList.add("g-hole--hit"); hole.firstChild.querySelector(".g-mole__face").textContent = "😵";
+      hole.classList.add("g-hole--hit"); hole.firstChild.querySelector(".g-mole__face").textContent = "😵"; fxHit(hole, 10 * Math.min(combo, 5));
       q.sayAnswer?.();
       holes.forEach(h => { if (h !== hole) hideMole(h); });
       sh.after(500, () => { hideMole(hole); newQuestion(); });
     } else {
       combo = 0; gameRecord(hq, false); buzzWrong();
-      hole.classList.add("g-hole--bad");
+      hole.classList.add("g-hole--bad"); fxMiss(hole);
+      if (hq === q) teachMiss(sh, L, hq, () => {});
       sh.after(400, () => hideMole(hole));
     }
     updateHud();
   }));
-  countdown(sh, () => {
+  learnFirst(sh, L, () => countdown(sh, () => {
     locked = false; newQuestion();
     sh.every(850, pop);
     sh.every(1000, () => { left--; sh.hud.right.textContent = `⏱ ${left}`; if (left <= 10) sh.hud.right.classList.add("g-hud__num--hot"); if (left <= 0) { locked = true; gameOver(sh, game, subject, score); } });
-  });
+  }));
   return sh.root;
 }
 
@@ -231,17 +247,22 @@ function renderGameMole(subject) {
 function renderGameBalloon(subject) {
   const game = GAMES[1];
   const sh = gameShell(game, subject);
-  const gen = makeQuestionGen(subject);
+  const L = makeLearnSession(subject); sh.learn = L;
+  const gen = () => L.next();
   let score = 0, combo = 0, lives = 3, round = 0, q = null, locked = true;
   const COLORS = ["#ff6fa3", "#6b8cff", "#4ec9a8", "#ffb020", "#b388ff"];
   const promptEl = el("div", { class: "g-prompt" });
   const speakBtn = el("button", { class: "icon-btn icon-btn--accent g-speak", "aria-label": "念題目", onclick: () => q?.say() }, "🔊");
   const sky = el("div", { class: "g-sky" });
+  const scenery = el("div", { class: "g-sky__scenery", "aria-hidden": "true" },
+    el("span", { class: "g-sun" }, "☀️"), el("span", { class: "g-cloud g-cloud--1" }, "☁️"), el("span", { class: "g-cloud g-cloud--2" }, "☁️"), el("span", { class: "g-cloud g-cloud--3" }, "☁️"),
+    el("div", { class: "g-hills" }));
+  sky.appendChild(scenery);
   const livesEl = () => "❤️".repeat(lives) + "🤍".repeat(Math.max(0, 3 - lives));
   sh.hud.right.textContent = livesEl();
   sh.app.replaceChildren(sh.hudEl, el("div", { class: "g-prompt-row" }, promptEl, speakBtn), sky);
   const updateHud = () => { sh.hud.score.textContent = String(score); sh.hud.combo.textContent = comboText(combo); sh.hud.right.textContent = livesEl(); };
-  const clearSky = () => sky.replaceChildren();
+  const clearSky = () => sky.replaceChildren(scenery);
   const nextRound = () => {
     if (lives <= 0) { locked = true; gameOver(sh, game, subject, score, el("div", { class: "g-over__msg" }, t(`戳破了 ${round} 題`))); return; }
     q = gen(); round++;
@@ -259,20 +280,20 @@ function renderGameBalloon(subject) {
         b.classList.add("g-balloon--pop");
         if (opt.ok) {
           combo++; score += 10 * Math.min(combo, 5); gameRecord(q, true); dingCorrect(); q.sayAnswer?.();
-          b.firstChild.textContent = "💥"; updateHud();
+          b.firstChild.textContent = "💥"; fxHit(b, 10 * Math.min(combo, 5)); updateHud();
           sky.querySelectorAll(".g-balloon").forEach(x => { if (x !== b) x.classList.add("g-balloon--fade"); });
           sh.after(700, nextRound);
-        } else { combo = 0; gameRecord(q, false); buzzWrong(); b.firstChild.textContent = "❌"; updateHud(); }
+        } else { combo = 0; gameRecord(q, false); buzzWrong(); b.firstChild.textContent = "❌"; fxMiss(b); updateHud(); teachMiss(sh, L, q, () => {}); }
       });
       b.addEventListener("animationend", () => { // 飄走了
         if (thisQ !== q || b.classList.contains("g-balloon--pop")) return;
-        if (opt.ok) { lives--; combo = 0; gameRecord(q, false); buzzWrong(); updateHud(); sky.classList.add("shake"); sh.after(400, () => sky.classList.remove("shake")); sh.after(500, nextRound); }
+        if (opt.ok) { lives--; combo = 0; gameRecord(q, false); buzzWrong(); updateHud(); sky.classList.add("shake"); sh.after(400, () => sky.classList.remove("shake")); sh.after(500, () => teachMiss(sh, L, thisQ, nextRound)); }
         else b.remove();
       });
       sky.appendChild(b);
     });
   };
-  countdown(sh, () => { locked = false; nextRound(); });
+  learnFirst(sh, L, () => countdown(sh, () => { locked = false; nextRound(); }));
   return sh.root;
 }
 
@@ -280,7 +301,8 @@ function renderGameBalloon(subject) {
 function renderGameRace(subject) {
   const game = GAMES[2];
   const sh = gameShell(game, subject);
-  const gen = makeQuestionGen(subject);
+  const L = makeLearnSession(subject); sh.learn = L;
+  const gen = () => L.next();
   const TRACK = 100, QS = 10;
   let me = 0, rival = 0, qi = 0, score = 0, combo = 0, q = null, qStart = 0, locked = true, stunned = false, finished = false;
   const promptEl = el("div", { class: "g-prompt" });
@@ -312,15 +334,16 @@ function renderGameRace(subject) {
           const fast = Date.now() - qStart < 4000;
           combo++; const gain = 10 * Math.min(combo, 5) + (fast ? 5 : 0); score += gain;
           me += fast ? 13 : 10; gameRecord(q, true); dingCorrect(); q.sayAnswer?.();
-          b.classList.add("zh-opt--ok"); feedback.textContent = fast ? `好快！+${gain} 🚀` : `+${gain}`; feedback.className = "quiz-feedback quiz-feedback--correct pop";
+          b.classList.add("zh-opt--ok"); fxHit(b, gain); feedback.textContent = fast ? `好快！+${gain} 🚀` : `+${gain}`; feedback.className = "quiz-feedback quiz-feedback--correct pop";
           meEl.classList.add("g-runner--hop"); sh.after(400, () => meEl.classList.remove("g-runner--hop"));
           draw(); updateHud();
           if (me >= TRACK) { sh.after(500, () => end(true)); return; }
           sh.after(700, ask);
         } else {
-          combo = 0; gameRecord(q, false); buzzWrong(); b.classList.add("zh-opt--bad"); b.disabled = true;
+          combo = 0; gameRecord(q, false); buzzWrong(); b.classList.add("zh-opt--bad"); b.disabled = true; fxMiss(b);
           stunned = true; feedback.textContent = "哎呀，絆倒了 😵"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           sh.after(900, () => { stunned = false; });
+          teachMiss(sh, L, q, () => {});
           updateHud();
         }
       });
@@ -328,10 +351,10 @@ function renderGameRace(subject) {
     }));
   };
   draw();
-  countdown(sh, () => {
+  learnFirst(sh, L, () => countdown(sh, () => {
     locked = false; ask();
     sh.every(700, () => { if (finished) return; rival += 1.6; draw(); if (rival >= TRACK) end(false); });
-  });
+  }));
   return sh.root;
 }
 
@@ -340,7 +363,8 @@ function renderGameRace(subject) {
 function renderGameCar(subject) {
   const game = GAMES.find(g => g.id === "car");
   const sh = gameShell(game, subject);
-  const gen = makeQuestionGen(subject);
+  const L = makeLearnSession(subject); sh.learn = L;
+  const gen = () => L.next();
   const GATES = 15;
   let score = 0, combo = 0, gate = 0, lane = 1, q = null, locked = true, raf = 0, hits = 0;
   const promptEl = el("div", { class: "g-prompt" });
@@ -348,7 +372,8 @@ function renderGameCar(subject) {
   const car = el("div", { class: "g-car" }, "🏎️");
   const gateRow = el("div", { class: "g-gates" });
   const laneBtns = [0, 1, 2].map(i => { const b = el("button", { class: "g-lane-btn", "aria-label": `第${i + 1}條車道` }); b.addEventListener("pointerdown", e => { e.preventDefault(); if (!locked) { lane = i; placeCar(); } }); return b; });
-  const road = el("div", { class: "g-road" }, el("div", { class: "g-road__lines" }), gateRow, car, el("div", { class: "g-lane-btns" }, laneBtns));
+  const side = cls => el("div", { class: `g-roadside ${cls}`, "aria-hidden": "true" }, ["🌳", "🌷", "🌲", "🏠", "🌳", "🌼", "🌲", "🌳"].map(e => el("span", {}, e)));
+  const road = el("div", { class: "g-road" }, side("g-roadside--l"), side("g-roadside--r"), el("div", { class: "g-road__asphalt" }, el("div", { class: "g-road__lines" })), gateRow, car, el("div", { class: "g-lane-btns" }, laneBtns));
   const speedEl = el("div", { class: "g-speed" });
   sh.hud.right.textContent = `🚩 0/${GATES}`;
   sh.app.replaceChildren(sh.hudEl, el("div", { class: "g-prompt-row" }, promptEl, speakBtn), road, speedEl);
@@ -372,15 +397,15 @@ function renderGameCar(subject) {
       const ok = opts[lane] === right;
       gameRecord(q, ok);
       const g = gateRow.children[lane];
-      if (ok) { hits++; combo++; score += 10 * Math.min(combo, 5); dingCorrect(); q.sayAnswer?.(); g.classList.add("g-gate--ok"); car.classList.add("g-car--boost"); }
-      else { combo = 0; buzzWrong(); g.classList.add("g-gate--bad"); gateRow.children[opts.indexOf(right)].classList.add("g-gate--ok"); car.classList.add("g-car--crash"); }
+      if (ok) { hits++; combo++; score += 10 * Math.min(combo, 5); dingCorrect(); q.sayAnswer?.(); g.classList.add("g-gate--ok"); car.classList.add("g-car--boost"); fxHit(g, 10 * Math.min(combo, 5)); road.classList.add("g-road--boost"); sh.after(600, () => road.classList.remove("g-road--boost")); }
+      else { combo = 0; buzzWrong(); g.classList.add("g-gate--bad"); gateRow.children[opts.indexOf(right)].classList.add("g-gate--ok"); car.classList.add("g-car--crash"); fxMiss(g); }
       updateHud();
-      sh.after(ok ? 600 : 1300, () => { car.classList.remove("g-car--boost", "g-car--crash"); nextGate(); });
+      sh.after(ok ? 600 : 1300, () => { car.classList.remove("g-car--boost", "g-car--crash"); if (ok) nextGate(); else teachMiss(sh, L, q, nextGate); });
     };
     raf = requestAnimationFrame(tick);
   };
   placeCar(); showSpeed();
-  countdown(sh, () => { locked = false; nextGate(); });
+  learnFirst(sh, L, () => countdown(sh, () => { locked = false; nextGate(); }));
   return sh.root;
 }
 
