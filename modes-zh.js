@@ -11,16 +11,51 @@ function pickZhVoice() {
   const isTW = v => /zh[-_]TW|zh[-_]Hant[-_]TW|cmn[-_]Hant[-_]TW/i.test(v.lang) || /Taiwan|臺灣|台灣|Mei-?Jia|美佳|HsiaoChen|HsiaoYu|曉臻|曉雨|YunJhe|雲哲/i.test(v.name);
   return vs.find(v => isTW(v) && v.localService) || vs.find(isTW) || null;
 }
-function speakZh(text) {
+// 主要用 Google 翻譯的台灣國語語音（tl=zh-TW），每台平板聽起來都一樣；
+// 連不到或播放失敗時，退回平板內建的台灣聲音
+const GOOGLE_TTS = (q) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=zh-TW&ttsspeed=0.8&q=${encodeURIComponent(q)}`;
+const zhAudio = typeof Audio !== "undefined" ? new Audio() : null;
+let zhAudioQueue = [], zhGoogleOK = true;
+// iPad 要在使用者第一次點畫面時「解鎖」播放，之後程式自動念題目才念得出來
+if (zhAudio) {
+  const unlock = () => { zhAudio.muted = true; zhAudio.play().catch(() => {}).finally(() => { zhAudio.pause(); zhAudio.muted = false; }); document.removeEventListener("pointerdown", unlock, true); };
+  document.addEventListener("pointerdown", unlock, true);
+}
+// Google 一次最多約 200 字，長句照標點切開依序念
+function splitForTts(text) {
+  const parts = text.split(/(?<=[，。！？、；：,.!?])/).map(x => x.trim()).filter(Boolean);
+  const out = [];
+  for (const p of parts) { if (out.length && (out[out.length - 1] + p).length <= 90) out[out.length - 1] += p; else out.push(p); }
+  return out.flatMap(p => p.length <= 180 ? [p] : p.match(/.{1,180}/g));
+}
+function speakZhDevice(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(zhTwText(text));
+  const u = new SpeechSynthesisUtterance(text);
   u.lang = "zh-TW";
   u.rate = 0.8;
   // 每次重找：聲音清單常常晚一點才載入，不能記住一開始找到的（可能是大陸的）聲音
   const v = pickZhVoice();
   if (v) u.voice = v; // 找不到台灣聲音就不指定，只設定 lang=zh-TW，不會退回大陸聲音
   speechSynthesis.speak(u);
+}
+function speakZh(text) {
+  const say = zhTwText(String(text || "")).trim();
+  if (!say) return;
+  window.speechSynthesis?.cancel();
+  if (!zhAudio || !zhGoogleOK) return speakZhDevice(say);
+  zhAudio.pause();
+  zhAudioQueue = splitForTts(say);
+  const playNext = () => {
+    const chunk = zhAudioQueue.shift();
+    if (!chunk) return;
+    zhAudio.onended = playNext;
+    zhAudio.onerror = () => { zhGoogleOK = false; zhAudioQueue = []; speakZhDevice(say); setTimeout(() => { zhGoogleOK = true; }, 60000); }; // 連不到 Google：先用平板聲音，一分鐘後再試 Google
+    zhAudio.src = GOOGLE_TTS(chunk);
+    const pr = zhAudio.play();
+    if (pr && pr.catch) pr.catch(err => { if (err && err.name === "NotAllowedError") speakZhDevice(say); }); // 還沒解鎖播放時先用平板聲音
+  };
+  playNext();
 }
 
 const zhLesson = (id) => ZH?.lessons.find(l => l.id === id);
