@@ -9,6 +9,12 @@ const MATH_DATA = {
         exam: { date: "2026-10-13", label: "小考 第6、7頁", mode: "sheet" },
         topics: ["line", "length", "height", "thick", "most", "tf"],
       },
+      {
+        // 小A本 第9回 p.18-19（照片 Drive「一年級數學小A本」IMG_8819），老師會考一模一樣的題目
+        id: "u4", title: "第9回 0的認識・分與合", titleBopo: "ㄉㄧˋ ㄐㄧㄡˇ ㄏㄨㄟˊ ㄌㄧㄥˊ ㄉㄜ˙ ㄖㄣˋ ㄕˋ ㄈㄣ ㄩˇ ㄏㄜˊ", emoji: "🔀",
+        sheetLabel: "📄 小A本原題（第18、19頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
+        topics: ["split", "make10", "zero"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答

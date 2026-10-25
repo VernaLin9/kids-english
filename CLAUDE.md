@@ -15,13 +15,14 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 ## 檔案
 | 檔案 | 內容 |
 |---|---|
-| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-night → modes-math → modes-math2 → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
+| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-night → modes-math → modes-math2 → modes-sheet → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
 | `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子；第八課〈拔蘿蔔〉聽寫本 18 題，第 8 題 ㄨㄢˇ ㄒㄩㄥˊ 國字待確認放在 `pending`，沒有課文 `text: []`）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，課文照課本分段 `{ para:"一", zh, bopo }`（p.48-50 共四段），便條 `{ note, lines:[{zh,bopo,right?}] }`（p.51 照課本分行）；`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
 | `data-math.js` | 數學 `MATH_DATA`（一年級上 第 3 回：比長短、高矮與厚薄；只列單元與題型，題目由程式隨機畫）。二年級 `MATH_DATA.g2`（南一二上）：第4單元 加減的關係與應用（`bookId:"u4"` 課本原題 p.54-63）、第5單元 容量（只有 p.68 開頭頁，題目照觀念出，待補課本頁）；`kind:"calc"` 的單元交給 modes-math2 |
 | `modes-math.js` | 數學：SVG 畫圖題（直線曲線、比長短、比高矮、比厚薄、三個比一比、對不對）、小考混合 12 題；`MATH_TOPICS` 每個題型一個 `gen()`，回傳 `{ prompt, items:[{node, correct}], tf? }`。`SHEET_U2` 是評量卷原題（p.6-7，六大題 22 小題；老師會考一模一樣的題目，所以版面和作答方式都照原卷：在 (　) 裡打 ✓／畫 ○、把圖圈起來、方框打 ✓✗，寫完按「交卷」照卷子配分算得分），`renderMathSheet()` 一頁顯示整張卷子 |
 | `modes-math2.js` | 二年級數學：題目 `{ text, visual, steps:[choice|num|pick3], hint, topic|page, calc? }`，一題的畫面是 `mountMath2Q(q, container, onDone)`（練習和遊戲共用），數字鍵盤作答、線段圖 `barModel`、分合圖 `bondEl`、直式 `vertEl`。`MATH2_TOPICS`：解題、加減的關係、驗算、直式加減、大於小於等於、神機妙算（3 張湊 15）、容量 4 種。`BOOK_U4` 是課本原題（p.54-67，照頁碼、數字、順序、題目文字），`BOOK_U5` 是第5單元容量 p.71-78 能用文字表達的原題 |
+| `modes-sheet.js` | 📄 要填數字／連連看的原題卷（`FILL_SHEETS`，`renderFillSheet`）：一上第9回小A本 p.18-19（4-3 0的認識、4-4 分與合，照片 Drive「一年級數學小A本」IMG_8819）。(　)／□ 點一下跳出 0～10 數字鍵、連連看先點上面再點下面畫線，交卷照原卷配分（共 100 分）。圖的數量照照片（湯圓 9/5/0、番茄 3/0/2、串好的香腸 4/1/0）。另外加了第9回的練習題型 `MATH_TOPICS.split/make10/zero`（不是原題）。單元有 `sheetLabel` 就顯示在單元頁 |
 | `app.js` | 共用工具、STORE（localStorage `partygo:store:v1`）、注音元件、首頁、設定面板、間隔重複、考前範圍 `nextExam()`、拆音節 `SYLLABLES` |
 | `modes-play.js` | 自選複習、單字卡、選擇題、聽力、字母拼拼樂、翻牌配對、跟著念 |
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |

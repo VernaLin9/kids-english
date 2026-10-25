@@ -215,8 +215,8 @@ function renderMathUnit(id) {
   const app = el("main", { class: "app" });
   app.appendChild(questEntryBtn("math", u.id));
   app.appendChild(el("section", { class: "section" },
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("📄 評量卷原題（第6、7頁）")),
-    el("div", { class: "progress-note", style: "text-align: center;" }, "跟學校的評量卷一樣的題目和順序"),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t(u.sheetLabel || "📄 評量卷原題（第6、7頁）")),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(u.sheetNote || "跟學校的評量卷一樣的題目和順序")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, "每次都不一樣的題目，練熟概念")));
   app.appendChild(el("section", { class: "section" },
@@ -246,6 +246,7 @@ function mountMathQ(q, container, onDone, tp = q.topic, onWrong) {
     }
   };
   const board = svg("svg", { viewBox: `0 0 400 ${q.h}`, class: "m-board" });
+  if (q.extra) board.appendChild(q.extra); // 題目的圖（不能點，例如分合圖）
   q.items.forEach(it => {
     const b = it.node.bbox;
     it.node.classList.add("m-item");
@@ -282,7 +283,7 @@ function renderMathPlay(topic, unitId) {
   const u = mathUnit(unitId) || MATH?.units[0];
   if (!u) return renderEmpty("#/", "找不到這個單元");
   if (u.kind === "calc") return renderMath2Play(topic, u);
-  if (topic === "sheet") return renderMathSheet(u.id);
+  if (topic === "sheet") return typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id] ? renderFillSheet(u) : renderMathSheet(u.id);
   const isMix = topic === "mix";
   const total = isMix ? 12 : 8;
   const topics = isMix ? u.topics : [topic];
@@ -563,7 +564,7 @@ function renderMathSheet(unitId) {
   const submit = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
     const left = total - Object.keys(answered).length;
     if (left > 0 && !submit.dataset.confirm) { submit.dataset.confirm = "1"; submit.replaceChildren(t(`還有${left}題沒寫，確定要交卷？`)); return; }
-    locked = true; submit.hidden = true;
+    locked = true; submit.hidden = true; submit.style.display = "none";
     let score = 0, got = 0; const wrong = [];
     graders.forEach(g => { const ok = g.check(); g.show(ok); if (ok) { score += g.points; got++; } else wrong.push(g.key); recordMath("sheet", ok); });
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
