@@ -12,6 +12,7 @@ const MATH_DATA = {
       {
         // 小A本 第9回 p.18-19（照片 Drive「一年級數學小A本」IMG_8819），老師會考一模一樣的題目
         id: "u4", title: "第9回 0的認識・分與合", titleBopo: "ㄉㄧˋ ㄐㄧㄡˇ ㄏㄨㄟˊ ㄌㄧㄥˊ ㄉㄜ˙ ㄖㄣˋ ㄕˋ ㄈㄣ ㄩˇ ㄏㄜˊ", emoji: "🔀",
+        exam: { date: "2026-10-27", label: "小考 小A本第18、19頁", mode: "sheet" },
         sheetLabel: "📄 小A本原題（第18、19頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
         topics: ["split", "make10", "zero"],
       },
