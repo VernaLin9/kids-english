@@ -15,6 +15,9 @@ function guardTip() {
   if (/zhplay\/listen/.test(h)) return "把詞慢慢再聽一次：先聽第一個聲音是哪個注音，再聽後面的聲音，最後聽聲調是平平、往上、轉彎還是往下。";
   if (/zhplay\/tone/.test(h)) return "跟著念一次，用手比比看：一聲平平，二聲往上，三聲先下去再上來，四聲往下，輕聲輕輕短短的。";
   if (/zhplay\/spell|zhplay\/write/.test(h)) return "一個一個拼：先念聲母，再念韻母，拼在一起，最後加聲調。";
+  if (/zhplay\/pick/.test(h)) return "看例詞想一想意思，再看部首；長得像的字要看清楚哪裡不一樣，例如己、已、巳的開口。";
+  if (/zhplay\/radical/.test(h)) return "部首常常在字的左邊、上面或外框。想想這個字的意思跟什麼有關：跟水有關是氵，跟手有關是扌，跟說話有關是言。";
+  if (/zhplay\/strokes/.test(h)) return "用手指在桌上一筆一筆寫，邊寫邊數；先數部首有幾畫，再數其他的部分，加起來就是總筆畫。";
   if (/zhplay\/sentence/.test(h)) return "先看圖：是誰？在哪裡？在做什麼？照順序一段一段選。";
   if (/tonedrill/.test(h)) return "聲調寫在最後一個注音的右上角；輕聲是小圓點，寫在最上面。";
   if (/mathplay\/shape|u=u5/.test(h)) return "數一數邊和角：三角形有3個邊；正方形4個邊一樣長；長方形2個長邊、2個短邊；圓形圓圓的，沒有角。會滾動的東西有彎彎的面。";
@@ -29,7 +32,7 @@ function guardTip() {
 function guardClearTip() {
   clearTimeout(guard.timer);
   guard.tipEl?.remove(); guard.tipEl = null;
-  guard.lockedBox?.classList.remove("guard-lock"); guard.lockedBox = null;
+  guard.lockedBox?.classList.remove("guard-lock", "guard-lock--hard"); guard.lockedBox = null;
 }
 function guardRushLog() {
   const p = getProfile(); if (!p) return;
@@ -47,17 +50,17 @@ function guardToast(opt, text) {
   box.after(toast);
   setTimeout(() => toast.remove(), 1600);
 }
-// 答錯：選項先停一下，出現小技巧
-function guardOnWrong(opt) {
+// 答錯：選項先停一下，出現小技巧（box＝選項外框；hard＝連點都不能點，給數字鍵這種不是選項的作答區用）
+function guardOnWrong(box, hard = false) {
   guard.wrongs++;
   const ms = guard.wrongs >= 2 ? GUARD_LOCK2 : GUARD_LOCK1;
   guard.lockUntil = Date.now() + ms;
   guardClearTip();
-  const box = opt.parentElement;
   if (!box) return;
   const tip = guardTip();
   guard.lockedBox = box; box.classList.add("guard-lock");
-  if (!tip) { guard.timer = setTimeout(() => { guard.lockedBox?.classList.remove("guard-lock"); guard.lockedBox = null; }, ms); return; }
+  if (hard) box.classList.add("guard-lock--hard");
+  if (!tip) { guard.timer = setTimeout(() => { guard.lockedBox?.classList.remove("guard-lock", "guard-lock--hard"); guard.lockedBox = null; }, ms); return; }
   guard.tipEl = el("div", { class: "guard-tip" },
     el("div", { class: "guard-tip__head" }, t(guard.wrongs >= 2 ? "🐢 慢慢來，不用急！先看小技巧" : "💡 小技巧")),
     el("div", { class: "guard-tip__body" }, el("div", { class: "guard-tip__text" }, t(tip)),
@@ -65,7 +68,7 @@ function guardOnWrong(opt) {
     el("div", { class: "guard-tip__bar" }, el("span", { style: `animation-duration: ${ms}ms` })));
   box.after(guard.tipEl);
   if (guard.wrongs >= 2) setTimeout(() => speakZh(tip), 700);
-  guard.timer = setTimeout(() => { guard.lockedBox?.classList.remove("guard-lock"); guard.lockedBox = null; guard.tipEl?.querySelector(".guard-tip__bar")?.remove(); }, ms);
+  guard.timer = setTimeout(() => { guard.lockedBox?.classList.remove("guard-lock", "guard-lock--hard"); guard.lockedBox = null; guard.tipEl?.querySelector(".guard-tip__bar")?.remove(); }, ms);
 }
 
 document.addEventListener("click", e => {
@@ -86,7 +89,7 @@ document.addEventListener("click", e => {
   if (now - guard.shownAt < GUARD_FAST && typeof logRushFlag !== "undefined") logRushFlag = true;
   // 看看這一下是不是答錯（各模式會在選項加 --bad / --wrong）
   setTimeout(() => {
-    if (opt.matches('[class*="--bad"], [class*="--wrong"], [class*="--fine"]')) guardOnWrong(opt);
+    if (opt.matches('[class*="--bad"], [class*="--wrong"], [class*="--fine"]')) guardOnWrong(opt.parentElement);
     else if (typeof logRushFlag !== "undefined") logRushFlag = false;
   }, 0);
 }, true);

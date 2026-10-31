@@ -9,6 +9,7 @@ const ZH2_MODES = [
   ["radical", "🧩", "部首"],
   ["strokes", "✏️", "筆畫數"],
   ["quiz",    "📝", "小考"],
+  ["exam",    "📝", "模擬小考"],
 ];
 
 const RADICAL_NAMES = { "水": "水（氵）", "手": "手（扌）", "肉": "肉（月）", "人": "人（亻）", "宀": "宀（寶蓋頭）", "言": "言" };
@@ -145,7 +146,7 @@ function renderZh2Write(l) {
     if (style === "trace") {
       prompt.replaceChildren(charPromptEl(c, false));
       stepText.replaceChildren(t("照著淡淡的字描寫，注意筆順 ✍️"));
-      actions.replaceChildren(btn("btn--ghost", "🧹 清除重寫", () => pen.clear()), btn("btn--success", "✅ 寫好了！", () => { recordZh(c.zh, true); dingCorrect(); next(); }));
+      actions.replaceChildren(btn("btn--ghost", "🧹 清除重寫", () => pen.clear()), btn("btn--success", "✅ 寫好了！", inkGate(pen, () => { recordZh(c.zh, true); dingCorrect(); next(); })));
     } else {
       const look = () => {
         prompt.replaceChildren(charPromptEl(c, false));
@@ -159,7 +160,7 @@ function renderZh2Write(l) {
         prompt.replaceChildren(charPromptEl(c, true));
         guide.style.visibility = "hidden"; canvas.style.pointerEvents = ""; pen.clear();
         stepText.replaceChildren(t("③ 寫：聽注音，把「？」的字寫出來"));
-        actions.replaceChildren(btn("btn--ghost", "🧹 清除", () => pen.clear()), btn("btn--accent", "④ 寫好了，對答案 👀", check));
+        actions.replaceChildren(btn("btn--ghost", "🧹 清除", () => pen.clear()), btn("btn--accent", "④ 寫好了，對答案 👀", inkGate(pen, check)));
         speakZh(c.word);
       };
       const check = () => {
@@ -231,6 +232,21 @@ function renderZh2Quiz(l) {
   });
 }
 
+// 📝 模擬小考：選國字 10、部首 5、筆畫 5，每題 5 分；選好按下一題、交卷才看分數，錯的列出怎麼記
+function renderZh2Exam(l) {
+  const memo = c => (typeof ZH2_MNEMONIC !== "undefined" && ZH2_MNEMONIC[c.zh]) || `「${c.zh}」是${c.word}的${c.zh}`;
+  const wrap = (c, q, review, tip) => ({ prompt: q.prompt, say: () => speakZh(q.say), review, tip,
+    options: q.options.map(o => ({ label: o.label, ok: o.ok, text: o.label.textContent.replace(/[ㄅ-ㄩˊˇˋ˙]/g, "") })), rec: ok => recordZh(c.zh, ok) });
+  const cs = shuffle(l.chars);
+  const at = k => cs[k % cs.length];
+  const sections = [
+    { no: "一", name: "選國字", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const c = at(k); return wrap(c, zh2PickQuestion(l, c), `${c.word}的「${c.zh}」`, memo(c)); }) },
+    { no: "二", name: "部首", pts: 5, qs: Array.from({ length: 5 }, (_, k) => { const c = at(k + 10); return wrap(c, zh2RadicalQuestion(l, c), `「${c.zh}」的部首`, `「${c.zh}」的部首是「${radicalLabel(c.radical)}」。${memo(c)}`); }) },
+    { no: "三", name: "筆畫數", pts: 5, qs: Array.from({ length: 5 }, (_, k) => { const c = at(k + 15), kind = k % 2 ? "extra" : "total"; return wrap(c, zh2StrokeQuestion(l, c, kind), `「${c.zh}」${kind === "extra" ? "部首以外" : "總共"}幾畫`, `「${c.zh}」總共${c.strokes}畫，部首「${c.radical}」以外${c.extra}畫。用手指一筆一筆寫，邊寫邊數。`); }) },
+  ];
+  return renderChoiceExam({ title: `📝 模擬小考・${l.title}`, back: `#/zh/${l.id}`, key: `zh:${l.id}`, practiceHash: `#/zhplay/quiz?l=${l.id}`, retryHash: `#/zhplay/exam?l=${l.id}`, sections });
+}
+
 function renderZh2Play(mode, l) {
-  return ({ card: renderZh2Card, write: renderZh2Write, pick: renderZh2Pick, radical: renderZh2Radical, strokes: renderZh2Strokes, quiz: renderZh2Quiz })[mode]?.(l) || renderZhCharLesson(l);
+  return ({ card: renderZh2Card, write: renderZh2Write, pick: renderZh2Pick, radical: renderZh2Radical, strokes: renderZh2Strokes, quiz: renderZh2Quiz, exam: renderZh2Exam })[mode]?.(l) || renderZhCharLesson(l);
 }

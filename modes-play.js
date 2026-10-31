@@ -360,6 +360,26 @@ function renderQuiz(setKey) {
   return root;
 }
 
+// === 📝 英文模擬小考：看中文選英文 10、聽音選英文 10，每題 5 分；選好按下一題、交卷才看分數，錯的列出怎麼記 ===
+function renderEnMock(setKey) {
+  const words = resolveSet(setKey);
+  if (words.length < 4) return renderEmpty("#/", "單字太少，無法考試");
+  const pick = shuffle(words), at = k => pick[k % pick.length];
+  // 中文用單字表的注音（rubyEl），不靠自動注音
+  const zhOf = w => rubyEl(WORDS[w]?.zh || "", WORDS[w]?.bopo || "", "span");
+  const tip = w => el("span", {}, `${w}：`, zhOf(w), t(`。${SYLLABLES[w] ? `分段念 ${SYLLABLES[w].replace(/·/g, " - ")}，` : ""}看著圖大聲念三次 ${w}`));
+  const opts = w => shuffle([w, ...distractors(w)]).map(o => ({ label: el("span", { class: "ex-en" }, o), text: o, ok: o === w }));
+  const sections = [
+    { no: "一", name: "看中文選英文", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const w = at(k), info = WORDS[w] || {};
+      return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, info.emoji || ""), rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" })),
+        say: () => speakZh(info.zh || ""), options: opts(w), review: el("span", {}, `${info.emoji || ""} `, zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
+    { no: "二", name: "聽音選英文", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const w = at(k + 10), info = WORDS[w] || {};
+      return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, "🎧"), el("div", { class: "quiz-prompt__hint" }, t("按🔊聽，選出聽到的英文"))),
+        say: () => speakWord(w), options: opts(w), review: el("span", {}, "🎧 ", zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
+  ];
+  return renderChoiceExam({ title: `📝 英文模擬小考・${setLabel(setKey)}`, back: "#/", key: `en:${setKey}`, practiceHash: `#/practice/${encodeURIComponent(setKey)}`, retryHash: `#/play/mock?set=${encodeURIComponent(setKey)}`, sections });
+}
+
 // === Listening mode ===
 function renderListening(setKey) {
   const words = resolveSet(setKey);

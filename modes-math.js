@@ -244,6 +244,61 @@ function mockResult(u, score, secs, rows, key = mockKey(u)) {
       el("span", {}, t(`第${r.no}大題`)), el("b", { "data-nobopo": "" }, `${r.got}/${r.max}`)))));
 }
 
+// 選擇題模擬考（國語生字、英文共用）：一題一題寫，選好按「下一題」才換（一定要作答、不能跳過），交卷才看分數
+// cfg: { title, back, key, practiceHash, retryHash, sections:[{ no, name, pts, qs:[{ prompt, say(), options:[{label, text, ok}], review, tip, rec(ok) }] }] }
+function renderChoiceExam(cfg) {
+  const u = { id: cfg.key };
+  const root = el("div", {});
+  const header = renderHeader(cfg.title, { back: cfg.back });
+  root.appendChild(header);
+  const progressLabel = $(".header__progress", header);
+  const app = el("main", { class: "app" });
+  root.appendChild(app);
+  const body = el("div", {});
+  const gate = mockGate(body, u, cfg.practiceHash, cfg.key);
+  app.append(gate.el, body);
+  const qs = cfg.sections.flatMap(sec => sec.qs.map(q => ({ ...q, sec })));
+  const picks = [];
+  let i = 0;
+  const ask = () => {
+    if (i >= qs.length) return finish();
+    const q = qs[i];
+    progressLabel.textContent = `第${i + 1}/${qs.length}題`;
+    let picked = null;
+    const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 ? "✅ 交卷" : "下一題 ▶"));
+    const grid = el("div", { class: "zh-opts ex-opts" }, q.options.map(o => {
+      const b = el("button", { class: "zh-opt bp-opt ex-opt" }, o.label);
+      b.addEventListener("click", () => { picked = o; grid.querySelectorAll(".ex-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b)); nextBtn.disabled = false; });
+      return b;
+    }));
+    nextBtn.addEventListener("click", () => { if (!picked) return; picks.push(picked); q.rec?.(!!picked.ok); i++; ask(); window.scrollTo(0, 0); });
+    body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
+      el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => q.say(), "aria-label": "念題目" }, "🔊")),
+      grid, el("div", { class: "bp-next__hint" }, t("選好了再按下一題（一定要選一個）")), nextBtn);
+    setTimeout(() => q.say(), 250);
+  };
+  const finish = () => {
+    progressLabel.textContent = "交卷了";
+    const rows = cfg.sections.map(sec => ({ no: sec.no, got: 0, max: sec.qs.length * sec.pts }));
+    let score = 0;
+    const wrong = [];
+    qs.forEach((q, k) => { const r = rows.find(x => x.no === q.sec.no); if (picks[k].ok) { score += q.sec.pts; r.got += q.sec.pts; } else wrong.push([q, picks[k]]); });
+    if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
+    body.replaceChildren(el("div", { class: "ws-result" },
+      el("div", { class: "ws-result__big" }, `${score} 分`),
+      mockResult(u, score, gate.secs(), rows, cfg.key),
+      wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼記：`)),
+        wrong.map(([q, p]) => el("div", { class: "bp-missed__row" }, el("div", { class: "bp-missed__q" }, typeof q.review === "string" ? t(q.review) : q.review),
+          el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options.find(o => o.ok).text)),
+          el("div", { class: "bp-missed__tip" }, "📌 ", typeof q.tip === "string" ? t(q.tip) : q.tip)))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
+      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(cfg.retryHash + (cfg.retryHash.includes("?") ? "&" : "?") + `r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(cfg.back) }, t("回上一頁"))));
+    window.scrollTo(0, 0);
+  };
+  gate.el.querySelector(".btn--accent").addEventListener("click", () => ask());
+  return root;
+}
+
 // === 單元頁：選題型 / 小考 ===
 function renderMathUnit(id) {
   const u = mathUnit(id);

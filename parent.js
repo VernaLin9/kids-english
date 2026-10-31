@@ -117,7 +117,7 @@ function renderParentLog(name, daysParam) {
   });
   Object.entries(p.mockExams || {}).forEach(([key, list]) => list.filter(r => r.at >= since).forEach(r => {
     const [subj, id] = key.split(":");
-    const title = key === "zh:bopo" ? "注音大會考" : `${(typeof MATH_DATA !== "undefined" ? Object.values(MATH_DATA).flatMap(g => g.units || []).find(u => u.id === id)?.title : "") || id}`;
+    const title = key === "zh:bopo" ? "注音大會考" : subj === "zh" ? `國語・${logPageName(`#/zhplay/exam?l=${id}`).split("・").pop()}` : subj === "en" ? `英文・${key.slice(3)}` : `${(typeof MATH_DATA !== "undefined" ? Object.values(MATH_DATA).flatMap(g => g.units || []).find(u => u.id === id)?.title : "") || id}`;
     sessions.push({ kind: "mock", subj, start: r.at - (r.secs || 0) * 1000, end: r.at, title, score: r.score, secs: r.secs || 0 });
   }));
   sessions.sort((a, b) => b.start - a.start);
@@ -550,6 +550,7 @@ function route() {
     const week = query.week;
     if (path[1] === "flashcard") view = renderFlashcard(setKey);
     else if (path[1] === "quiz") view = renderQuiz(setKey);
+    else if (path[1] === "mock") view = renderEnMock(setKey);
     else if (path[1] === "listening") view = renderListening(setKey);
     else if (path[1] === "spelling") view = renderSpelling(setKey);
     else if (path[1] === "handwrite") view = renderHandwrite(setKey);

@@ -2598,3 +2598,8 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .log-row__wrong { flex-basis: 100%; color: #b3261e; font-size: 13px; }
 .log-fast { color: #b26a00; font-weight: 800; }
 .log-more { display: flex; gap: 8px; justify-content: center; margin: 10px 0 20px; flex-wrap: wrap; }
+.guard-lock--hard { pointer-events: none; }
+/* 📝 選擇題模擬考（二年級國語、英文） */
+.ex-q { margin-bottom: 10px; }
+.ex-en { font-size: calc(24px * var(--font-scale)); font-weight: 800; }
+.bp-missed__q { font-weight: 800; flex-basis: 100%; line-height: 1.8; }

@@ -497,7 +497,7 @@ function renderZhWrite(l) {
     const next = () => setTimeout(() => { i++; render(); }, 600);
     if (style === "trace") {
       stepText.replaceChildren(t("照著淡淡的注音描寫，聲調也要寫 ✍️"));
-      actions.replaceChildren(btn("btn--ghost", "🧹 清除重寫", () => pen.clear()), btn("btn--success", "✅ 寫好了！", () => { recordZh(w.zh, true); dingCorrect(); next(); }));
+      actions.replaceChildren(btn("btn--ghost", "🧹 清除重寫", () => pen.clear()), btn("btn--success", "✅ 寫好了！", inkGate(pen, () => { recordZh(w.zh, true); dingCorrect(); next(); })));
     } else {
       const look = () => {
         guide.style.visibility = ""; guide.classList.add("write-guide--show"); guide.classList.remove("write-guide--check");
@@ -509,7 +509,7 @@ function renderZhWrite(l) {
       const cover = () => {
         guide.style.visibility = "hidden"; canvas.style.pointerEvents = ""; pen.clear();
         stepText.replaceChildren(t("③ 寫：自己寫寫看，聲調也要寫"));
-        actions.replaceChildren(btn("btn--ghost", "🧹 清除", () => pen.clear()), btn("btn--accent", "④ 寫好了，對答案 👀", check));
+        actions.replaceChildren(btn("btn--ghost", "🧹 清除", () => pen.clear()), btn("btn--accent", "④ 寫好了，對答案 👀", inkGate(pen, check)));
       };
       const check = () => {
         guide.style.visibility = ""; guide.classList.remove("write-guide--show"); guide.classList.add("write-guide--check");
