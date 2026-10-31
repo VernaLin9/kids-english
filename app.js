@@ -910,7 +910,9 @@ function renderHome() {
           el("div", { class: "exam-card__sub" }, `第 ${exam.week.num} 週（${exam.week.dateRange}）・${exam.title}`))),
       el("div", { class: "exam-card__count" }, `考試範圍 ${exam.words.length} 個字・已學會 ${learnedExam} 個`),
       el("div", { class: "progress-bar" }, el("div", { class: "progress-bar__fill", style: `width: ${Math.round(learnedExam * 100 / Math.max(exam.words.length, 1))}%;` })),
-      el("button", { class: "btn btn--full btn--xl exam-card__btn", onclick: () => navigate(`#/practice/${encodeURIComponent(exam.setKey)}`) }, t("📝 考前複習"))
+      el("button", { class: "btn btn--full btn--xl exam-card__btn", onclick: () => navigate(`#/practice/${encodeURIComponent(exam.setKey)}`) }, t("📝 考前複習")),
+      el("button", { class: "btn btn--full btn--xl exam-card__btn", style: "margin-top: 8px;", onclick: () => navigate(`#/play/mock?set=${encodeURIComponent(exam.setKey)}`) }, t("✏️ 模擬小考（20題・寫完才看分數）")),
+      el("div", { class: "progress-note", style: "text-align: center;" }, t(typeof mockSummary === "function" ? mockSummary(`en:${exam.setKey}`) : ""))
     ));
   }
 

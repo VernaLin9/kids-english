@@ -13,7 +13,7 @@ function setupCanvas(canvas) {
     ctx.strokeStyle = "#3b3a4a";
   };
   resize();
-  let drawing = false, lastX = 0, lastY = 0;
+  let drawing = false, lastX = 0, lastY = 0, ink = 0; // ink：寫了多長（px），沒寫字不能按「寫好了」
   const point = e => {
     const r = canvas.getBoundingClientRect();
     const t = e.touches?.[0] || e;
@@ -28,6 +28,7 @@ function setupCanvas(canvas) {
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
+    ink += Math.hypot(p.x - lastX, p.y - lastY);
     lastX = p.x; lastY = p.y;
   };
   const up = () => { drawing = false; };
@@ -38,8 +39,20 @@ function setupCanvas(canvas) {
   canvas.addEventListener("touchmove", move, { passive: false });
   canvas.addEventListener("touchend", up);
   return {
-    clear: () => { const r = canvas.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height); },
+    clear: () => { const r = canvas.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height); ink = 0; },
+    ink: () => ink,
     resize
+  };
+}
+
+// 「寫好了」要真的有寫：畫布上寫不到一點點就按，提醒先寫（家長：小孩會沒寫就按下一步）
+function inkGate(pen, fn, min = 80) {
+  return e => {
+    if (pen.ink() >= min) return fn(e);
+    buzzWrong();
+    const host = e?.currentTarget?.parentElement;
+    host?.parentElement?.querySelector(".guard-toast")?.remove();
+    host?.after(el("div", { class: "guard-toast" }, t("✍️ 還沒寫喔！先用手指寫出來，再按這個")));
   };
 }
 
@@ -100,7 +113,7 @@ function renderHandwrite(setKey) {
       stepText.replaceChildren(t("用手指描寫底下的字 ✍️"));
       actions.replaceChildren(
         btn("btn--ghost", "🧹 清除重寫", () => pen.clear()),
-        btn("btn--success", "✅ 寫好了！", () => { doneCount++; streak++; setMastered(w, true); dingCorrect(); speakWord(w); goNext(); }));
+        btn("btn--success", "✅ 寫好了！", inkGate(pen, () => { doneCount++; streak++; setMastered(w, true); dingCorrect(); speakWord(w); goNext(); })));
     } else {
       // 1. 看：大字＋拆音節，念出來
       const look = () => {
@@ -122,7 +135,7 @@ function renderHandwrite(setKey) {
         stepText.replaceChildren(t("③ 寫：不看答案，自己寫寫看"));
         actions.replaceChildren(
           btn("btn--ghost", "🧹 清除", () => pen.clear()),
-          btn("btn--accent", "④ 寫好了，對答案 👀", check));
+          btn("btn--accent", "④ 寫好了，對答案 👀", inkGate(pen, check)));
       };
       // 3. 對：答案疊在自己寫的字上面
       const check = () => {

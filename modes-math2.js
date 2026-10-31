@@ -129,8 +129,8 @@ function vertEl(a, op, b) {
     el("div", { class: "b2-vert__row" }, el("span", {}, op), el("span", {}, String(b))), el("div", { class: "b2-vert__line" }));
 }
 function genVert() {
-  if (Math.random() < 0.6) { const [T, A] = subPair(); return { topic: "vert", text: `用直式算算看：${T} − ${A}`, visual: vertEl(T, "−", A), calc: { op: "sub", a: T, b: A }, steps: [{ type: "num", label: "答案", answer: T - A }], hint: "個位不夠減，要向十位借 1 個十（變成 10）" }; }
-  const [A, B] = addPair(); return { topic: "vert", text: `用直式算算看：${A} + ${B}`, visual: vertEl(A, "+", B), calc: { op: "add", a: A, b: B }, steps: [{ type: "num", label: "答案", answer: A + B }], hint: "個位滿 10 要進位到十位" };
+  if (Math.random() < 0.6) { const [T, A] = subPair(); return { topic: "vert", text: `用直式算算看：${T} − ${A}`, visual: vertEl(T, "−", A), calc: { op: "sub", a: T, b: A }, steps: [{ type: "num", label: "答案", answer: T - A }], hint: T % 10 < A % 10 ? "個位不夠減，要向十位借 1 個十（變成 10）" : "先算個位，再算十位，個位夠減不用借位" }; }
+  const [A, B] = addPair(); return { topic: "vert", text: `用直式算算看：${A} + ${B}`, visual: vertEl(A, "+", B), calc: { op: "add", a: A, b: B }, steps: [{ type: "num", label: "答案", answer: A + B }], hint: A % 10 + B % 10 >= 10 ? "個位滿 10 要進位到十位" : "先算個位，再算十位，個位沒有滿 10 不用進位" };
 }
 
 // 大於、小於、等於
@@ -336,24 +336,30 @@ function calcOf(q) {
 }
 // 一題（題目卡＋步驟＋回饋）放進 container；全部步驟答對後呼叫 onDone(有沒有錯過)
 // 不限時間；答錯會給提示，可以按「🧱 用積木看」一步一步看怎麼算
-function mountMath2Q(q, container, onDone, onWrong) {
+// exam＝模擬小考：不給提示、不給積木，答錯就記錯、直接換下一題（onDone(true)）；答對也不出聲，交卷才看分數
+function mountMath2Q(q, container, onDone, onWrong, exam = false) {
   let step = 0, missed = false;
+  if (typeof guard !== "undefined") { guard.wrongs = 0; guard.shownAt = Date.now(); } // 新題目：防亂點重新計時
   const feedback = el("div", { class: "quiz-feedback" });
   const stepWrap = el("div", { class: "b2-step" });
   const calc = calcOf(q);
-  const helpBtn = calc ? el("button", { class: "btn btn--ghost btn--full b2-help", onclick: () => openBlocksTeach(calc) }, t("🧱 不會算？用積木一步一步看")) : null;
+  const helpBtn = calc && !exam ? el("button", { class: "btn btn--ghost btn--full b2-help", onclick: () => openBlocksTeach(calc) }, t("🧱 不會算？用積木一步一步看")) : null;
   const card = el("div", { class: "m-card b2-card-q" },
     q.page ? el("div", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
     el("div", { class: "b2-text" }, t(q.text)),
     el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.text), "aria-label": "念題目" }, "🔊"),
     q.visual || null);
   const fail = () => {
+    if (exam) { if (q.topic) recordMath(q.topic, false); stepWrap.classList.add("guard-lock--hard"); setTimeout(() => onDone(true), 300); return; }
     missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false);
+    // 數字鍵、三張牌不是選項，modes-guard 抓不到 → 這裡自己鎖一下、出小技巧
+    if (q.steps[step]?.type !== "choice" && typeof guardOnWrong === "function") setTimeout(() => guardOnWrong(stepWrap, true), 650);
     feedback.textContent = q.hint ? `再想想：${q.hint}` : "再算一次看看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
     if (helpBtn) helpBtn.classList.add("b2-help--hot");
     onWrong?.();
   };
   const pass = () => {
+    if (exam) { step++; if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); onDone(false); } else showStep(); return; }
     dingCorrect(); feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
     step++;
     if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); onDone(missed); }
@@ -425,7 +431,9 @@ function renderMath2Unit(u) {
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 課本原題（第${u.pages}頁）`)),
     el("div", { class: "progress-note", style: "text-align: center;" }, t("課本上的題目、數字和順序")));
   top.append(
-    el("button", { class: `btn btn--full btn--xl ${u.book ? "" : "btn--accent"}`, style: u.book ? "margin-top: 10px;" : "", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
+    el("button", { class: "btn btn--full btn--xl", style: u.book ? "margin-top: 10px;" : "", onclick: () => navigate(`#/mathplay/exam?u=${u.id}`) }, t("📝 模擬小考（20題・寫完才看分數）")),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(mockKey(u)))),
+    el("button", { class: `btn btn--full btn--xl ${u.book ? "" : "btn--accent"}`, style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t("每次都不一樣的數字，練熟方法")));
   if (u.note) top.append(el("div", { class: "b2-note" }, t(u.note)));
   app.appendChild(top);
@@ -440,7 +448,56 @@ function renderMath2Unit(u) {
   root.appendChild(app);
   return root;
 }
+// 📝 模擬小考：課本原題 10 題＋練習題 10 題，每題 5 分；不給提示、答錯直接下一題，交卷才看分數和錯在哪裡
+function renderMath2Exam(u) {
+  const root = el("div", {});
+  const header = renderHeader("📝 模擬小考", { back: `#/math/${u.id}` });
+  root.appendChild(header);
+  const progressLabel = $(".header__progress", header);
+  const app = el("main", { class: "app" });
+  root.appendChild(app);
+  const body = el("div", {});
+  const gate = mockGate(body, u, u.book ? `#/mathplay/book?u=${u.id}` : `#/mathplay/mix?u=${u.id}`);
+  app.append(gate.el, body);
+  const book = u.book ? shuffle(u.book.map((b, k) => k)).slice(0, 10).sort((a, b) => a - b).map(k => () => ({ ...u.book[k], visual: u.book[k].visual ? u.book[k].visual() : null, sec: "一" })) : [];
+  const gens = Array.from({ length: 20 - book.length }, (_, k) => () => ({ ...MATH2_TOPICS[u.topics[k % u.topics.length]].gen(), sec: book.length ? "二" : "一" }));
+  const makers = [...book, ...gens];
+  const results = [];
+  let i = 0;
+  const ask = () => {
+    if (i >= makers.length) return finish();
+    const q = makers[i]();
+    progressLabel.textContent = `第${i + 1}/${makers.length}題`;
+    const box = el("div", {});
+    body.replaceChildren(el("div", { class: "bp-sec" }, t(q.sec === "一" && book.length ? "第一大題・課本原題" : `第${q.sec}大題・練習題`)), box,
+      el("div", { class: "bp-next__hint" }, t("想好再作答，答完自動換下一題")));
+    mountMath2Q(q, box, missed => { results.push({ q, ok: !missed }); i++; setTimeout(() => { ask(); window.scrollTo(0, 0); }, 250); }, null, true);
+  };
+  const finish = () => {
+    progressLabel.textContent = "交卷了";
+    const secs = [...new Set(results.map(r => r.q.sec))];
+    const rows = secs.map(no => { const rs = results.filter(r => r.q.sec === no); return { no, got: rs.filter(r => r.ok).length * 5, max: rs.length * 5 }; });
+    const score = results.filter(r => r.ok).length * 5;
+    const wrong = results.filter(r => !r.ok);
+    if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
+    body.replaceChildren(el("div", { class: "ws-result" },
+      el("div", { class: "ws-result__big" }, `${score} 分`),
+      mockResult(u, score, gate.secs(), rows),
+      wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼想：`)),
+        wrong.map(({ q }) => el("div", { class: "bp-missed__row" }, q.page ? el("span", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
+          el("div", { class: "bp-missed__q" }, t(q.text)),
+          el("div", { class: "bp-missed__tip" }, t(`💡 ${q.hint || "把題目再念一次，想想是合起來還是拿走，再算一次"}`)),
+          calcOf(q) ? el("button", { class: "btn btn--ghost", onclick: () => openBlocksTeach(calcOf(q)) }, t("🧱 用積木看怎麼算")) : null))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
+      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/exam?u=${u.id}&r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學"))));
+    window.scrollTo(0, 0);
+  };
+  gate.el.querySelector(".btn--accent").addEventListener("click", () => ask());
+  return root;
+}
+
 function renderMath2Play(topic, u) {
+  if (topic === "exam") return renderMath2Exam(u);
   if (topic === "book" && u.book) return renderMath2Run(u, "📗 課本原題", `#/math/${u.id}`, `#/mathplay/book?u=${u.id}`, u.book.map(b => () => ({ ...b, visual: b.visual ? b.visual() : null })));
   if (topic === "mix") return renderMath2Run(u, "📝 小考", `#/math/${u.id}`, `#/mathplay/mix?u=${u.id}`, Array.from({ length: 12 }, (_, k) => () => MATH2_TOPICS[u.topics[k % u.topics.length]].gen()));
   const tp = MATH2_TOPICS[topic];
