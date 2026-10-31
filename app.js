@@ -109,6 +109,22 @@ function setGrade(g) {
   reloadIfGradeChanged();
 }
 
+// === 📋 學習紀錄（家長模式查詢）：每次作答記一筆 [時間, 科目, 頁面, 題目, 對1/錯0, 距離上一次作答幾毫秒, 太快亂點1/0]，留最近 4000 筆 ===
+const LOG_MAX = 4000;
+let logLastAt = 0, logRushFlag = false; // logRushFlag 由 modes-guard 設定（題目出來不到 1 秒就點）
+function logAnswer(subj, key, ok) {
+  const p = getProfile(); if (!p || typeof ok !== "boolean") return;
+  const now = Date.now(), gap = logLastAt ? now - logLastAt : 0;
+  const page = location.hash.replace(/[&?]r=\d+/, "").slice(0, 60), k = String(key).slice(0, 30);
+  p.log = p.log || [];
+  const last = p.log[p.log.length - 1];
+  if (ok && last && last[3] === k && last[2] === page && last[4] === 0 && now - last[0] < 120000) return; // 答錯後改對：只算第一次的作答
+  logLastAt = now;
+  p.log.push([now, subj, page, k, ok ? 1 : 0, gap, logRushFlag ? 1 : 0]);
+  logRushFlag = false;
+  if (p.log.length > LOG_MAX) p.log = p.log.slice(-LOG_MAX);
+}
+
 // 連續答對 MASTER_STREAK 次 → 自動標記「學會」；答錯 → 取消學會、重新累計
 const MASTER_STREAK = 3;
 function recordWord(w, hit) {
@@ -123,6 +139,7 @@ function recordWord(w, hit) {
   if (hit === false) { r.wrong += 1; r.streak = 0; r.mastered = false; }
   scheduleReview(r, hit);
   p.progress[w] = r;
+  logAnswer("en", w, hit);
   saveStore();
 }
 

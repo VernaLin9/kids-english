@@ -24,6 +24,7 @@ function recordMath(topic, hit) {
   r.seen++;
   if (hit) { r.correct++; p.stars = (p.stars || 0) + 1; } else r.wrong++;
   prog[topic] = r;
+  logAnswer("math", topic, hit);
   saveStore();
 }
 
@@ -217,21 +218,21 @@ function mockSummary(key, p) {
   return `最高${Math.max(...L.map(r => r.score))}分・上次${last.score}分(${mockDay(last.at)})・考了${L.length}次`;
 }
 // 考試前的說明卡；body 是卷子，按「開始考試」才顯示
-function mockGate(body, u, practiceHash) {
+function mockGate(body, u, practiceHash, key = mockKey(u)) {
   let t0 = Date.now();
   body.style.display = "none";
   const gate = el("section", { class: "mock-gate" },
     el("div", { class: "mock-gate__icon" }, "📝"),
     el("div", { class: "mock-gate__title" }, t("模擬小考")),
     el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看題目寫", "不會念的字可以按🔊聽", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
-    el("div", { class: "mock-gate__hist" }, t(mockSummary(mockKey(u)))),
+    el("div", { class: "mock-gate__hist" }, t(mockSummary(key))),
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); } }, t("✏️ 開始考試")),
     el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(practiceHash) }, t("先練習一次")));
   return { el: gate, secs: () => Math.round((Date.now() - t0) / 1000) };
 }
 // 交卷後：記分數，顯示用了多久、跟上次比、每一大題得幾分
-function mockResult(u, score, secs, rows) {
-  const key = mockKey(u), prev = mockList(key), last = prev[prev.length - 1];
+function mockResult(u, score, secs, rows, key = mockKey(u)) {
+  const prev = mockList(key), last = prev[prev.length - 1];
   const best = prev.length ? Math.max(...prev.map(r => r.score)) : null;
   mockSave(key, { at: Date.now(), score, secs, parts: rows.map(r => r.got) });
   const diff = last ? score - last.score : null;
@@ -540,7 +541,7 @@ function renderMathSheet(unitId, exam = false) {
   const answered = {}; // key -> 使用者答案
   const graders = []; // 每小題 { key, points, check(), showAnswer(ok) }
   let locked = false;
-  const update = () => { progressLabel.textContent = `寫了 ${Object.keys(answered).length}/${total} 題`; };
+  const update = () => { progressLabel.textContent = `寫了 ${Object.keys(answered).length}/${total} 題`; graders.forEach(g => { if (g.key in answered) g.card.classList.remove("fs-need"); }); };
 
   S.sections.forEach(sec => {
     const secEl = el("section", { class: "ws-sec" });
@@ -598,7 +599,7 @@ function renderMathSheet(unitId, exam = false) {
       card.appendChild(board);
       if (marksRow.childElementCount) card.appendChild(marksRow);
       if (q.hint) { const h = el("div", { class: "ws-q__hint" }, t(`💡 ${q.hint}`)); h.hidden = true; card.appendChild(h); q._hintEl = h; }
-      graders.push({ key, points: sec.points, check: correctFn, show: ok => { showAnswer(ok); badge.textContent = ok ? "⭕" : "❌"; card.classList.add(ok ? "ws-q--ok" : "ws-q--bad"); if (!ok && q._hintEl) q._hintEl.hidden = false; } });
+      graders.push({ key, card, points: sec.points, check: correctFn, show: ok => { showAnswer(ok); badge.textContent = ok ? "⭕" : "❌"; card.classList.add(ok ? "ws-q--ok" : "ws-q--bad"); if (!ok && q._hintEl) q._hintEl.hidden = false; } });
       grid.appendChild(card);
     });
     secEl.appendChild(grid);
@@ -608,7 +609,15 @@ function renderMathSheet(unitId, exam = false) {
   const result = el("div", { class: "ws-result" });
   const submit = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
     const left = total - Object.keys(answered).length;
-    if (left > 0 && !submit.dataset.confirm) { submit.dataset.confirm = "1"; submit.replaceChildren(t(`還有${left}題沒寫，確定要交卷？`)); return; }
+    // 每一題都要寫完才能交卷：沒寫的題目標黃色、捲過去
+    if (left > 0) {
+      const empty = graders.filter(g => !(g.key in answered));
+      app.querySelectorAll(".fs-need").forEach(x => x.classList.remove("fs-need"));
+      empty.forEach(g => g.card.classList.add("fs-need"));
+      submit.replaceChildren(t(`還有${left}題沒寫，每一題都要寫完才能交卷`));
+      buzzWrong(); empty[0]?.card.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     locked = true; submit.hidden = true; submit.style.display = "none";
     let score = 0, got = 0; const wrong = [];
     graders.forEach(g => { const ok = g.check(); g.show(ok); if (ok) { score += g.points; got++; } else wrong.push(g.key); recordMath("sheet", ok); });

@@ -141,6 +141,7 @@ function recordZh(zh, hit) {
   if (hit) { r.correct++; r.streak = (r.streak || 0) + 1; p.stars = (p.stars || 0) + 1; if (r.streak >= MASTER_STREAK) r.mastered = true; }
   else { r.wrong++; r.streak = 0; r.mastered = false; }
   prog[zh] = r;
+  logAnswer("zh", zh, hit);
   saveStore();
 }
 
@@ -181,7 +182,7 @@ function bopoVariants(bopo) {
 function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
-  if (ZH.lessons.some(l => l.kind !== "chars")) wrap.appendChild(renderToneDrillEntry()); // 一年級：聲調位置特訓
+  if (ZH.lessons.some(l => l.kind !== "chars")) wrap.append(renderBopoEntry(), renderToneDrillEntry()); // 一年級：注音總複習（期中考考全部注音）、聲調位置特訓
   ZH.lessons.forEach(l => {
     const items = l.kind === "chars" ? l.chars : l.words;
     const learned = items.filter(w => prog[w.zh]?.mastered).length;

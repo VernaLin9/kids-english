@@ -191,11 +191,11 @@ function renderToneDrill(lessonId) {
         syl.classList.add("tp-syl--done");
         feedback.textContent = wrongOnce ? "對了！記住這個位置 👍" : "答對了！🎉";
         feedback.className = "quiz-feedback quiz-feedback--correct pop";
-        if (!wrongOnce && !q.retry) firstTry++; speakZh(it.zh);
+        if (!wrongOnce && !q.retry) firstTry++; if (!wrongOnce) logAnswer("zh", `聲調位置:${it.zh}`, true); speakZh(it.zh);
         done(!wrongOnce);
       } else {
         if (!wrongOnce) miss(it);
-        wrongOnce = true; buzzWrong();
+        if (!wrongOnce) logAnswer("zh", `聲調位置:${it.zh}`, false); wrongOnce = true; buzzWrong();
         btn.replaceChildren(toneGlyph(it.tone)); btn.classList.add("tp-slot--bad");
         setTimeout(() => { btn.textContent = ""; btn.classList.remove("tp-slot--bad"); }, 700);
         syl.querySelector(`.tp-slot[data-pos="${target}"]`)?.classList.add("tp-slot--hint");
@@ -228,11 +228,11 @@ function renderToneDrill(lessonId) {
           locked = true; b.classList.add("tp-opt--ok");
           feedback.textContent = wrongOnce ? "對了！記住這個位置 👍" : "答對了！🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          if (!wrongOnce && !q.retry) firstTry++; speakZh(it.zh);
+          if (!wrongOnce && !q.retry) firstTry++; if (!wrongOnce) logAnswer("zh", `聲調哪個對:${it.zh}`, true); speakZh(it.zh);
           done(!wrongOnce);
         } else {
           if (!wrongOnce) miss(it);
-          wrongOnce = true; b.disabled = true; b.classList.add("tp-opt--bad"); buzzWrong();
+          if (!wrongOnce) logAnswer("zh", `聲調哪個對:${it.zh}`, false); wrongOnce = true; b.disabled = true; b.classList.add("tp-opt--bad"); buzzWrong();
           feedback.textContent = "這個寫錯了，再找找"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           rule.replaceChildren(el("div", { class: "tp-rule" }, el("div", { class: "tp-rule__text" }, t(`📌 ${tpRuleOf(it.tone)}`))));
         }
@@ -262,12 +262,12 @@ function renderToneDrill(lessonId) {
           b.replaceChildren(el("span", { class: "tp-find__zh", "data-nobopo": "" }, p.zh), tpSylEl(p.symbols, { tone: p.tone, pos: tpCorrectPos(p), cls: "tp-syl--sm tp-syl--fixed" }));
           feedback.textContent = wrongOnce ? "找到了！已經幫你改好 👍" : "抓到了！改成這樣才對 🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          if (!wrongOnce && !q.retry) firstTry++; speakZh(w.zh);
+          if (!wrongOnce && !q.retry) firstTry++; if (!wrongOnce) logAnswer("zh", `抓錯字:${w.zh}`, true); speakZh(w.zh);
           rule.replaceChildren(el("div", { class: "tp-rule" }, el("div", { class: "tp-rule__text" }, t(`📌 ${tpRuleOf(p.tone)}`))));
           done(!wrongOnce);
         } else {
           if (!wrongOnce) miss({ ...badIt, key: `${badIt.zh}|${badIt.syl}` });
-          wrongOnce = true; b.disabled = true; b.classList.add("tp-find__col--fine"); buzzWrong();
+          if (!wrongOnce) logAnswer("zh", `抓錯字:${w.zh}`, false); wrongOnce = true; b.disabled = true; b.classList.add("tp-find__col--fine"); buzzWrong();
           feedback.textContent = "這個字寫對了喔，看別的字"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
         }
       });
@@ -425,14 +425,14 @@ function renderToneWrite(app, progressLabel, pool, back) {
       const shapeOk = shape === it.tone, posOk = pos === wantPos;
       if (shapeOk && posOk) {
         locked = true;
-        if (tries === 0) first++;
+        if (tries === 0) { first++; logAnswer("zh", `手寫聲調:${it.zh}`, true); }
         dingCorrect(); speakZh(it.zh);
         feedback.textContent = tries === 0 ? "寫對了！位置也對 🎉" : "對了！記住這個位置 👍"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
         board.classList.add("tw-board--ok");
         setTimeout(() => { i++; ask(); }, 1300);
         return;
       }
-      if (tries === 0) missed.push(it);
+      if (tries === 0) { missed.push(it); logAnswer("zh", `手寫聲調:${it.zh}`, false); }
       tries++; buzzWrong();
       const msgs = [];
       if (!shapeOk) msgs.push(shape ? `你寫的像${TW_NAME[shape]}，這個字是${TW_NAME[it.tone]}` : `這個字是${TW_NAME[it.tone]}`);

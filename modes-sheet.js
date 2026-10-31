@@ -103,7 +103,7 @@ function renderFillSheet(u, exam = false) {
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
-  const update = () => { const done = blanks.filter(b => b.get() != null).length; progressLabel.textContent = `寫了 ${done}/${blanks.length} ${S.unitWord || "格"}`; };
+  const update = () => { blanks.forEach(b => { if (b.get() != null) b.node?.classList.remove("fs-need"); }); const done = blanks.filter(b => b.get() != null).length; progressLabel.textContent = `寫了 ${done}/${blanks.length} ${S.unitWord || "格"}`; };
   // 一個要填數字的空格；style: "paren" (　)、"box" □
   const blank = (ans, pts, style = "paren") => {
     let val = null;
@@ -111,7 +111,7 @@ function renderFillSheet(u, exam = false) {
     const draw = () => b.replaceChildren(style === "paren" ? el("span", { class: "fs-blank__p" }, "(") : "", el("span", { class: "fs-blank__v", "data-nobopo": "" }, val == null ? "　" : String(val)), style === "paren" ? el("span", { class: "fs-blank__p" }, ")") : "");
     draw();
     b.addEventListener("click", () => { if (locked) return; app.querySelectorAll(".fs-blank--on").forEach(x => x.classList.remove("fs-blank--on")); b.classList.add("fs-blank--on"); fsOpenPad(n => { val = n; draw(); b.classList.remove("fs-blank--on"); update(); }); });
-    blanks.push({ get: () => val, ans, pts, show: ok => { b.classList.add(ok ? "fs-blank--ok" : "fs-blank--bad"); if (!ok) b.append(el("span", { class: "fs-blank__ans", "data-nobopo": "" }, String(ans))); } });
+    blanks.push({ node: b, get: () => val, ans, pts, show: ok => { b.classList.add(ok ? "fs-blank--ok" : "fs-blank--bad"); if (!ok) b.append(el("span", { class: "fs-blank__ans", "data-nobopo": "" }, String(ans))); } });
     return b;
   };
   const sectionHead = sec => el("div", { class: "ws-sec__head" }, el("span", { class: "ws-sec__no" }, sec.no),
@@ -160,7 +160,15 @@ function renderFillSheet(u, exam = false) {
   const total = blanks.length;
   const submit = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
     const left = blanks.filter(b => b.get() == null).length;
-    if (left > 0 && !submit.dataset.confirm) { submit.dataset.confirm = "1"; submit.replaceChildren(t(`還有${left}${S.unitWord || "格"}沒寫，確定要交卷？`)); return; }
+    // 每一題都要寫（家長：不能亂寫一寫就交卷）→ 沒寫的標黃色、捲過去
+    if (left > 0) {
+      const empty = blanks.filter(b => b.get() == null);
+      app.querySelectorAll(".fs-need").forEach(x => x.classList.remove("fs-need"));
+      empty.forEach(b => b.node?.classList.add("fs-need"));
+      submit.replaceChildren(t(`還有${left}${S.unitWord || "格"}沒寫，每一題都要寫完才能交卷`));
+      buzzWrong(); empty.find(b => b.node)?.node.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove();
     let score = 0, got = 0;
     blanks.forEach(b => { const ok = b.ok = b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
@@ -403,7 +411,7 @@ function fsCircleQ(q, pts, addBlank, isLocked, update) {
   const row = el("div", { class: `fs-picks${q.shapes ? " fs-picks--shapes" : ""}` }, btns);
   card.append(q.ref ? el("div", { class: "fs-picks-ref" }, el("div", { class: "fs-ref" }, q.ref()), row) : row);
   const ans = q.items.map((it, i) => it.correct ? i : -1).filter(i => i >= 0).join(",");
-  addBlank({ get: () => on.size ? [...on].sort((a, b) => a - b).join(",") : null, ans, pts,
+  addBlank({ node: card, get: () => on.size ? [...on].sort((a, b) => a - b).join(",") : null, ans, pts,
     show: ok => { badge.textContent = ok ? "⭕" : "❌"; card.classList.add(ok ? "ws-q--ok" : "ws-q--bad");
       if (!ok) btns.forEach((b, i) => { if (q.items[i].correct) b.classList.add("fs-pick--ans"); else if (on.has(i)) b.classList.add("fs-pick--bad"); }); } });
   return card;
@@ -428,7 +436,7 @@ function fsCodesQ(sec, addBlank, isLocked, update) {
       fsOpenCodePad(codes, val, picked => { val = picked; draw(); box.classList.remove("fs-codes__box--on"); update(); });
     });
     boxes.appendChild(el("div", { class: "fs-codes__cell" }, el("div", { class: "fs-codes__label" }, t(label)), box));
-    addBlank({ get: () => val.length ? val.join("") : null, ans, pts: sec.pts,
+    addBlank({ node: box, get: () => val.length ? val.join("") : null, ans, pts: sec.pts,
       show: ok => { box.classList.add(ok ? "fs-codes__box--ok" : "fs-codes__box--bad"); if (!ok) box.append(el("span", { class: "fs-codes__ans" }, [...ans].join(" "))); } });
   });
   wrap.appendChild(boxes);
@@ -472,7 +480,7 @@ function fsMatch3(sec, addBlank, isLocked, update) {
     picDots[key] = dot;
     const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, el("span", { class: "fs-m3__no" }, no), FS10[k](), dot);
     b.addEventListener("click", () => { if (isLocked()) return; if (pick?.label != null) return link(key, pick.label); pick = { pic: key }; clearOn(); b.classList.add("fs-m3--on"); });
-    addBlank({ get: () => links[key] ?? null, ans, pts: sec.pts, show: ok => { status[key] = ok ? "ok" : "bad"; if (!ok) links[key] = ans; draw(); } });
+    addBlank({ node: b, get: () => links[key] ?? null, ans, pts: sec.pts, show: ok => { status[key] = ok ? "ok" : "bad"; if (!ok) links[key] = ans; draw(); } });
     return b;
   };
   const grid = el("div", { class: "fs-m3__grid" });
