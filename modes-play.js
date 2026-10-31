@@ -327,22 +327,21 @@ function renderQuiz(setKey) {
           btn.classList.add("quiz-option--correct");
           feedback.textContent = "答對了！🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          if (!missed.has(w)) score++; // 只算第一次就答對的
+          if (!missed.has(w)) { score++; recordWord(w, true); } // 只算第一次就答對的（答錯後改對不算）
           streak++;
-          recordWord(w, true);
           dingCorrect();
           speakWord(w);
         } else {
-          btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === w) b.classList.add("quiz-option--correct"); });
-          feedback.textContent = `正確答案：${w}`;
+          // 答錯不直接給答案、不跳下一題：這個選項關掉，要自己再選對才能往下（防亂點，小技巧由 modes-guard 跳出）
+          btn.classList.add("quiz-option--wrong"); btn.disabled = true;
+          feedback.textContent = "再想想，看圖、念念看中文，再選一次";
           feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           streak = 0;
-          recordWord(w, false);
+          if (!missed.has(w)) { recordWord(w, false); pushWrongBack(queue, i, w); }
           missed.add(w);
           buzzWrong();
-          speakWord(w);
-          pushWrongBack(queue, i, w);
+          locked = false;
+          return;
         }
         setTimeout(() => {
           maybeMovementBreak(streak, () => { i++; render(); });
@@ -399,20 +398,21 @@ function renderListening(setKey) {
           btn.classList.add("quiz-option--correct");
           feedback.textContent = "答對了！🎉";
           feedback.className = "quiz-feedback quiz-feedback--correct pop";
-          if (!missed.has(w)) score++;
+          if (!missed.has(w)) { score++; recordWord(w, true); }
           streak++;
-          recordWord(w, true);
           dingCorrect();
         } else {
-          btn.classList.add("quiz-option--wrong");
-          [...optionsWrap.children].forEach(b => { if (b.textContent === w) b.classList.add("quiz-option--correct"); });
-          feedback.textContent = `正確答案：${w}`;
+          // 答錯要自己再聽、再選對才能往下
+          btn.classList.add("quiz-option--wrong"); btn.disabled = true;
+          feedback.textContent = "再聽一次🔊，注意第一個音，再選一次";
           feedback.className = "quiz-feedback quiz-feedback--wrong shake";
           streak = 0;
-          recordWord(w, false);
+          if (!missed.has(w)) { recordWord(w, false); pushWrongBack(queue, i, w); }
           missed.add(w);
           buzzWrong();
-          pushWrongBack(queue, i, w);
+          setTimeout(() => speakWord(w), 600);
+          locked = false;
+          return;
         }
         setTimeout(() => maybeMovementBreak(streak, () => { i++; render(); }), 1300);
       });

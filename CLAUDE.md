@@ -15,7 +15,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 ## 檔案
 | 檔案 | 內容 |
 |---|---|
-| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-play → modes-extra → modes-zh → modes-tone → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-night → modes-math → modes-math2 → modes-sheet → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
+| `index.html` | 載入順序：data-g1 → data → data-zh → data-math → app → modes-guard → modes-play → modes-extra → modes-zh → modes-tone → modes-bopo → modes-zh2 → modes-games → modes-learn → modes-blocks → modes-quest → modes-night → modes-math → modes-math2 → modes-sheet → parent。改 JS/CSS 後要更新 `?v=` 版本號，避免平板讀到快取的舊檔；app.js 結尾 `checkNewVersion()` 打開網頁、切回網頁、每 3 分鐘抓最新 index.html，版本號不同就自動重新載入（家長要求強制更新） |
 | `data-g1.js` | 一年級英文 `GRADE1`（115-1：字母 A-Z、Unit 0-4、每週一句 20 句） |
 | `data.js` | 二年級英文 `GRADE2`（115-1，144 字）、`GRADES` 年級切換、`CHAR_BOPO` 注音表、`MOVEMENT_BREAKS` |
 | `data-zh.js` | 國語 `ZH_DATA`（一年級第六課〈謝謝老師〉課文 + 18 個複習詞；第七課〈龜兔賽跑〉習作 p.62-69：`symbols` 符號、`text` 猜謎（`textTitle` 自訂標題）、29 個詞、`sentences` 連句子；第八課〈拔蘿蔔〉聽寫本 18 題，第 8 題 ㄨㄢˇ ㄒㄩㄥˊ 國字待確認放在 `pending`，沒有課文 `text: []`）。課有 `exam:{date,label,mode}` 首頁會出提醒卡（mode `lesson` 進課的頁面）。二年級 `ZH_DATA.g2`：第六課〈從自己開始〉`kind:"chars"`，課文照課本分段 `{ para:"一", zh, bopo }`（p.48-50 共四段），便條 `{ note, lines:[{zh,bopo,right?}] }`（p.51 照課本分行）；`chars` 18 個生字 `{ zh, bopo, radical, extra 部首外筆畫, strokes 總筆畫, word, wordBopo, confuse 長得像的字 }`（照課本 p.52）、`words` 詞語、`text` 課文 |
@@ -25,6 +25,9 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `modes-math2.js` | 二年級數學：題目 `{ text, visual, steps:[choice|num|pick3], hint, topic|page, calc? }`，一題的畫面是 `mountMath2Q(q, container, onDone)`（練習和遊戲共用），數字鍵盤作答、線段圖 `barModel`、分合圖 `bondEl`、直式 `vertEl`。`MATH2_TOPICS`：解題、加減的關係、驗算、直式加減、大於小於等於、神機妙算（3 張湊 15）、容量 4 種。`BOOK_U4` 是課本原題（p.54-67，照頁碼、數字、順序、題目文字），`BOOK_U5` 是第5單元容量 p.71-78 能用文字表達的原題 |
 | `modes-sheet.js` | 📄 要填數字／連連看的原題卷（`FILL_SHEETS`，`renderFillSheet`）：一上第9回小A本 p.18-19（4-3 0的認識、4-4 分與合，照片 Drive「一年級數學小A本」IMG_8819）。(　)／□ 點一下跳出 0～10 數字鍵、連連看先點上面再點下面畫線，交卷照原卷配分（共 100 分）。圖的數量照照片（湯圓 9/5/0、番茄 3/0/2、串好的香腸 4/1/0）。另外加了第9回的練習題型 `MATH_TOPICS.split/make10/zero`（不是原題）。一上第10回小A本 p.20-21（5-1 堆疊與分類、5-2 認識形狀，照片 IMG_5099）：`kind:"circle"` 圈圈看（可圈好幾個，每小題全對才給分）、`codes` 填代號（點方框跳出 ㄅ～ㄌ 可複選）、`match3` 三欄連連看（左右的東西連到中間的形狀）；圖畫在 `FS10`（SVG 不放國字），第四大題圖形照照片大小方向 `fsShape`；練習題型 `shapeName/shapeTrace/shapeRoll`。單元有 `sheetLabel` 就顯示在單元頁 |
 | `app.js` | 共用工具、STORE（localStorage `partygo:store:v1`）、注音元件、首頁、設定面板、間隔重複、考前範圍 `nextExam()`、拆音節 `SYLLABLES` |
+| `modes-guard.js` | 🛡️ 認真作答（家長：小孩會亂點、點到對就按下一題）：document 層攔截所有選項（`GUARD_OPT`：.zh-opt、.quiz-option、.m-item、.tp-opt…；考卷 `.ws` 和計時遊戲 `#/game/` 不套）。新題目出來 1 秒內點不算（提醒＋記「太快亂點」）；答錯（選項被加上 --bad/--wrong）→ 選項停 2.5 秒、跳出「💡 小技巧」`guardTip()`（照頁面給怎麼想、怎麼記的白話短句＋🔊），同一題再錯停 4 秒並念出小技巧；1.5 秒內作答在學習紀錄標「太快」。新增選擇題時，選項 class 要在 `GUARD_OPT` 裡、答錯要加 --bad，且答錯後不能直接跳下一題（要自己再選對；英文選擇題／聽力已改成這樣） |
+| `modes-bopo.js` | 🔤 注音總複習・大會考（一年級期中考考全部 37 個注音，`#/bopo`，國語首頁入口）：`BP_WORDS` 每個注音一個代表詞（注音照教育部）、`BP_PAIR_TIPS` 容易搞混的怎麼分（ㄅㄆ 送不送氣、ㄓㄗ 翹不翹舌…）。練習 `#/bopo/init|final|tone|word`（聲母 21、韻母 16 全部、聲調、聽詞選注音），答錯要自己再選對並出現「📌 記一記」，錯的 3 題後再考；`#/bopo/chart` 37 個注音表；`#/bopo/exam` 模擬考 25 題（聲母 8、韻母 8、聲調 5、聽詞 4，每題 4 分），選好按「下一題」才換（一定要作答、不能跳過），交卷後列出錯題和記法，紀錄 `profile.mockExams["zh:bopo"]` |
+| 📋 學習紀錄 | `logAnswer()`（app.js）在 recordWord／recordZh／recordMath 和聲調特訓每次作答記一筆到 `profile.log`（`[時間, 科目, 頁面hash, 題目, 對1/錯0/亂點-1, 間隔ms, 太快1/0]`，留 4000 筆；答錯後改對不重算）。家長模式小孩頁 →「📋 學習紀錄」`#/parent/log/<名字>?days=7|30|90`：照日期、每一次練習（同一頁、間隔 15 分鐘內）列題數、答對率、⚡太快次數、❌錯的題目，模擬考分數也列在裡面 |
 | `modes-play.js` | 自選複習、單字卡、選擇題、聽力、字母拼拼樂、翻牌配對、跟著念 |
 | `modes-extra.js` | 手寫（描寫／默寫）、每週一句 |
 | `modes-zh.js` | 國語（一年級注音課）：注音卡、聽音選注音、加聲調、拼注音（聽寫）、寫注音、連句子（課有 `sentences` 才出現）；`kind:"chars"` 的課轉給 modes-zh2 |
@@ -58,6 +61,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 - 新學期／新年級單字表：照 `data-g1.js` 的 IIFE 格式新增，週次日期要對 PDF。
 - 國語新的一課：一年級在 `ZH_DATA.g1.lessons` 加 `{ id, title, titleBopo, emoji, text, words }`；二年級在 `ZH_DATA.g2.lessons` 加 `{ id, kind:"chars", chars, words, text }`，注音、部首、筆畫照課本逐字核對。
 - 數學新的單元：二年級在 `MATH_DATA.g2.units` 加 `{ id, kind:"calc", title, titleBopo, emoji, topics }`，題型加在 `MATH2_TOPICS`；一年級在 `MATH_DATA.g1.units` 加 `{ id, title, titleBopo, emoji, topics }`；新題型在 `modes-math.js` 的 `MATH_TOPICS` 加 `gen()`，用 SVG 畫、點圖作答，畫面文字要能查到 `CHAR_BOPO`。
+- 考卷（原題卷、模擬小考）每一題都要寫完才能交卷，沒寫的標黃色 `.fs-need` 並捲過去。
 - 數學／國語進度分別存在 `profile.mathProgress`、`profile.zhProgress`；科目分頁記在 `profile.subject`（en/zh/math）。
 - 中文翻譯是自己配的，交付時要跟家長說明哪些可能需要確認。
 - **多音字、變調、標點、順序一律照家長拍的課本照片**（小孩會跟著學、考試照課本）。一年級國語課本只有注音沒有國字：課文用 `bopoOnly: true` 只顯示注音；聽寫詞的國字是配的，照片上看不到的國字放 `pending`。

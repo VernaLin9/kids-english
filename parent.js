@@ -64,6 +64,87 @@ function fmtDate(iso) {
 function modeName(m) {
   return ({ quiz: "選擇題", listening: "聽力", spelling: "拼字", handwrite: "手寫", "sentence-listen": "句子聽力" })[m] || m;
 }
+// === 📋 學習紀錄：profile.log（每次作答一筆）＋ profile.mockExams（模擬考），照日期、照每一次練習分組 ===
+function logPageName(h) {
+  const [path, qs] = String(h || "").replace(/^#\//, "").split("?");
+  const q = Object.fromEntries(new URLSearchParams(qs || ""));
+  const seg = (path || "").split("/");
+  const lessonTitle = id => { for (const g of Object.values(typeof ZH_DATA !== "undefined" ? ZH_DATA : {})) { const l = g.lessons?.find(x => x.id === id); if (l) return l.title; } return id || ""; };
+  const unitTitle = id => { for (const g of Object.values(typeof MATH_DATA !== "undefined" ? MATH_DATA : {})) { const u = g.units?.find(x => x.id === id); if (u) return u.title; } return id || ""; };
+  if (seg[0] === "zhplay") { const m = [...ZH_MODES, ...ZH2_MODES, ["sentence", "", "連句子"]].find(x => x[0] === seg[1]); return `國語・${m ? m[2] : seg[1]}・${lessonTitle(q.l)}`; }
+  if (seg[0] === "mathplay") {
+    const T = MATH_TOPICS[seg[1]] || (typeof MATH2_TOPICS !== "undefined" ? MATH2_TOPICS[seg[1]] : null);
+    const n = ({ exam: "模擬小考", sheet: "原題卷", mix: "小考", book: "課本原題" })[seg[1]] || T?.name || seg[1];
+    return `數學・${n}・${unitTitle(q.u)}`;
+  }
+  if (seg[0] === "bopo") return `注音總複習・${seg[1] === "exam" ? "大會考" : BP_KINDS[seg[1]]?.name || ""}`;
+  if (seg[0] === "tonedrill") return "國語・聲調放哪裡特訓";
+  if (seg[0] === "play") return `英文・${({ quiz: "選擇題", listening: "聽力", spelling: "拼字", handwrite: "手寫", speak: "跟著念", match: "翻牌配對", flash: "單字卡", letters: "字母拼拼樂" })[seg[1]] || seg[1]}`;
+  if (seg[0] === "quest") return `遊戲・${seg[1] === "top" ? "陀螺對戰" : seg[1] === "pet" ? "養寵物" : seg[1]}`;
+  if (seg[0] === "night") return `夜市・${NIGHT_BOOTHS.find(b => b.id === seg[1])?.name || seg[1]}`;
+  if (seg[0] === "game") return `計時遊戲・${GAMES.find(g => g.id === seg[1])?.name || seg[1]}`;
+  if (seg[0] === "mindmap") return "記憶地圖";
+  return path || "首頁";
+}
+function logItemName(subj, key) {
+  if (subj === "math") return MATH_TOPICS[key]?.name || (typeof MATH2_TOPICS !== "undefined" ? MATH2_TOPICS[key]?.name : "") || key;
+  return key;
+}
+const LOG_DAY_FMT = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}(${"日一二三四五六"[d.getDay()]})`; };
+const LOG_HM = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+function renderParentLog(name, daysParam) {
+  const p = STORE.profiles[name];
+  if (!p) return renderEmpty("#/parent", "找不到這個小孩");
+  const days = Number(daysParam) || 7;
+  const since = Date.now() - days * 86400000;
+  const root = el("div", { "data-nobopo": "" });
+  root.appendChild(el("header", { class: "header" },
+    el("button", { class: "header__back", onclick: () => navigate(`#/parent/kid/${encodeURIComponent(name)}`), "aria-label": "回小孩頁" }, "←"),
+    el("div", { class: "header__title" }, `📋 ${name} 的學習紀錄`),
+    el("div", { class: "header__progress" }, `最近${days}天`)));
+  const app = el("main", { class: "app" });
+  app.appendChild(el("div", { class: "log-legend" }, "每一次練習：題數、答對率（第一次作答）、⚡太快（題目出來不到1.5秒就點，或1秒內亂點被擋下來）、❌答錯的題目。"));
+  // 一次練習＝同一頁、前後間隔不到 15 分鐘
+  const sessions = [];
+  (p.log || []).filter(r => r[0] >= since).forEach(r => {
+    const [t0, subj, page, key, ok, , fast] = r;
+    let s = sessions[sessions.length - 1];
+    if (!s || s.page !== page || t0 - s.end > 15 * 60000) { s = { kind: "log", page, subj, start: t0, end: t0, n: 0, right: 0, fast: 0, wrong: new Map() }; sessions.push(s); }
+    s.end = t0;
+    if (fast) s.fast++;
+    if (ok === -1) return;
+    s.n++; if (ok) s.right++; else s.wrong.set(key, (s.wrong.get(key) || 0) + 1);
+  });
+  Object.entries(p.mockExams || {}).forEach(([key, list]) => list.filter(r => r.at >= since).forEach(r => {
+    const [subj, id] = key.split(":");
+    const title = key === "zh:bopo" ? "注音大會考" : `${(typeof MATH_DATA !== "undefined" ? Object.values(MATH_DATA).flatMap(g => g.units || []).find(u => u.id === id)?.title : "") || id}`;
+    sessions.push({ kind: "mock", subj, start: r.at - (r.secs || 0) * 1000, end: r.at, title, score: r.score, secs: r.secs || 0 });
+  }));
+  sessions.sort((a, b) => b.start - a.start);
+  if (!sessions.length) app.appendChild(el("div", { class: "log-empty" }, `最近${days}天還沒有作答紀錄（這個功能 2026/10/31 開始記）`));
+  const byDay = new Map();
+  sessions.forEach(s => { const k = LOG_DAY_FMT(s.start); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(s); });
+  const subjIcon = s => ({ en: "🔤", zh: "📖", math: "➕" })[s] || "🎮";
+  byDay.forEach((list, day) => {
+    const logs = list.filter(s => s.kind === "log");
+    const n = logs.reduce((a, s) => a + s.n, 0), right = logs.reduce((a, s) => a + s.right, 0), fast = logs.reduce((a, s) => a + s.fast, 0);
+    const mins = Math.round(list.reduce((a, s) => a + Math.max(1, (s.end - s.start) / 60000), 0));
+    app.appendChild(el("div", { class: "log-day" },
+      el("div", { class: "log-day__head" }, el("b", {}, day), ` 答了${n}題・答對${n ? Math.round(right * 100 / n) : 0}%・約${mins}分鐘`, fast ? el("span", { class: "log-fast" }, ` ⚡太快${fast}次`) : ""),
+      list.map(s => s.kind === "mock"
+        ? el("div", { class: "log-row log-row--mock" }, el("span", { class: "log-row__time" }, LOG_HM(s.end)),
+            el("span", { class: "log-row__name" }, `📝 模擬考・${s.title}`), el("span", { class: "log-row__score" }, `${s.score}分（${Math.floor(s.secs / 60)}分${s.secs % 60}秒）`))
+        : el("div", { class: "log-row" }, el("span", { class: "log-row__time" }, `${LOG_HM(s.start)}–${LOG_HM(s.end)}`),
+            el("span", { class: "log-row__name" }, `${subjIcon(s.subj)} ${logPageName(s.page)}`),
+            el("span", { class: `log-row__score ${s.n && s.right / s.n < 0.7 ? "log-row__score--low" : ""}` }, `${s.n}題・對${s.right}（${s.n ? Math.round(s.right * 100 / s.n) : 0}%）`),
+            s.fast ? el("span", { class: "log-fast" }, `⚡太快${s.fast}次`) : null,
+            s.wrong.size ? el("div", { class: "log-row__wrong" }, "❌ ", [...s.wrong].map(([k, c]) => `${logItemName(s.subj, k)}${c > 1 ? `×${c}` : ""}`).join("、")) : null))));
+  });
+  app.appendChild(el("div", { class: "log-more" }, [7, 30, 90].map(d => el("button", { class: `btn ${d === days ? "btn--accent" : "btn--ghost"}`, onclick: () => navigate(`#/parent/log/${encodeURIComponent(name)}?days=${d}`) }, `最近${d}天`))));
+  root.appendChild(app);
+  return root;
+}
+
 function exportProfileText(name) {
   const p = STORE.profiles[name]; if (!p) return "";
   const masteredCount = masteredOf(p);
@@ -312,6 +393,8 @@ function renderParentKidDetail(name) {
     })));
   }
 
+  app.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-bottom: 12px;", onclick: () => navigate(`#/parent/log/${encodeURIComponent(name)}`) }, "📋 學習紀錄（每天做了什麼題目、答對幾題、有沒有亂點）"));
+
   // Unit progress
   app.appendChild(el("div", { class: "section__title" }, t("📊 單元進度")));
   const unitBox = el("div", { class: "unit-bars" });
@@ -435,6 +518,8 @@ function route() {
   else if (path[0] === "parent") {
     if (!parentSession) {
       view = renderParentGate();
+    } else if (path[1] === "log" && path[2]) {
+      view = renderParentLog(decodeURIComponent(path[2]), query.days);
     } else if (path[1] === "kid" && path[2]) {
       view = renderParentKidDetail(decodeURIComponent(path[2]));
     } else {
@@ -448,6 +533,7 @@ function route() {
   else if (path[0] === "mathplay" && path[1]) view = renderMathPlay(path[1], query.u);
   else if (path[0] === "zhplay" && path[1]) view = renderZhPlay(path[1], query.l);
   else if (path[0] === "tonedrill") view = renderToneDrill(query.l);
+  else if (path[0] === "bopo") view = renderBopo(path[1]);
   else if (path[0] === "games") view = renderGames(query.s, query.c);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);
