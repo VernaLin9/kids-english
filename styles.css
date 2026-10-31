@@ -2530,3 +2530,18 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .fs-m3__label { display: flex; align-items: center; justify-content: space-between; gap: 2px; background: #e6e6e6; border: 0; border-radius: 12px; min-height: 48px; padding: 4px 3px; white-space: nowrap; font-weight: 900; font-size: calc(16px * var(--font-scale)); }
 .fs-m3__label .fs-match__dot { flex: none; }
 .fs-m3--on { background: #fff3c4; }
+/* 📝 模擬小考 */
+.mock-gate { background: #fff; border: 2px solid var(--line); border-radius: var(--radius-lg); padding: 18px 16px; margin-top: 14px; display: grid; gap: 10px; text-align: center; }
+.mock-gate__icon { font-size: 44px; }
+.mock-gate__title { font-weight: 900; font-size: calc(24px * var(--font-scale)); }
+.mock-gate__rules { text-align: left; margin: 0; padding-left: 1.4em; display: grid; gap: 4px; font-weight: 700; font-size: calc(16px * var(--font-scale)); line-height: 1.8; }
+.mock-gate__hist { color: var(--ink-soft); font-weight: 700; }
+.mock-result { display: grid; gap: 8px; margin: 10px 0 14px; padding: 12px; border: 2px solid var(--line); border-radius: var(--radius); background: #fff; }
+.mock-result__cmp { font-weight: 900; font-size: calc(18px * var(--font-scale)); text-align: center; }
+.mock-result__time { text-align: center; color: var(--ink-soft); font-weight: 700; }
+.mock-result__rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+.mock-result__row { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: #eefaf4; font-weight: 800; }
+.mock-result__row--miss { background: #fff1f1; }
+.mock-result__row b { font-size: 18px; }
+.mock-hist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.mock-hist__item { background: #f4f4f8; border-radius: 8px; padding: 2px 8px; font-size: 13px; }

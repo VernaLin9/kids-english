@@ -204,6 +204,45 @@ function renderMathHomeSection() {
   return wrap;
 }
 
+// === 📝 模擬小考：跟真的考試一樣，按「開始考試」才出題、交卷才看分數；分數記在 profile.mockExams["math:單元"]（留最近 20 次）===
+const mockKey = u => `math:${u.id}`;
+const mockList = (key, p = getProfile()) => p?.mockExams?.[key] || [];
+function mockSave(key, rec) { const p = getProfile(); if (!p) return; p.mockExams = p.mockExams || {}; p.mockExams[key] = [...mockList(key, p), rec].slice(-20); saveStore(); }
+const mockDay = at => { const d = new Date(at); return `${d.getMonth() + 1}/${d.getDate()}`; };
+const mockTime = secs => `${Math.floor(secs / 60)}分${secs % 60}秒`;
+function mockSummary(key, p) {
+  const L = mockList(key, p);
+  if (!L.length) return "還沒考過";
+  const last = L[L.length - 1];
+  return `最高${Math.max(...L.map(r => r.score))}分・上次${last.score}分(${mockDay(last.at)})・考了${L.length}次`;
+}
+// 考試前的說明卡；body 是卷子，按「開始考試」才顯示
+function mockGate(body, u, practiceHash) {
+  let t0 = Date.now();
+  body.style.display = "none";
+  const gate = el("section", { class: "mock-gate" },
+    el("div", { class: "mock-gate__icon" }, "📝"),
+    el("div", { class: "mock-gate__title" }, t("模擬小考")),
+    el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看題目寫", "不會念的字可以按🔊聽", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
+    el("div", { class: "mock-gate__hist" }, t(mockSummary(mockKey(u)))),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); } }, t("✏️ 開始考試")),
+    el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(practiceHash) }, t("先練習一次")));
+  return { el: gate, secs: () => Math.round((Date.now() - t0) / 1000) };
+}
+// 交卷後：記分數，顯示用了多久、跟上次比、每一大題得幾分
+function mockResult(u, score, secs, rows) {
+  const key = mockKey(u), prev = mockList(key), last = prev[prev.length - 1];
+  const best = prev.length ? Math.max(...prev.map(r => r.score)) : null;
+  mockSave(key, { at: Date.now(), score, secs, parts: rows.map(r => r.got) });
+  const diff = last ? score - last.score : null;
+  const cmp = !last ? "第一次模擬小考，記下來了" : score > best ? `🏆 新紀錄！比上次多${diff}分` : diff > 0 ? `比上次多${diff}分 🎉` : diff === 0 ? "跟上次一樣分數" : `比上次少${-diff}分，看看錯在哪裡`;
+  return el("div", { class: "mock-result" },
+    el("div", { class: "mock-result__cmp" }, t(cmp)),
+    el("div", { class: "mock-result__time" }, t(`用了${mockTime(secs)}`)),
+    el("div", { class: "mock-result__rows" }, rows.map(r => el("div", { class: `mock-result__row${r.got < r.max ? " mock-result__row--miss" : ""}` },
+      el("span", {}, t(`第${r.no}大題`)), el("b", { "data-nobopo": "" }, `${r.got}/${r.max}`)))));
+}
+
 // === 單元頁：選題型 / 小考 ===
 function renderMathUnit(id) {
   const u = mathUnit(id);
@@ -215,7 +254,9 @@ function renderMathUnit(id) {
   const app = el("main", { class: "app" });
   app.appendChild(questEntryBtn("math", u.id));
   app.appendChild(el("section", { class: "section" },
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t(u.sheetLabel || "📄 評量卷原題（第6、7頁）")),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/exam?u=${u.id}`) }, t("📝 模擬小考")),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(mockKey(u)))),
+    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t(u.sheetLabel || "📄 評量卷原題（第6、7頁）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(u.sheetNote || "跟學校的評量卷一樣的題目和順序")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, "每次都不一樣的題目，練熟概念")));
@@ -283,7 +324,7 @@ function renderMathPlay(topic, unitId) {
   const u = mathUnit(unitId) || MATH?.units[0];
   if (!u) return renderEmpty("#/", "找不到這個單元");
   if (u.kind === "calc") return renderMath2Play(topic, u);
-  if (topic === "sheet") return typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id] ? renderFillSheet(u) : renderMathSheet(u.id);
+  if (topic === "sheet" || topic === "exam") return typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id] ? renderFillSheet(u, topic === "exam") : renderMathSheet(u.id, topic === "exam");
   const isMix = topic === "mix";
   const total = isMix ? 12 : 8;
   const topics = isMix ? u.topics : [topic];
@@ -474,12 +515,12 @@ function circleMark(b, color) {
   return svg("ellipse", { cx: b.x + b.w / 2, cy: b.y + b.h / 2, rx: b.w / 2 + 10, ry: b.h / 2 + 10, fill: "none", stroke: color, "stroke-width": 5, class: "ws-circle pop" });
 }
 
-function renderMathSheet(unitId) {
+function renderMathSheet(unitId, exam = false) {
   const u = mathUnit(unitId) || MATH?.units[0];
   const S = SHEETS[u.id] || SHEET_U2;
   const total = SHEET_TOTAL(S);
   const root = el("div", {});
-  const header = renderHeader("📄 評量卷原題", { back: `#/math/${u.id}` });
+  const header = renderHeader(exam ? "📝 模擬小考" : "📄 評量卷原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
   const app = el("main", { class: "app ws" });
@@ -490,7 +531,11 @@ function renderMathSheet(unitId) {
     el("div", { class: "ws-title__main" }, t(S.title)),
     el("div", { class: "ws-title__sub" }, t(S.sub)),
     el("div", { class: "ws-score" }, t("得分"), scoreBox)));
-  app.appendChild(el("div", { class: "ws-howto" }, t("跟考卷一樣寫：點(　)寫記號、點圖把它圈起來。全部寫完按「交卷」")));
+  const body = el("div", {});
+  const gate = exam ? mockGate(body, u, `#/mathplay/sheet?u=${u.id}`) : null;
+  if (gate) app.appendChild(gate.el);
+  app.appendChild(body);
+  body.appendChild(el("div", { class: "ws-howto" }, t("跟考卷一樣寫：點(　)寫記號、點圖把它圈起來。全部寫完按「交卷」")));
 
   const answered = {}; // key -> 使用者答案
   const graders = []; // 每小題 { key, points, check(), showAnswer(ok) }
@@ -557,7 +602,7 @@ function renderMathSheet(unitId) {
       grid.appendChild(card);
     });
     secEl.appendChild(grid);
-    app.appendChild(secEl);
+    body.appendChild(secEl);
   });
 
   const result = el("div", { class: "ws-result" });
@@ -569,15 +614,17 @@ function renderMathSheet(unitId) {
     graders.forEach(g => { const ok = g.check(); g.show(ok); if (ok) { score += g.points; got++; } else wrong.push(g.key); recordMath("sheet", ok); });
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) dingCorrect(); else buzzWrong();
+    const rows = S.sections.map(sec => { const gs = graders.filter(g => g.key.startsWith(`${sec.no}-`)); return { no: sec.no, got: gs.reduce((n, g) => n + (wrong.includes(g.key) ? 0 : g.points), 0), max: gs.reduce((n, g) => n + g.points, 0) }; });
     result.replaceChildren(
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} 題，錯的題目看一下綠色的正確答案 💪`)),
-      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t("🔁 再寫一次")),
+      exam ? mockResult(u, score, gate.secs(), rows) : null,
+      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次" : "🔁 再寫一次")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
     result.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => app.querySelector(".ws-q--bad")?.scrollIntoView({ behavior: "smooth", block: "center" }), 1200);
   } }, t("✅ 交卷"));
-  app.appendChild(el("div", { class: "ws-submit" }, submit, result));
+  body.appendChild(el("div", { class: "ws-submit" }, submit, result));
   update();
   return root;
 }
