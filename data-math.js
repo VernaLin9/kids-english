@@ -16,6 +16,13 @@ const MATH_DATA = {
         sheetLabel: "📄 小A本原題（第18、19頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
         topics: ["split", "make10", "zero"],
       },
+      {
+        // 小A本 第10回 p.20-21（照片 Drive「一年級數學小A本」IMG_5099），老師會考一模一樣的題目
+        id: "u5", title: "第10回 堆疊與分類・認識形狀", titleBopo: "ㄉㄧˋ ㄕˊ ㄏㄨㄟˊ ㄉㄨㄟ ㄉㄧㄝˊ ㄩˇ ㄈㄣ ㄌㄟˋ ㄖㄣˋ ㄕˋ ㄒㄧㄥˊ ㄓㄨㄤˋ", emoji: "🔺",
+        exam: { date: "2026-11-02", label: "小考 小A本第20、21頁", mode: "sheet" },
+        sheetLabel: "📄 小A本原題（第20、21頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
+        topics: ["shapeName", "shapeTrace", "shapeRoll"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答

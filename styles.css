@@ -2488,3 +2488,45 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .fs-pics { font-size: clamp(18px, 5.6vw, 30px); letter-spacing: 0; white-space: nowrap; overflow: hidden; }
 .fs-line { display: block; line-height: 2.6; }
 .fs-line .fs-blank { vertical-align: middle; margin: 0 2px; }
+/* 第10回：圈圈看（可以圈好幾個）、填代號、三欄連連看 */
+.fs-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 10px; margin-top: 8px; align-items: center; }
+.fs-picks--shapes { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 16px; padding: 6px 2px; }
+.fs-picks-ref { display: grid; grid-template-columns: minmax(56px, 0.8fr) 3fr; gap: 10px; align-items: center; }
+.fs-picks-ref .fs-picks { margin-top: 0; }
+.fs-ref { border-right: 3px dashed #9a9a9a; padding-right: 8px; display: grid; place-items: center; }
+.fs-obj { max-width: 96px; display: block; margin: 0 auto; }
+.fs-pick { position: relative; background: none; border: 0; padding: 6px; min-height: 48px; min-width: 48px; display: grid; place-items: center; border-radius: 50%; }
+.fs-pick:active { background: rgba(107, 140, 255, 0.08); }
+.fs-pick::after { content: ""; position: absolute; inset: -2px; border: 4px solid transparent; border-radius: 50%; pointer-events: none; }
+.fs-pick--on::after { border-color: var(--danger, #e0393e); }
+.fs-pick--ans::after { border-color: #1b9e6a; border-style: dashed; }
+.fs-pick--bad::after { border-color: #e0393e; }
+.fs-pick--bad { opacity: 0.55; }
+.fs-shape { display: block; max-width: 100%; height: auto; }
+.fs-codes__pics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+.fs-codes__pic { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 2px; }
+.fs-codes__code { font-weight: 900; font-size: 20px; }
+.fs-codes__boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+@media (min-width: 700px) { .fs-codes__boxes { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fs-codes__cell { border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; background: #fff; }
+.fs-codes__label { background: #d9d9d9; text-align: center; font-weight: 900; padding: 4px 2px; font-size: calc(16px * var(--font-scale)); }
+.fs-codes__box { position: relative; width: 100%; min-height: 64px; border: 0; background: #fff; font-size: 26px; font-weight: 900; color: #3b6bff; letter-spacing: 2px; }
+.fs-codes__box--on { background: #fff3c4; }
+.fs-codes__box--ok { color: var(--success); }
+.fs-codes__box--bad .fs-codes__val { color: var(--danger); text-decoration: line-through; }
+.fs-codes__ans { position: absolute; right: 4px; bottom: 2px; background: #1b9e6a; color: #fff; border-radius: 10px; padding: 0 6px; font-size: 18px; }
+.fs-pad__tip { text-align: center; font-weight: 800; margin-bottom: 6px; font-size: calc(14px * var(--font-scale)); }
+.fs-pad__keys--codes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.fs-pad__key--on { background: #3b6bff; color: #fff; border-color: #3b6bff; }
+.fs-pad__key--done { grid-column: span 2; background: var(--primary, #ffb020); color: #fff; font-size: 20px; }
+.fs-m3 { position: relative; padding: 8px 2px 10px; }
+.fs-m3__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr); column-gap: 18px; row-gap: 12px; align-items: center; position: relative; z-index: 1; }
+.fs-m3__pic { display: flex; align-items: center; gap: 4px; background: none; border: 0; padding: 4px; border-radius: 12px; min-height: 64px; }
+.fs-m3__pic .fs-obj { width: 100%; max-width: 72px; }
+.fs-m3__pic--L { justify-content: flex-end; }
+.fs-m3__pic--R { justify-content: flex-start; }
+.fs-m3__pic--R .fs-match__dot { order: -1; }
+.fs-m3__no { font-weight: 800; font-size: 16px; align-self: flex-start; }
+.fs-m3__label { display: flex; align-items: center; justify-content: space-between; gap: 2px; background: #e6e6e6; border: 0; border-radius: 12px; min-height: 48px; padding: 4px 3px; white-space: nowrap; font-weight: 900; font-size: calc(16px * var(--font-scale)); }
+.fs-m3__label .fs-match__dot { flex: none; }
+.fs-m3--on { background: #fff3c4; }
