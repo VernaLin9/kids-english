@@ -40,6 +40,16 @@ function splitForTts(text) {
   for (const p of parts) { if (out.length && (out[out.length - 1] + p).length <= 90) out[out.length - 1] += p; else out.push(p); }
   return out.flatMap(p => p.length <= 180 ? [p] : p.match(/.{1,180}/g));
 }
+function zhSplitLang(text) {
+  const out = [];
+  text.split(/([A-Za-z][A-Za-z'’\-]*(?: [A-Za-z][A-Za-z'’\-]*)*)/).forEach((part, i) => {
+    const isEn = i % 2 === 1 && part.replace(/[^A-Za-z]/g, "").length >= 2;
+    const tl = isEn ? "en" : "zh-TW";
+    if (!part.trim() || (!isEn && !/[\u4e00-\u9fff0-9A-Za-z]/.test(part))) return; // 只剩標點就不念
+    if (out.length && out[out.length - 1][1] === tl) out[out.length - 1][0] += part; else out.push([part, tl]);
+  });
+  return out.length ? out : [[text, "zh-TW"]];
+}
 function speakZhDevice(text) {
   if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text);
@@ -58,21 +68,65 @@ function speakGoogle(text, tl = "zh-TW") {
   if (!zhAudio || !zhGoogleOK) return false;
   window.speechSynthesis?.cancel();
   zhAudio.pause();
-  zhAudioQueue = splitForTts(say);
+  // 國語句子裡夾的英文單字（兩個字母以上）改用英文聲音念，中文聲音念英文會有怪腔調
+  zhAudioQueue = (tl === "zh-TW" ? zhSplitLang(say) : [[say, tl]]).flatMap(([part, ptl]) => splitForTts(part).map(q => [q, ptl]));
   const playNext = () => {
-    const chunk = zhAudioQueue.shift();
-    if (!chunk) return;
+    const item = zhAudioQueue.shift();
+    if (!item) return;
+    const [chunk, ctl] = item;
     zhAudio.onended = playNext;
     zhAudio.onerror = () => { zhGoogleOK = false; zhAudioQueue = []; (tl === "zh-TW" ? speakZhDevice : speakEnDevice)(say); setTimeout(() => { zhGoogleOK = true; }, 60000); }; // 連不到 Google：先用平板聲音，一分鐘後再試
-    zhAudio.src = GOOGLE_TTS(chunk, tl);
+    zhAudio.src = GOOGLE_TTS(chunk, ctl);
     const pr = zhAudio.play();
     if (pr && pr.catch) pr.catch(err => { if (err && err.name === "NotAllowedError") zhPending = { text: say, tl }; });
   };
   playNext();
   return true;
 }
+// === 念之前整理文字（只影響聲音，畫面不變）===
+// 多音字：照畫面上的注音（課本讀法）念。先找資料裡有標注音的詞句（ZH_DATA、英文單字的中文），找不到用自動注音 autoReadings；
+// 遇到 Google 常念錯的讀法就換成同音字（例：課本連接詞「和」念 ㄏㄢˋ，Google 會念 ㄏㄜˊ）
+const ZH_SAY_FIX = {
+  "和": { "ㄏㄢˋ": "汗" }, "數": { "ㄕㄨˇ": "鼠" }, "量": { "ㄌㄧㄤˊ": "良" }, "長": { "ㄓㄤˇ": "掌" }, "種": { "ㄓㄨㄥˋ": "眾" },
+  "重": { "ㄔㄨㄥˊ": "蟲" }, "倒": { "ㄉㄠˋ": "到" }, "差": { "ㄔㄚˋ": "岔" }, "中": { "ㄓㄨㄥˋ": "眾" }, "空": { "ㄎㄨㄥˋ": "控" },
+  "得": { "ㄉㄜˊ": "德" }, "為": { "ㄨㄟˊ": "圍" }, "好": { "ㄏㄠˋ": "號" }, "當": { "ㄉㄤˋ": "盪" }, "轉": { "ㄓㄨㄢˋ": "賺" },
+  "分": { "ㄈㄣˋ": "份" }, "樂": { "ㄩㄝˋ": "月" }, "覺": { "ㄐㄧㄠˋ": "叫" }, "了": { "ㄌㄧㄠˇ": "瞭" },
+};
+let zhSayBopoMap = null;
+function zhSayBopo() {
+  if (zhSayBopoMap) return zhSayBopoMap;
+  zhSayBopoMap = new Map();
+  const cjkLen = s => [...s].filter(c => /[\u4e00-\u9fff]/.test(c)).length;
+  const add = (zh, bopo) => { if (typeof zh === "string" && typeof bopo === "string" && cjkLen(zh) === bopo.trim().split(/\s+/).length) zhSayBopoMap.set(zh, bopo.trim()); };
+  const walk = o => { if (!o || typeof o !== "object") return; if (Array.isArray(o)) return o.forEach(walk);
+    add(o.zh, o.bopo); add(o.word, o.wordBopo); Object.values(o).forEach(walk); };
+  walk(typeof ZH_DATA !== "undefined" ? ZH_DATA : null);
+  Object.values(typeof GRADES !== "undefined" ? GRADES : {}).forEach(g => walk(g?.data?.WORDS));
+  return zhSayBopoMap;
+}
+function zhSayPoly(text) {
+  const known = zhSayBopo().get(text);
+  const rs = known ? known.split(/\s+/) : autoReadings(text);
+  let k = 0;
+  return [...text].map(c => { if (!/[\u4e00-\u9fff]/.test(c)) return c; const r = rs[k++]; return ZH_SAY_FIX[c]?.[r] || c; }).join("");
+}
+// 符號：Google 會把符號照字念出來或亂念 → 注音和表情符號拿掉（只念一個注音符號時保留）、＿＿ 變停頓、
+// □ 念「方框」、(　) 念「括弧」、算式符號念成字、11/2 念成「11月2日」
+function zhSaySymbols(text) {
+  let s = text;
+  if (/[\u4e00-\u9fff]/.test(s)) s = s.replace(/[ㄅ-ㄩ]+[ˊˇˋ˙]?|[ˊˇˋ˙]/g, "");
+  return s.replace(/\p{Extended_Pictographic}|\uFE0F|\u20E3|\u200D/gu, "")
+    .replace(/[①-⑳]/g, c => `第${c.charCodeAt(0) - 0x245F}題，`)
+    .replace(/[=＝]\s*[?？]/g, "等於多少").replace(/(^|[，,、（(\s])[?？](?=[\u4e00-\u9fff])/g, "$1問號")
+    .replace(/[＿_]{2,}|＿/g, "，").replace(/[□☐]/g, "方框").replace(/[(（]\s*[　 ]*\s*[)）]/g, "括弧")
+    .replace(/(\d{1,2})\/(\d{1,2})(?!\d)/g, "$1月$2日")
+    .replace(/\s*[＋+]\s*/g, "加").replace(/\s*[−－]\s*/g, "減").replace(/(\d|方框|括弧) - (?=\d|方框|括弧)/g, "$1減").replace(/(\d)-(\d)/g, "$1到$2")
+    .replace(/\s*[×✕]\s*/g, "乘").replace(/\s*÷\s*/g, "除以").replace(/\s*[＝=]\s*/g, "等於").replace(/\s*[>＞]\s*/g, "大於").replace(/\s*[<＜]\s*/g, "小於")
+    .replace(/[✓✔]/g, "勾").replace(/[○◯]/g, "圈").replace(/[✗✘]/g, "叉").replace(/[・·•]/g, "，").replace(/[「」『』]/g, "").replace(/\s{2,}/g, " ").trim();
+}
+const zhSpeechText = text => zhTwText(zhSaySymbols(zhSayPoly(String(text || "")))).trim();
 function speakZh(text) {
-  const say = zhTwText(String(text || "")).trim();
+  const say = zhSpeechText(text);
   if (!say) return;
   if (!speakGoogle(say, "zh-TW")) speakZhDevice(say);
 }
@@ -470,7 +524,8 @@ function renderZhWrite(l) {
 }
 
 // 注音符號單獨念的時候，用有這個音的字讓 TTS 念得出來
-const ZH_SYMBOL_SAY = { "ㄧㄢ": "煙", "ㄧㄥ": "英", "ㄨㄞ": "歪", "ㄨㄟ": "威", "ㄅ": "ㄅ", "ㄆ": "ㄆ", "ㄇ": "ㄇ", "ㄈ": "ㄈ", "ㄉ": "ㄉ", "ㄊ": "ㄊ", "ㄋ": "ㄋ", "ㄌ": "ㄌ", "ㄍ": "ㄍ", "ㄎ": "ㄎ", "ㄏ": "ㄏ", "ㄐ": "ㄐ", "ㄑ": "ㄑ", "ㄒ": "ㄒ", "ㄓ": "ㄓ", "ㄔ": "ㄔ", "ㄕ": "ㄕ", "ㄖ": "ㄖ", "ㄗ": "ㄗ", "ㄘ": "ㄘ", "ㄙ": "ㄙ", "ㄚ": "啊", "ㄛ": "喔", "ㄜ": "鵝", "ㄝ": "ㄝ", "ㄞ": "哀", "ㄟ": "ㄟ", "ㄠ": "凹", "ㄡ": "歐", "ㄢ": "安", "ㄣ": "恩", "ㄤ": "骯", "ㄥ": "ㄥ", "ㄦ": "兒", "ㄧ": "衣", "ㄨ": "屋", "ㄩ": "迂" };
+// 注音符號的念法：用同音的國字念（ㄅ 玻、ㄍ 哥、ㄓ 知…）；找不到完全同音國字的（ㄈㄉㄊㄋㄌㄖㄝㄟㄥ）保留符號
+const ZH_SYMBOL_SAY = { "ㄧㄢ": "煙", "ㄧㄥ": "英", "ㄨㄞ": "歪", "ㄨㄟ": "威", "ㄅ": "玻", "ㄆ": "坡", "ㄇ": "摸", "ㄈ": "ㄈ", "ㄉ": "ㄉ", "ㄊ": "ㄊ", "ㄋ": "ㄋ", "ㄌ": "ㄌ", "ㄍ": "哥", "ㄎ": "科", "ㄏ": "喝", "ㄐ": "機", "ㄑ": "七", "ㄒ": "西", "ㄓ": "知", "ㄔ": "吃", "ㄕ": "師", "ㄖ": "ㄖ", "ㄗ": "資", "ㄘ": "疵", "ㄙ": "思", "ㄚ": "啊", "ㄛ": "喔", "ㄜ": "鵝", "ㄝ": "ㄝ", "ㄞ": "哀", "ㄟ": "ㄟ", "ㄠ": "凹", "ㄡ": "歐", "ㄢ": "安", "ㄣ": "恩", "ㄤ": "骯", "ㄥ": "ㄥ", "ㄦ": "兒", "ㄧ": "衣", "ㄨ": "屋", "ㄩ": "迂" };
 
 // === 🔗 連句子（習作 p.68）：誰 → 在哪裡 → 做什麼，照課本的三段選 ===
 function renderZhSentence(l) {
