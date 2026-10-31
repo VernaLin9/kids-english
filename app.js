@@ -838,7 +838,7 @@ function renderHome() {
     app.appendChild(el("button", { class: "exam-remind", onclick: () => navigate(r.hash) },
       el("span", { class: "exam-remind__icon" }, "📅"),
       el("span", { class: "exam-remind__text" }, t(`${d.getMonth() + 1}/${d.getDate()}(${"日一二三四五六"[d.getDay()]})${when}考${r.subject}：${r.label}`)),
-      el("span", { class: "exam-remind__go" }, t("去練習 ›"))));
+      el("span", { class: "exam-remind__go" }, t(r.mode === "exam" ? "模擬小考 ›" : "去練習 ›"))));
   });
   if (subjects.length > 1) {
     app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },

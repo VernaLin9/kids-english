@@ -81,10 +81,11 @@ function fsOpenPad(onPick) {
   document.body.appendChild(fsPadEl);
 }
 
-function renderFillSheet(u) {
-  const S = FILL_SHEETS[u.id];
+// exam＝模擬小考：先按「開始考試」才出題、圖的順序打亂（考觀念不是背位置）、交卷後記分數
+function renderFillSheet(u, exam = false) {
+  const S = exam ? fsShuffled(FILL_SHEETS[u.id]) : FILL_SHEETS[u.id];
   const root = el("div", {});
-  const header = renderHeader("📄 小A本原題", { back: `#/math/${u.id}` });
+  const header = renderHeader(exam ? "📝 模擬小考" : "📄 小A本原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
   const app = el("main", { class: "app ws fs" });
@@ -94,7 +95,11 @@ function renderFillSheet(u) {
     el("div", { class: "ws-title__main" }, t(S.title)),
     el("div", { class: "ws-title__sub" }, t(S.sub)),
     el("div", { class: "ws-score" }, t("得分"), scoreBox)));
-  app.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
+  const body = el("div", {});
+  const gate = exam ? mockGate(body, u, `#/mathplay/sheet?u=${u.id}`) : null;
+  if (gate) app.appendChild(gate.el);
+  app.appendChild(body);
+  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
@@ -114,6 +119,7 @@ function renderFillSheet(u) {
     el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(sec.instr.replace(/□/g, "方框")), "aria-label": "念題目" }, "🔊"));
 
   S.sections.forEach(sec => {
+    const first = blanks.length;
     const secEl = el("section", { class: "ws-sec" }, sectionHead(sec));
     if (!sec.kind) {
       sec.items.forEach(it => secEl.appendChild(el("div", { class: "ws-q fs-fill" },
@@ -146,7 +152,8 @@ function renderFillSheet(u) {
     } else if (sec.kind === "match3") {
       secEl.appendChild(fsMatch3(sec, x => blanks.push(x), () => locked, update));
     }
-    app.appendChild(secEl);
+    blanks.slice(first).forEach(b => b.sec = sec.no);
+    body.appendChild(secEl);
   });
 
   const result = el("div", { class: "ws-result" });
@@ -156,19 +163,35 @@ function renderFillSheet(u) {
     if (left > 0 && !submit.dataset.confirm) { submit.dataset.confirm = "1"; submit.replaceChildren(t(`還有${left}${S.unitWord || "格"}沒寫，確定要交卷？`)); return; }
     locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove();
     let score = 0, got = 0;
-    blanks.forEach(b => { const ok = b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
+    blanks.forEach(b => { const ok = b.ok = b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) { dingCorrect(); confetti(); } else buzzWrong();
+    const rows = S.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return { no: sec.no, got: bs.reduce((n, b) => n + (b.ok ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
     result.replaceChildren(
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} ${S.unitWord || "格"}，錯的地方看綠色的正確答案 💪`)),
-      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}&r=${Date.now()}`) }, t("🔁 再寫一次")),
+      exam ? mockResult(u, score, gate.secs(), rows) : null,
+      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次（圖的順序會換）" : "🔁 再寫一次")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   } }, t("✅ 交卷"));
-  app.appendChild(el("div", { class: "ws-submit" }, submit, result));
+  body.appendChild(el("div", { class: "ws-submit" }, submit, result));
   update();
   return root;
+}
+
+// 模擬小考的卷子：題目一樣，圈圈看、填代號、三欄連連看的圖換位置（代號照新位置重排 ㄅ～ㄌ）
+function fsShuffled(S) {
+  return { ...S, sections: S.sections.map(sec => {
+    if (sec.kind === "circle") return { ...sec, qs: sec.qs.map(q => ({ ...q, items: shuffle([...q.items]) })) };
+    if (sec.kind === "codes") return { ...sec, pics: shuffle([...sec.pics]) };
+    if (sec.kind === "match3") {
+      const order = shuffle([0, 1, 2, 3]); // 中間第 i 格放原本第 order[i] 個形狀
+      const side = list => shuffle([...list]).map(([k, a]) => [k, order.indexOf(a)]);
+      return { ...sec, labels: order.map(i => sec.labels[i]), left: side(sec.left), right: side(sec.right) };
+    }
+    return sec;
+  }) };
 }
 
 // 連連看：上面一排（青蛙）點一下、下面一排點一下，就畫一條線
@@ -345,12 +368,14 @@ FILL_SHEETS.u5 = {
       { n: 3, prompt: "哪一個東西看起來和左邊的圖很像？", ref: FS10.giftCube, items: [["hexTube"], ["dice3D", 1], ["beachBall"]].map(([k, ok]) => ({ pic: FS10[k], correct: !!ok })) },
     ] },
     { no: "2", instr: "用下面這些東西可以描出什麼形狀？填入代號：每題5分，共20分", pts: 5, kind: "codes",
-      pics: [["ㄅ", "cd"], ["ㄆ", "envelope"], ["ㄇ", "triRuler"], ["ㄈ", "postcard"], ["ㄉ", "flowerTile"], ["ㄊ", "clock"], ["ㄋ", "nameCard"], ["ㄌ", "diceFace"]],
-      boxes: [["1. 正方形", "ㄉㄌ"], ["2. 圓形", "ㄅㄊ"], ["3. 長方形", "ㄆㄈㄋ"], ["4. 三角形", "ㄇ"]] },
+      // [東西, 是第幾個方框的形狀]；代號照位置 ㄅ～ㄌ（原卷：正方形ㄉㄌ、圓形ㄅㄊ、長方形ㄆㄈㄋ、三角形ㄇ）
+      pics: [["cd", 1], ["envelope", 2], ["triRuler", 3], ["postcard", 2], ["flowerTile", 0], ["clock", 1], ["nameCard", 2], ["diceFace", 0]],
+      boxes: ["1. 正方形", "2. 圓形", "3. 長方形", "4. 三角形"] },
     { no: "3", instr: "連連看，下面的東西像哪一種形狀？每題4分，共32分", pts: 4, kind: "match3",
       labels: ["三角形", "正方形", "圓形", "長方形"],
-      left: [["①", "cdBunny", 2], ["②", "triDots", 0], ["③", "postcard", 3], ["④", "squarePic", 1]],
-      right: [["⑤", "flowerTile", 1], ["⑥", "warning", 0], ["⑦", "puppetBook", 3], ["⑧", "coin10", 2]] },
+      // [東西, 連到中間第幾個]；左邊①～④、右邊⑤～⑧
+      left: [["cdBunny", 2], ["triDots", 0], ["postcard", 3], ["squarePic", 1]],
+      right: [["flowerTile", 1], ["warning", 0], ["puppetBook", 3], ["coin10", 2]] },
     { no: "4", instr: "圈圈看：每題4分，共12分", pts: 4, kind: "circle", qs: [
       { n: 1, prompt: "哪些不是三角形？", shapes: true, items: fsShapes([
         [{ pts: [[29, 43], [56, 18], [56, 70]] }], [{ pts: [[83, 33], [106, 7], [128, 33]] }], [{ sq: 21, rot: 40 }, 1], [{ pts: [[63, 87], [92, 69], [92, 87]] }],
@@ -385,11 +410,14 @@ function fsCircleQ(q, pts, addBlank, isLocked, update) {
 }
 
 // 填代號：上面是東西（ㄅ～ㄌ），下面四個方框；點方框跳出代號鍵（可以選好幾個）
+const FS_CODES = [..."ㄅㄆㄇㄈㄉㄊㄋㄌ"];
 function fsCodesQ(sec, addBlank, isLocked, update) {
+  const codes = FS_CODES.slice(0, sec.pics.length);
   const wrap = el("div", { class: "ws-q fs-codes" },
-    el("div", { class: "fs-codes__pics" }, sec.pics.map(([code, k]) => el("div", { class: "fs-codes__pic" }, el("span", { class: "fs-codes__code" }, code), FS10[k]()))));
+    el("div", { class: "fs-codes__pics" }, sec.pics.map(([k], i) => el("div", { class: "fs-codes__pic" }, el("span", { class: "fs-codes__code" }, codes[i]), FS10[k]()))));
   const boxes = el("div", { class: "fs-codes__boxes" });
-  sec.boxes.forEach(([label, ans]) => {
+  sec.boxes.forEach((label, bi) => {
+    const ans = codes.filter((c, i) => sec.pics[i][1] === bi).join("");
     let val = [];
     const v = el("span", { class: "fs-codes__val" });
     const box = el("button", { class: "fs-codes__box", "aria-label": "填代號" }, v);
@@ -397,11 +425,10 @@ function fsCodesQ(sec, addBlank, isLocked, update) {
     box.addEventListener("click", () => {
       if (isLocked()) return;
       wrap.querySelectorAll(".fs-codes__box--on").forEach(x => x.classList.remove("fs-codes__box--on")); box.classList.add("fs-codes__box--on");
-      fsOpenCodePad(sec.pics.map(p => p[0]), val, picked => { val = picked; draw(); box.classList.remove("fs-codes__box--on"); update(); });
+      fsOpenCodePad(codes, val, picked => { val = picked; draw(); box.classList.remove("fs-codes__box--on"); update(); });
     });
     boxes.appendChild(el("div", { class: "fs-codes__cell" }, el("div", { class: "fs-codes__label" }, t(label)), box));
-    const order = sec.pics.map(p => p[0]);
-    addBlank({ get: () => val.length ? val.join("") : null, ans: [...ans].sort((a, b) => order.indexOf(a) - order.indexOf(b)).join(""), pts: sec.pts,
+    addBlank({ get: () => val.length ? val.join("") : null, ans, pts: sec.pts,
       show: ok => { box.classList.add(ok ? "fs-codes__box--ok" : "fs-codes__box--bad"); if (!ok) box.append(el("span", { class: "fs-codes__ans" }, [...ans].join(" "))); } });
   });
   wrap.appendChild(boxes);
@@ -439,7 +466,8 @@ function fsMatch3(sec, addBlank, isLocked, update) {
     }));
   };
   const link = (key, li) => { links[key] = li; pick = null; clearOn(); draw(); update(); };
-  const picBtn = (side, [no, k, ans], i) => {
+  const picBtn = (side, [k, ans], i) => {
+    const no = "①②③④⑤⑥⑦⑧"[side === "L" ? i : i + 4];
     const key = side + i, dot = el("span", { class: "fs-match__dot" });
     picDots[key] = dot;
     const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, el("span", { class: "fs-m3__no" }, no), FS10[k](), dot);

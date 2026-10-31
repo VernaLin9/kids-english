@@ -300,6 +300,18 @@ function renderParentKidDetail(name) {
   lastVisitRow.appendChild(document.createTextNode(fmtDate(p.lastVisit)));
   app.appendChild(lastVisitRow);
 
+  // 模擬小考紀錄（數學原題卷，最近 5 次）
+  const mockUnits = (MATH_DATA[profileGrade(p)]?.units || []).filter(u => (p.mockExams?.[mockKey(u)] || []).length);
+  if (mockUnits.length) {
+    app.appendChild(el("div", { class: "section__title" }, t("📝 模擬小考紀錄")));
+    app.appendChild(el("div", { class: "unit-bars" }, mockUnits.map(u => {
+      const L = p.mockExams[mockKey(u)];
+      return el("div", { class: "unit-bar" },
+        el("div", { class: "unit-bar__head" }, el("span", {}, `${u.emoji} `), rubyEl(u.title, u.titleBopo, "span"), el("span", { class: "unit-bar__count" }, ` ${mockSummary(mockKey(u), p)}`)),
+        el("div", { class: "mock-hist" }, L.slice(-5).reverse().map(r => el("span", { class: "mock-hist__item" }, `${mockDay(r.at)} ${r.score}分 (${mockTime(r.secs || 0)})`))));
+    })));
+  }
+
   // Unit progress
   app.appendChild(el("div", { class: "section__title" }, t("📊 單元進度")));
   const unitBox = el("div", { class: "unit-bars" });
