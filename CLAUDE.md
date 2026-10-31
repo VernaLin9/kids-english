@@ -45,6 +45,7 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 
 ## 語音
 - 國語 `speakZh()`、英文 `speak()` 都用 Google 翻譯的聲音 `speakGoogle(text, tl)`（`tl=zh-TW` 台灣國語、`tl=en` 英文），平板還沒解鎖播放時先記住、點一下畫面再用 Google 念（不換成平板聲音）；國語，長句照標點切段；連不到或播放失敗就退回平板內建的台灣聲音（`speakZhDevice`，只找 zh-TW、絕不退回大陸聲音），一分鐘後再試 Google。iPad 要使用者先點一下畫面才能自動播放（第一次 pointerdown 解鎖）。
+- 念之前 `zhSpeechText()`（modes-zh.js）整理文字，只影響聲音：多音字照畫面上的注音念（先找資料裡有標注音的詞句 `zhSayBopo`，找不到用 `autoReadings`），Google 會念錯的讀法在 `ZH_SAY_FIX` 換同音字（課本連接詞「和」ㄏㄢˋ→汗、數數 ㄕㄨˇ→鼠、長大 ㄓㄤˇ→掌…；新增多音字詞時要確認這裡有沒有）；符號 `zhSaySymbols`：注音和表情符號拿掉、＿＿ 變停頓、□ 念方框、(　) 念括弧、＋−＝＞＜ 念成字、①念「第1題」、11/2 念「11月2日」。國語句子裡夾的英文單字（兩個字母以上）`zhSplitLang` 分段改用英文聲音念。注音卡的子音用同音國字念（`ZH_SYMBOL_SAY`：ㄅ玻、ㄍ哥、ㄓ知…）。
 - 台灣和大陸讀法不同的字，念之前在 `ZH_TW_READING` 換成台灣讀法的同音字（例：垃圾→樂色，念 ㄌㄜˋ ㄙㄜˋ），畫面文字不變。新增課文遇到讀法不同的字就加進這個表。
 - 英文 `speak()`／國語 `speakZhDevice()` 用 `pickEnVoice`／`pickZhVoice` 挑聲音，排除 iPhone／iPad 的機器人聲音 `ODD_VOICES`（Albert、Bad News、Eddy、Flo、Grandma…，排在清單前面），英文優先 Samantha／Ava，國語優先美佳；iOS 用靜音音檔真的播一次才算解鎖（不然自動念題目會一下 Google 一下平板聲音）；`speakUtterance` 在 cancel 後等一下再念（iOS 會吃掉）。
 - 這個環境連不到 Google，測試時要 `page.route('**/translate.google.com/**', r => r.abort())`，console 會出現 ERR_FAILED（正常）。
