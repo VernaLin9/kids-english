@@ -254,7 +254,7 @@ function renderChoiceExam(cfg) {
   const header = renderHeader(cfg.title, { back: cfg.back });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
+  const app = el("main", { class: `app${cfg.practice ? "" : " is-exam"}` });
   root.appendChild(app);
   const body = el("div", {});
   const gate = cfg.practice ? null : mockGate(body, u, cfg.practiceHash, cfg.key);
@@ -292,9 +292,10 @@ function renderChoiceExam(cfg) {
       nextBtn.replaceChildren(t(i === qs.length - 1 ? "看成績 ▶" : "我懂了，下一題 ▶"));
     });
     body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
-      el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => q.say(), "aria-label": "念題目" }, "🔊")),
+      el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: `icon-btn icon-btn--accent m-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": q.listen ? "聽題目" : "念題目" }, "🔊")),
       grid, fb, el("div", { class: "bp-next__hint" }, t(q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
-    setTimeout(() => q.say(), 250);
+    if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }
+    setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
   };
   const finish = () => {
     progressLabel.textContent = "交卷了";
@@ -420,7 +421,7 @@ function mountMathQ(q, container, onDone, tp = q.topic, onWrong) {
     })));
   } else parts.push(el("div", { class: "m-hint" }, t("點一下你的答案")));
   container.replaceChildren(...parts, feedback);
-  setTimeout(() => speakZh(q.prompt), 250);
+  setTimeout(() => autoRead(() => speakZh(q.prompt)), 250);
 }
 
 // === 練習：一題一題畫 ===
@@ -627,7 +628,7 @@ function renderMathSheet(unitId, exam = false) {
   const header = renderHeader(exam ? "📝 模擬小考" : "📄 評量卷原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app ws" });
+  const app = el("main", { class: `app ws${exam ? " is-exam" : ""}` });
   root.appendChild(app);
 
   const scoreBox = el("span", { class: "ws-score__num" }, "");

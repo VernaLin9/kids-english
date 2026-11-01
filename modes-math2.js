@@ -387,7 +387,7 @@ function mountMath2Q(q, container, onDone, onWrong, exam = false) {
   };
   container.replaceChildren(card, stepWrap, feedback, helpBtn || "");
   showStep();
-  setTimeout(() => speakZh(q.text), 250);
+  setTimeout(() => { if (!exam) autoRead(() => speakZh(q.text)); }, 250);
 }
 
 // === 共用播放器 ===
@@ -454,7 +454,7 @@ function renderMath2Exam(u) {
   const header = renderHeader("📝 模擬小考", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app" });
+  const app = el("main", { class: "app is-exam" });
   root.appendChild(app);
   const body = el("div", {});
   const gate = mockGate(body, u, u.book ? `#/mathplay/book?u=${u.id}` : `#/mathplay/mix?u=${u.id}`);

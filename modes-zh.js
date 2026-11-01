@@ -576,7 +576,7 @@ function renderZhSentence(l) {
     app.replaceChildren(el("div", { class: "zh-sent__wrap" }, el("div", { class: "m-hint" }, t("照習作第68頁：先選在哪裡，再選做什麼")), line,
       el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.who.zh), "aria-label": "念" }, "🔊")), opts, feedback);
     ask();
-    setTimeout(() => speakZh(q.who.zh), 250);
+    setTimeout(() => autoRead(() => speakZh(q.who.zh)), 250);
   };
   render();
   return root;

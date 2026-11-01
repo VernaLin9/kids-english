@@ -375,7 +375,7 @@ function renderEnMock(setKey) {
         say: () => speakZh(info.zh || ""), options: opts(w), review: el("span", {}, `${info.emoji || ""} `, zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
     { no: "二", name: "聽音選英文", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const w = at(k + 10), info = WORDS[w] || {};
       return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, "🎧"), el("div", { class: "quiz-prompt__hint" }, t("按🔊聽，選出聽到的英文"))),
-        say: () => speakWord(w), options: opts(w), review: el("span", {}, "🎧 ", zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
+        listen: true, say: () => speakWord(w), options: opts(w), review: el("span", {}, "🎧 ", zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
   ];
   return renderChoiceExam({ title: `📝 英文模擬小考・${setLabel(setKey)}`, back: "#/", key: `en:${setKey}`, practiceHash: `#/practice/${encodeURIComponent(setKey)}`, retryHash: `#/play/mock?set=${encodeURIComponent(setKey)}`, sections });
 }

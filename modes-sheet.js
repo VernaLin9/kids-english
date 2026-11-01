@@ -88,7 +88,7 @@ function renderFillSheet(u, exam = false) {
   const header = renderHeader(exam ? "📝 模擬小考" : "📄 小A本原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
-  const app = el("main", { class: "app ws fs" });
+  const app = el("main", { class: `app ws fs${exam ? " is-exam" : ""}` });
   root.appendChild(app);
   const scoreBox = el("span", { class: "ws-score__num" }, "");
   app.appendChild(el("div", { class: "ws-title" },

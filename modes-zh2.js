@@ -217,7 +217,7 @@ function renderZh2Choice(l, mode, title, makeQs) {
     });
     app.replaceChildren(el("div", { class: "c-qcard" }, q.prompt, q.sub ? el("div", { class: "m-hint" }, t(q.sub)) : null,
       el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.say), "aria-label": "念" }, "🔊")), row, feedback);
-    setTimeout(() => speakZh(q.say), 250);
+    setTimeout(() => autoRead(() => speakZh(q.say)), 250);
   };
   render();
   return root;
