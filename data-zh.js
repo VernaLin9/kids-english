@@ -7,7 +7,7 @@ const ZH_DATA = {
   g1: {
     // 學校的考試（課後照顧行事曆 115-1：11/10 G1 注音符號總結性評量、11/16 注音符號闖關活動）→ 首頁倒數提醒
     exams: [
-      { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/bopo/exam", go: "模擬考 ›" },
+      { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/midterm", go: "去複習 ›" },
       { date: "2026-11-16", subject: "注音", label: "注音符號闖關活動", hash: "#/bopo", go: "去練習 ›" },
     ],
     lessons: [

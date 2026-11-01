@@ -2604,3 +2604,18 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .ex-en { font-size: calc(24px * var(--font-scale)); font-weight: 800; }
 .bp-missed__q { font-weight: 800; flex-basis: 100%; line-height: 1.8; }
 .mt-row { margin-bottom: 10px; }
+/* 📄 期中考複習卷 */
+.mp-q { display: grid; gap: 8px; justify-items: center; }
+.mp-q__no { font-weight: 900; color: var(--ink-soft); justify-self: start; }
+.mp-line { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 2px 6px; font-size: calc(26px * var(--font-scale)); line-height: 1.2; }
+.mp-line .zh-bopo { font-size: 1em; }
+.mp-blank { font-weight: 700; color: var(--ink-soft); }
+.mp-box { display: inline-block; width: 1.1em; height: 1.4em; border: 2px solid var(--ink); border-radius: 3px; background: #fff; }
+.mp-punct { font-weight: 800; }
+.mp-emoji { font-size: 64px; line-height: 1; }
+.mp-spell { display: grid; gap: 8px; justify-items: center; margin-top: 8px; }
+.mp-spell__done { min-height: 60px; }
+.mp-spell__ok { font-weight: 800; color: #1b9e6a; text-align: center; }
+.ex-fb__ans { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-weight: 800; margin-bottom: 6px; }
+.mt-paper { font-weight: 900; font-size: calc(18px * var(--font-scale)); margin-bottom: 6px; }
+.mt-paper__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

@@ -245,7 +245,9 @@ function mockResult(u, score, secs, rows, key = mockKey(u)) {
 }
 
 // 選擇題模擬考（國語生字、英文共用）：一題一題寫，選好按「下一題」才換（一定要作答、不能跳過），交卷才看分數
-// cfg: { title, back, key, practiceHash, retryHash, sections:[{ no, name, pts, qs:[{ prompt, say(), options:[{label, text, ok}], review, tip, rec(ok) }] }] }
+// cfg: { title, back, key, practiceHash, retryHash, practice?, sections:[{ no, name, pts, qs:[{ prompt, say(), options:[{label, text, ok}] | mount(pick), review, tip, rec(ok) }] }] }
+//   mount(pick)：自己畫作答區（例如點注音拼出來），作答好呼叫 pick({ text, ok })、改回沒答呼叫 pick(null)
+//   practice：練習版，不用按開始、不記模擬考分數；按下一題先對答案，錯了看答案和怎麼記再往下
 function renderChoiceExam(cfg) {
   const u = { id: cfg.key };
   const root = el("div", {});
@@ -255,8 +257,8 @@ function renderChoiceExam(cfg) {
   const app = el("main", { class: "app" });
   root.appendChild(app);
   const body = el("div", {});
-  const gate = mockGate(body, u, cfg.practiceHash, cfg.key);
-  app.append(gate.el, body);
+  const gate = cfg.practice ? null : mockGate(body, u, cfg.practiceHash, cfg.key);
+  app.append(...(gate ? [gate.el] : []), body);
   const qs = cfg.sections.flatMap(sec => sec.qs.map(q => ({ ...q, sec })));
   const picks = [];
   let i = 0;
@@ -264,17 +266,34 @@ function renderChoiceExam(cfg) {
     if (i >= qs.length) return finish();
     const q = qs[i];
     progressLabel.textContent = `第${i + 1}/${qs.length}題`;
-    let picked = null;
-    const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 ? "✅ 交卷" : "下一題 ▶"));
-    const grid = el("div", { class: "zh-opts ex-opts" }, q.options.map(o => {
+    let picked = null, checked = false;
+    const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 && !cfg.practice ? "✅ 交卷" : cfg.practice ? "✅ 對答案" : "下一題 ▶"));
+    const fb = el("div", {});
+    const grid = q.mount ? q.mount(o => { if (checked) return; picked = o; nextBtn.disabled = !o; }) : el("div", { class: "zh-opts ex-opts" }, q.options.map(o => {
       const b = el("button", { class: "zh-opt bp-opt ex-opt" }, o.label);
-      b.addEventListener("click", () => { picked = o; grid.querySelectorAll(".ex-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b)); nextBtn.disabled = false; });
+      b.addEventListener("click", () => { if (checked) return; picked = o; grid.querySelectorAll(".ex-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b)); nextBtn.disabled = false; });
       return b;
     }));
-    nextBtn.addEventListener("click", () => { if (!picked) return; picks.push(picked); q.rec?.(!!picked.ok); i++; ask(); window.scrollTo(0, 0); });
+    const go = () => { i++; ask(); window.scrollTo(0, 0); };
+    nextBtn.addEventListener("click", () => {
+      if (!picked) return;
+      if (checked) return go();
+      picks.push(picked); q.rec?.(!!picked.ok);
+      if (!cfg.practice) return go();
+      // 練習版：馬上對答案
+      checked = true;
+      const right = q.options ? q.options.find(o => o.ok).text : q.answerText;
+      if (picked.ok) { dingCorrect(); fb.replaceChildren(el("div", { class: "quiz-feedback quiz-feedback--correct pop" }, t("答對了！🎉"))); setTimeout(go, 900); nextBtn.disabled = true; return; }
+      buzzWrong();
+      fb.replaceChildren(el("div", { class: "guard-tip" }, el("div", { class: "guard-tip__head" }, t("📌 記一記")),
+        el("div", { class: "ex-fb__ans" }, t("你寫"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, picked.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, right)),
+        el("div", { class: "guard-tip__body" }, el("div", { class: "guard-tip__text" }, typeof q.tip === "string" ? t(q.tip) : q.tip),
+          el("button", { class: "l-say__btn", "aria-label": "念給我聽", onclick: e => { e.stopPropagation(); speakZh(typeof q.tip === "string" ? q.tip : q.tip.textContent); } }, "🔊"))));
+      nextBtn.replaceChildren(t(i === qs.length - 1 ? "看成績 ▶" : "我懂了，下一題 ▶"));
+    });
     body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
       el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => q.say(), "aria-label": "念題目" }, "🔊")),
-      grid, el("div", { class: "bp-next__hint" }, t("選好了再按下一題（一定要選一個）")), nextBtn);
+      grid, fb, el("div", { class: "bp-next__hint" }, t(q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
     setTimeout(() => q.say(), 250);
   };
   const finish = () => {
@@ -286,16 +305,16 @@ function renderChoiceExam(cfg) {
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
     body.replaceChildren(el("div", { class: "ws-result" },
       el("div", { class: "ws-result__big" }, `${score} 分`),
-      mockResult(u, score, gate.secs(), rows, cfg.key),
+      gate ? mockResult(u, score, gate.secs(), rows, cfg.key) : el("div", { class: "mock-result" }, el("div", { class: "mock-result__rows" }, rows.map(r => el("div", { class: `mock-result__row${r.got < r.max ? " mock-result__row--miss" : ""}` }, el("span", {}, t(`第${r.no}大題`)), el("b", { "data-nobopo": "" }, `${r.got}/${r.max}`))))),
       wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼記：`)),
         wrong.map(([q, p]) => el("div", { class: "bp-missed__row" }, el("div", { class: "bp-missed__q" }, typeof q.review === "string" ? t(q.review) : q.review),
-          el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options.find(o => o.ok).text)),
+          el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options ? q.options.find(o => o.ok).text : q.answerText)),
           el("div", { class: "bp-missed__tip" }, "📌 ", typeof q.tip === "string" ? t(q.tip) : q.tip)))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
       el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(cfg.retryHash + (cfg.retryHash.includes("?") ? "&" : "?") + `r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(cfg.back) }, t("回上一頁"))));
     window.scrollTo(0, 0);
   };
-  gate.el.querySelector(".btn--accent").addEventListener("click", () => ask());
+  if (gate) gate.el.querySelector(".btn--accent").addEventListener("click", () => ask()); else ask();
   return root;
 }
 
@@ -304,7 +323,7 @@ function renderMidterm() {
   const root = el("div", {});
   root.appendChild(renderHeader("📝 期中考複習", { back: "#/" }));
   const app = el("main", { class: "app" });
-  const exam = (ZH?.exams || []).find(x => x.hash === "#/midterm");
+  const exam = (ZH?.exams || []).find(x => x.hash === "#/midterm" && x.date >= dayISO());
   if (exam) app.appendChild(el("div", { class: "m-hint" }, t(`${exam.label}：每一科都考考看，錯的看怎麼記`)));
   const row = (label, hash, key) => el("div", { class: "mt-row" },
     el("button", { class: "btn btn--full btn--xl", onclick: () => navigate(hash) }, t(label)),
@@ -313,6 +332,13 @@ function renderMidterm() {
   sec("📖 國語", (ZH?.lessons || []).filter(l => l.kind === "chars").map(l => row(`${l.title}・模擬小考`, `#/zhplay/exam?l=${l.id}`, `zh:${l.id}`))
     .concat((ZH?.lessons || []).some(l => l.kind !== "chars") ? [row("🔤 注音大會考", "#/bopo/exam", "zh:bopo")] : []));
   sec("➕ 數學", (MATH?.units || []).filter(u => u.kind === "calc" || (typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id]) || u.id === "u2").map(u => row(`${u.title}・模擬小考`, `#/mathplay/exam?u=${u.id}`, mockKey(u))));
+  const papers = typeof MID_PAPERS !== "undefined" ? Object.values(MID_PAPERS).filter(P => P.grade === profileGrade(getProfile())) : [];
+  if (papers.length) app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t("📄 11/1複習日老師的考卷")),
+    papers.map(P => el("div", { class: "mt-row" }, el("div", { class: "mt-paper" }, t(P.title)),
+      el("div", { class: "mt-paper__btns" },
+        el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/midpaper/${P.id}?mode=exam`) }, t("📝 模擬考")),
+        el("button", { class: "btn btn--xl", onclick: () => navigate(`#/midpaper/${P.id}`) }, t("📄 練習（馬上對答案）"))),
+      el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(`mid:${P.id}`)))))));
   const en = typeof nextExam === "function" ? nextExam() : null;
   sec("🔤 英文", en ? [row(`${en.title}・模擬小考`, `#/play/mock?set=${encodeURIComponent(en.setKey)}`, `en:${en.setKey}`)] : []);
   root.appendChild(app);

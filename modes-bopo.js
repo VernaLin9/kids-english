@@ -161,6 +161,7 @@ function renderBopo(sub) {
     el("div", { class: "m-hint" }, t("期中考會考全部37個注音：聲母21個、韻母16個，還有聲調和拼音")),
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/bopo/exam") }, t("📝 注音大會考（模擬考）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(key))),
+    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midterm") }, t("📄 11/1複習日老師的考卷")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/chart") }, t("📋 37個注音表（點了會念）"))));
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("🎯 一種一種練")),

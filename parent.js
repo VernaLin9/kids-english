@@ -77,6 +77,8 @@ function logPageName(h) {
     const n = ({ exam: "模擬小考", sheet: "原題卷", mix: "小考", book: "課本原題" })[seg[1]] || T?.name || seg[1];
     return `數學・${n}・${unitTitle(q.u)}`;
   }
+  if (seg[0] === "midpaper") return `期中考複習卷・${MID_PAPERS[seg[1]]?.title || seg[1]}`;
+  if (seg[0] === "midterm") return "期中考複習";
   if (seg[0] === "bopo") return `注音總複習・${seg[1] === "exam" ? "大會考" : BP_KINDS[seg[1]]?.name || ""}`;
   if (seg[0] === "tonedrill") return "國語・聲調放哪裡特訓";
   if (seg[0] === "play") return `英文・${({ quiz: "選擇題", listening: "聽力", spelling: "拼字", handwrite: "手寫", speak: "跟著念", match: "翻牌配對", flash: "單字卡", letters: "字母拼拼樂" })[seg[1]] || seg[1]}`;
@@ -117,7 +119,7 @@ function renderParentLog(name, daysParam) {
   });
   Object.entries(p.mockExams || {}).forEach(([key, list]) => list.filter(r => r.at >= since).forEach(r => {
     const [subj, id] = key.split(":");
-    const title = key === "zh:bopo" ? "注音大會考" : subj === "zh" ? `國語・${logPageName(`#/zhplay/exam?l=${id}`).split("・").pop()}` : subj === "en" ? `英文・${key.slice(3)}` : `${(typeof MATH_DATA !== "undefined" ? Object.values(MATH_DATA).flatMap(g => g.units || []).find(u => u.id === id)?.title : "") || id}`;
+    const title = key === "zh:bopo" ? "注音大會考" : subj === "mid" ? `期中考複習卷・${MID_PAPERS[id]?.title || id}` : subj === "zh" ? `國語・${logPageName(`#/zhplay/exam?l=${id}`).split("・").pop()}` : subj === "en" ? `英文・${key.slice(3)}` : `${(typeof MATH_DATA !== "undefined" ? Object.values(MATH_DATA).flatMap(g => g.units || []).find(u => u.id === id)?.title : "") || id}`;
     sessions.push({ kind: "mock", subj, start: r.at - (r.secs || 0) * 1000, end: r.at, title, score: r.score, secs: r.secs || 0 });
   }));
   sessions.sort((a, b) => b.start - a.start);
@@ -535,6 +537,7 @@ function route() {
   else if (path[0] === "tonedrill") view = renderToneDrill(query.l);
   else if (path[0] === "bopo") view = renderBopo(path[1]);
   else if (path[0] === "midterm") view = renderMidterm();
+  else if (path[0] === "midpaper") view = renderMidPaper(path[1], query.mode);
   else if (path[0] === "games") view = renderGames(query.s, query.c);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);
