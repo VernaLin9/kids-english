@@ -248,6 +248,8 @@ function mockResult(u, score, secs, rows, key = mockKey(u)) {
 // cfg: { title, back, key, practiceHash, retryHash, practice?, sections:[{ no, name, pts, qs:[{ prompt, say(), options:[{label, text, ok}] | mount(pick), review, tip, rec(ok) }] }] }
 //   mount(pick)：自己畫作答區（例如點注音拼出來），作答好呼叫 pick({ text, ok })、改回沒答呼叫 pick(null)
 //   practice：練習版，不用按開始、不記模擬考分數；按下一題先對答案，錯了看答案和怎麼記再往下
+//   review：錯題再練（交卷後「錯的再練一次」、期中卷錯題本），每題有「💡 先看提示」
+//   onFinish({ qs, picks })：交卷後呼叫（期中卷用來記錯題本）；題目可以有 id
 function renderChoiceExam(cfg) {
   const u = { id: cfg.key };
   const root = el("div", {});
@@ -259,7 +261,7 @@ function renderChoiceExam(cfg) {
   const body = el("div", {});
   const gate = cfg.practice ? null : mockGate(body, u, cfg.practiceHash, cfg.key);
   app.append(...(gate ? [gate.el] : []), body);
-  const qs = cfg.sections.flatMap(sec => sec.qs.map(q => ({ ...q, sec })));
+  const qs = cfg.sections.flatMap(sec => sec.qs.map(q => ({ ...q, sec, src: q })));
   const picks = [];
   let i = 0;
   const ask = () => {
@@ -269,6 +271,7 @@ function renderChoiceExam(cfg) {
     let picked = null, checked = false;
     const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 && !cfg.practice ? "✅ 交卷" : cfg.practice ? "✅ 對答案" : "下一題 ▶"));
     const fb = el("div", {});
+    const hintBtn = cfg.review && q.tip ? el("button", { class: "btn btn--ghost btn--full ex-hint", onclick: e => e.currentTarget.replaceWith(el("div", { class: "guard-tip" }, el("div", { class: "guard-tip__head" }, t("💡 提示")), el("div", { class: "guard-tip__text" }, typeof q.tip === "string" ? t(q.tip) : q.tip.cloneNode(true)))) }, t("💡 不會？先看提示")) : null;
     const grid = q.mount ? q.mount(o => { if (checked) return; picked = o; nextBtn.disabled = !o; }) : el("div", { class: "zh-opts ex-opts" }, q.options.map(o => {
       const b = el("button", { class: "zh-opt bp-opt ex-opt" }, o.label);
       b.addEventListener("click", () => { if (checked) return; picked = o; grid.querySelectorAll(".ex-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b)); nextBtn.disabled = false; });
@@ -293,7 +296,7 @@ function renderChoiceExam(cfg) {
     });
     body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
       el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: `icon-btn icon-btn--accent m-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": q.listen ? "聽題目" : "念題目" }, "🔊")),
-      grid, fb, el("div", { class: "bp-next__hint" }, t(q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
+      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
     if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }
     setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
   };
@@ -306,14 +309,24 @@ function renderChoiceExam(cfg) {
     qs.forEach((q, k) => { if (q.noScore) return; const r = rows.find(x => x.no === q.sec.no); if (picks[k].ok) { score += q.sec.pts; r.got += q.sec.pts; } else wrong.push([q, picks[k]]); });
     if (cfg.percent) { const max = rows.reduce((n, r) => n + r.max, 0); score = max ? Math.round(score * 100 / max) : 0; }
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
+    cfg.onFinish?.({ qs, picks });
+    // 錯的再練一次：只留錯的題目、練習版（馬上對答案）＋每題可以先看提示
+    const redo = () => {
+      const bad = new Set(wrong.map(([q]) => q.src));
+      const sections = cfg.sections.map(sec => ({ ...sec, qs: sec.qs.filter(q => bad.has(q)).map(q => q.options ? { ...q, options: shuffle([...q.options]) } : q) })).filter(sec => sec.qs.length);
+      document.getElementById("app").replaceChildren(renderChoiceExam({ ...cfg, title: "🔁 錯題再練", practice: true, review: true, percent: false, sections }));
+      window.scrollTo(0, 0);
+    };
+    const wrongList = wrong.length ? el("div", { class: "bp-missed ex-wrong" }, el("div", { class: "zh-missed__title" }, t(`❌ 錯了${wrong.length}題，錯在這裡：`)),
+      wrong.map(([q, p]) => el("div", { class: "bp-missed__row" }, el("div", { class: "bp-missed__q" }, typeof q.review === "string" ? t(q.review) : q.review),
+        el("span", { class: "bp-missed__ans" }, t("你寫"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options ? q.options.find(o => o.ok).text : q.answerText)),
+        el("div", { class: "bp-missed__tip" }, "📌 ", typeof q.tip === "string" ? t(q.tip) : q.tip)))) : null;
     body.replaceChildren(el("div", { class: "ws-result" },
       el("div", { class: "ws-result__big" }, `${score} 分`),
+      wrong.length ? el("button", { class: "btn btn--accent btn--full btn--xl", onclick: redo }, t(`🔁 錯的${wrong.length}題再練一次（有提示教你）`)) : el("div", { class: "ws-result__msg" }, t(cfg.review ? "錯的都會了！太棒了 🌟" : "全對！太厲害了 🌟")),
+      wrongList,
       gate ? mockResult(u, score, gate.secs(), rows, cfg.key) : el("div", { class: "mock-result" }, el("div", { class: "mock-result__rows" }, rows.map(r => el("div", { class: `mock-result__row${r.got < r.max ? " mock-result__row--miss" : ""}` }, el("span", {}, t(`第${r.no}大題`)), el("b", { "data-nobopo": "" }, `${r.got}/${r.max}`))))),
-      wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼記：`)),
-        wrong.map(([q, p]) => el("div", { class: "bp-missed__row" }, el("div", { class: "bp-missed__q" }, typeof q.review === "string" ? t(q.review) : q.review),
-          el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options ? q.options.find(o => o.ok).text : q.answerText)),
-          el("div", { class: "bp-missed__tip" }, "📌 ", typeof q.tip === "string" ? t(q.tip) : q.tip)))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
-      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(cfg.retryHash + (cfg.retryHash.includes("?") ? "&" : "?") + `r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
+      el("button", { class: `btn ${wrong.length ? "" : "btn--accent"} btn--full btn--xl`, onclick: () => navigate(cfg.retryHash + (cfg.retryHash.includes("?") ? "&" : "?") + `r=${Date.now()}`) }, t(cfg.review ? "🔁 整份再考一次" : "🔁 再考一次（題目會換）")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(cfg.back) }, t("回上一頁"))));
     window.scrollTo(0, 0);
   };
@@ -341,11 +354,20 @@ function renderMidterm() {
       el("div", { class: "mt-paper__btns" },
         el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/midpaper/${P.id}?mode=exam`) }, t("📝 模擬考")),
         el("button", { class: "btn btn--xl", onclick: () => navigate(`#/midpaper/${P.id}`) }, t("📄 練習（馬上對答案）"))),
+      mpBook(P.id).length ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=book`) }, t(`📒 錯題本：${mpBook(P.id).length}題要再練`)) : null,
       el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(`mid:${P.id}`)))))));
   const en = typeof nextExam === "function" ? nextExam() : null;
   sec("🔤 英文", en ? [row(`${en.title}・模擬小考`, `#/play/mock?set=${encodeURIComponent(en.setKey)}`, `en:${en.setKey}`)] : []);
   root.appendChild(app);
   return root;
+}
+
+// 原題卷交卷後：錯在哪裡（點一下跳到那一題）＋錯的觀念再練（這個單元的練習題）
+function sheetWrongNav(items, u) {
+  if (!items.length) return null;
+  return el("div", { class: "bp-missed ex-wrong" }, el("div", { class: "zh-missed__title" }, t("❌ 錯在這裡（點一下跳過去看正確答案）：")),
+    el("div", { class: "sw-chips" }, items.map(({ label, node }) => el("button", { class: "sw-chip", onclick: () => { node?.scrollIntoView({ behavior: "smooth", block: "center" }); node?.classList.add("sw-flash"); setTimeout(() => node?.classList.remove("sw-flash"), 1600); } }, t(label)))),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("🧠 錯的觀念再練一次（練習題，答錯會教）")));
 }
 
 // === 單元頁：選題型 / 小考 ===
@@ -731,6 +753,7 @@ function renderMathSheet(unitId, exam = false) {
     result.replaceChildren(
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} 題，錯的題目看一下綠色的正確答案 💪`)),
+      sheetWrongNav(graders.filter(g => wrong.includes(g.key)).map(g => ({ label: `第${g.key.replace("-", "大題第")}題`, node: g.card })), u),
       exam ? mockResult(u, score, gate.secs(), rows) : null,
       el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次" : "🔁 再寫一次")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));

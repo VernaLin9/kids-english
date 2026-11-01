@@ -152,7 +152,7 @@ function renderFillSheet(u, exam = false) {
     } else if (sec.kind === "match3") {
       secEl.appendChild(fsMatch3(sec, x => blanks.push(x), () => locked, update));
     }
-    blanks.slice(first).forEach(b => b.sec = sec.no);
+    blanks.slice(first).forEach(b => { b.sec = sec.no; b.secEl = secEl; });
     body.appendChild(secEl);
   });
 
@@ -178,6 +178,7 @@ function renderFillSheet(u, exam = false) {
     result.replaceChildren(
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} ${S.unitWord || "格"}，錯的地方看綠色的正確答案 💪`)),
+      sheetWrongNav(S.sections.map(sec => { const bad = blanks.filter(b => b.sec === sec.no && !b.ok); return bad.length ? { label: `第${sec.no}大題：錯${bad.length}${S.unitWord || "格"}`, node: bad.find(b => b.node)?.node || bad[0].secEl } : null; }).filter(Boolean), u),
       exam ? mockResult(u, score, gate.secs(), rows) : null,
       el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次（圖的順序會換）" : "🔁 再寫一次")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
