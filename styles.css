@@ -2619,3 +2619,23 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .ex-fb__ans { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-weight: 800; margin-bottom: 6px; }
 .mt-paper { font-weight: 900; font-size: calc(18px * var(--font-scale)); margin-bottom: 6px; }
 .mt-paper__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mp-num { display: grid; justify-items: center; gap: 6px; } .mp-num__shown { font-weight: 800; color: #3b6bff; }
+/* 二年級國語卷：一句話裡要寫的格子 */
+.mp-sent { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 2px 4px; font-size: calc(22px * var(--font-scale)); line-height: 1.5; font-weight: 700; }
+.mp-tgt { display: inline-flex; align-items: center; gap: 2px; border: 3px dashed #e0393e; border-radius: 8px; background: #fff3f3; padding: 2px 4px; }
+.mp-tgt__q { color: #e0393e; font-weight: 900; font-size: 1.1em; }
+.mp-tgt--char { font-size: 1.3em; }
+.mp-oth { opacity: 0.7; border-bottom: 2px solid var(--line); padding: 0 2px; }
+.mp-punct-line { line-height: 2.2; }
+.mp-pslot { min-width: 44px; min-height: 44px; border: 2px solid var(--ink); border-radius: 8px; background: #fff; font-size: 24px; font-weight: 900; color: #3b6bff; margin: 0 2px; }
+.mp-pslot--on { background: #fff3c4; border-color: #ffb020; }
+.mp-ppal { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 360px; }
+.mp-pkey { min-height: 52px; border-radius: 12px; border: 2px solid var(--primary-soft); background: #fff; font-size: 28px; font-weight: 900; }
+.mp-open { display: grid; gap: 8px; width: 100%; }
+.mp-open__ex { font-weight: 800; background: #f4f4f8; border-radius: 10px; padding: 8px; }
+.mp-open__ans { font-weight: 800; color: #1b9e6a; background: #eefaf4; border-radius: 10px; padding: 8px; }
+.mp-menu { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.mp-menu__item { display: grid; justify-items: center; gap: 2px; border: 2px solid var(--line); border-radius: 10px; padding: 6px 2px; background: #fff; font-weight: 800; font-size: calc(14px * var(--font-scale)); }
+.mp-menu__e { font-size: 28px; }
+.mp-ruler, .mp-cups { width: 100%; max-width: 340px; height: auto; }
+.mp-mtext { text-align: left; }

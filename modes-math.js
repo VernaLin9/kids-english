@@ -279,7 +279,7 @@ function renderChoiceExam(cfg) {
       if (!picked) return;
       if (checked) return go();
       picks.push(picked); q.rec?.(!!picked.ok);
-      if (!cfg.practice) return go();
+      if (!cfg.practice || q.noScore) return go();
       // 練習版：馬上對答案
       checked = true;
       const right = q.options ? q.options.find(o => o.ok).text : q.answerText;
@@ -298,10 +298,12 @@ function renderChoiceExam(cfg) {
   };
   const finish = () => {
     progressLabel.textContent = "交卷了";
-    const rows = cfg.sections.map(sec => ({ no: sec.no, got: 0, max: sec.qs.length * sec.pts }));
+    // noScore（照樣寫短語、造句這種沒有標準答案的）不計分；percent：原卷沒寫配分，照答對幾題換成 100 分
+    const rows = cfg.sections.map(sec => ({ no: sec.no, got: 0, max: sec.qs.filter(q => !q.noScore).length * sec.pts })).filter(r => r.max > 0);
     let score = 0;
     const wrong = [];
-    qs.forEach((q, k) => { const r = rows.find(x => x.no === q.sec.no); if (picks[k].ok) { score += q.sec.pts; r.got += q.sec.pts; } else wrong.push([q, picks[k]]); });
+    qs.forEach((q, k) => { if (q.noScore) return; const r = rows.find(x => x.no === q.sec.no); if (picks[k].ok) { score += q.sec.pts; r.got += q.sec.pts; } else wrong.push([q, picks[k]]); });
+    if (cfg.percent) { const max = rows.reduce((n, r) => n + r.max, 0); score = max ? Math.round(score * 100 / max) : 0; }
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
     body.replaceChildren(el("div", { class: "ws-result" },
       el("div", { class: "ws-result__big" }, `${score} 分`),

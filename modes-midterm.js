@@ -118,5 +118,152 @@ function renderMidPaper(id, mode) {
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
   const exam = mode === "exam";
   return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
-    practice: !exam, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : ""}`, sections: mpQuestions(P) });
+    practice: !exam, percent: !!P.g2, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : ""}`, sections: P.math ? mpMathQuestions(P) : P.g2 ? mpG2Questions(P) : mpQuestions(P) });
+}
+
+// === 二年級用的作答方式 ===
+// 寫國字 → 選國字：用 CHAR_BOPO 找同音字（同注音不同聲調也算），考的就是同音字別寫錯
+let mpBopoIndex = null;
+function mpHomophones(ch, n = 3, avoid = []) {
+  if (!mpBopoIndex) { mpBopoIndex = {}; Object.entries(CHAR_BOPO).forEach(([c, b]) => { const k = b.replace(/[ˊˇˋ˙]/g, ""); (mpBopoIndex[k] = mpBopoIndex[k] || []).push(c); }); }
+  const b = CHAR_BOPO[ch] || "";
+  const same = (mpBopoIndex[b.replace(/[ˊˇˋ˙]/g, "")] || []).filter(c => c !== ch && !avoid.includes(c));
+  return shuffle(same).slice(0, n);
+}
+// 一個詞（可能好幾個字）的錯誤選項：把其中一個字換成同音字；extra 是卷子／老師的形近字，優先用
+function mpWordDistractors(word, extra = []) {
+  const out = new Set(extra.filter(x => x !== word));
+  [...word].forEach((ch, i) => mpHomophones(ch, 3).forEach(h => out.add(word.slice(0, i) + h + word.slice(i + 1))));
+  return shuffle([...out]).slice(0, 3);
+}
+// 數字作答（數學）：數字鍵盤，按 ✓ 才算作答；可以再改
+function mpNumInput(ans, unit, pick) {
+  const shown = el("div", { class: "mp-num__shown" }, t("還沒作答"));
+  const pad = numPad((v, reset) => { shown.replaceChildren(t(`你寫：${v}${unit || ""}（要改就重新按數字）`)); pick({ text: `${v}${unit || ""}`, ok: v === ans }); reset(); });
+  return el("div", { class: "mp-num" }, unit ? el("div", { class: "b2-unit" }, t(`答：□ ${unit}`)) : null, pad, shown);
+}
+
+// === 二年級國語卷（資料在 data-midterm.js 的 MID_G2_ZH）===
+// segs：['c', 文字, 注音]＝一般字（注音照卷子，沒有就自動注音）、['t', 顯示]＝這一題要寫的格子、['b', 顯示]＝別題的空格（只給注音或國字，不洩答案）
+const mpIsBopo = s => /[ㄅ-ㄩ]/.test(s);
+function mpSegsEl(segs, kind) {
+  return el("div", { class: "mp-sent" }, segs.map(([k, s, b]) => {
+    if (k === "c") return b ? rubyEl(s, b, "span") : t(s);
+    if (k === "t") return kind === "bopow" ? el("span", { class: "mp-tgt mp-tgt--char", "data-nobopo": "1" }, s, el("span", { class: "mp-tgt__q" }, "？"))
+      : el("span", { class: "mp-tgt" }, el("span", { class: "mp-tgt__q" }, "？"), bopoWordEl(s));
+    return mpIsBopo(s) ? el("span", { class: "mp-oth" }, bopoWordEl(s)) : el("span", { class: "mp-oth", "data-nobopo": "1" }, s);
+  }));
+}
+// 標點符號：點空格，再點符號
+const MP_PUNCT = ["，", "。", "？", "！", "：", "「", "」", "、"];
+function mpPunct(text, ans, pick) {
+  const parts = text.split("(＿)"), val = ans.map(() => null);
+  let cur = 0;
+  const line = el("div", { class: "mp-sent mp-punct-line" });
+  const draw = () => {
+    line.replaceChildren(...parts.flatMap((p, i) => [t(p), i < ans.length ? el("button", { class: `mp-pslot ${i === cur ? "mp-pslot--on" : ""}`, "data-nobopo": "1", onclick: () => { cur = i; draw(); } }, val[i] || "　") : null]).filter(Boolean));
+    pick(val.every(Boolean) ? { text: val.join(" "), ok: val.every((v, i) => v === ans[i]) } : null);
+  };
+  const pal = el("div", { class: "mp-ppal" }, MP_PUNCT.map(p => el("button", { class: "mp-pkey", "data-nobopo": "1", onclick: () => { val[cur] = p; cur = Math.min(cur + 1, ans.length - 1); draw(); } }, p)));
+  draw();
+  return el("div", { class: "mp-punct" }, line, el("div", { class: "m-hint" }, t("點空格，再點要填的標點符號")), pal);
+}
+// 照樣寫短語、造句：沒有標準答案 → 想一想、說說看，再看老師的參考答案（不計分）
+function mpOpen(q, pick) {
+  const box = el("div", { class: "mp-open" });
+  box.append(q.ex ? el("div", { class: "mp-open__ex" }, t(`範例：${q.ex}`)) : null,
+    el("div", { class: "m-hint" }, t("先想一想、說說看，再按下面看老師的參考答案（這題不計分）")),
+    el("button", { class: "btn btn--ghost btn--full", onclick: e => { e.currentTarget.replaceWith(el("div", { class: "mp-open__ans" }, t(`參考答案：${q.sample}`))); pick({ text: "看過了", ok: true }); } }, t("💡 想好了，看參考答案")));
+  return box;
+}
+function mpG2Questions(P) {
+  const pool = P.sections.flatMap(s => s.qs).filter(q => q.k === "zhw").map(q => q.ans);
+  return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: 1, qs: sec.qs.map((q, k) => {
+    const no = el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n || k + 1}`));
+    if (q.k === "zhw") {
+      const opts = [q.ans, ...mpWordDistractors(q.ans, shuffle(pool.filter(a => a.length === q.ans.length && a !== q.ans)).slice(0, 2))];
+      while (opts.length < 4) { const x = shuffle(pool.filter(a => a.length === q.ans.length && !opts.includes(a)))[0]; if (!x) break; opts.push(x); }
+      const memo = q.ans.length === 1 && typeof ZH2_MNEMONIC !== "undefined" && ZH2_MNEMONIC[q.ans] ? `。${ZH2_MNEMONIC[q.ans]}` : "";
+      return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "zhw"), el("div", { class: "m-hint" }, t("看注音，選出「？」要寫的國字"))),
+        say: () => speakZh(q.full), review: mpSegsEl(q.segs, "zhw"), tip: `${q.full}（「${q.ans}」）${memo}`,
+        options: shuffle(opts).map(o => ({ label: el("span", { class: "c-opt__zh", "data-nobopo": "1" }, o), text: o, ok: o === q.ans })), rec: ok => recordZh(`期中卷:${q.ans}`, ok) };
+    }
+    if (q.k === "bopow") {
+      const ch = q.segs.find(s => s[0] === "t")[1];
+      return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "bopow"), el("div", { class: "m-hint" }, t("看國字，把「？」的注音拼出來"))),
+        say: () => speakZh("看國字，把它的注音拼出來"), review: mpSegsEl(q.segs, "bopow"), tip: `「${ch}」念「${q.ans}」，${q.full}`,
+        mount: pick => mpSpell(q.ans, a => pick(a == null ? null : { text: a, ok: mpNorm(a) === mpNorm(q.ans) })), answerText: q.ans, rec: ok => recordZh(`期中卷:${ch}`, ok) };
+    }
+    if (q.k === "punct") return { prompt: el("div", { class: "mp-q" }, no, el("div", { class: "m-hint" }, t("填入標點符號"))), say: () => speakZh(q.text),
+      review: t(q.text), tip: `答案：${q.ans.join(" ")}。說話的話用「」，問句用？，驚訝或高興用！，句子說完用。`,
+      mount: pick => mpPunct(q.text, q.ans, pick), answerText: q.ans.join(" "), rec: ok => recordZh(`期中卷:標點${sec.no}${q.n}`, ok) };
+    if (q.k === "open") return { noScore: true, prompt: el("div", { class: "mp-q" }, no, el("div", { class: "mp-sent" }, t(q.text))), say: () => speakZh(`${q.text}。${q.ex || ""}`),
+      review: t(q.text), tip: `參考答案：${q.sample}`, mount: pick => mpOpen(q, pick), answerText: q.sample };
+    return { prompt: el("div", { class: "mp-q" }, no, el("div", { class: "mp-sent" }, t(q.text))), say: () => speakZh(q.text), review: t(q.text),
+      tip: `答案是「${q.opts[q.ans]}」。`, options: q.opts.map((o, i) => ({ label: t(o), text: o, ok: i === q.ans })), rec: ok => recordZh(`期中卷:${q.text.slice(0, 12)}`, ok) };
+  }) }));
+}
+Object.entries(MID_G2_ZH).forEach(([id, P]) => { MID_PAPERS[id] = { ...P, id, grade: "g2", g2: true }; });
+
+// === 二年級數學：課照數學期中複習卷(二)（tools/midterm/m2.json，答案照老師紅字）===
+// 原卷前兩題沒有大題標題，這裡叫「早餐店」「驗算」；寫算式的題目在網站上只填最後答案（數字鍵盤）
+const MP_MENU = () => el("div", { class: "mp-menu" }, [["🥛", "豆漿", 20], ["🍼", "牛奶", 28], ["🥪", "三明治", 35], ["🍔", "漢堡", 60]].map(([e, n, p]) => el("div", { class: "mp-menu__item" }, el("span", { class: "mp-menu__e" }, e), t(n), el("b", { "data-nobopo": "1" }, `${p}元`))));
+const MP_VEG = () => el("div", { class: "mp-menu" }, [["🥬", "高麗菜", "95元"], ["🥦", "花椰菜", "●元"], ["🥒", "絲瓜", "●元"], ["🌽", "玉米", "18元"]].map(([e, n, p]) => el("div", { class: "mp-menu__item" }, el("span", { class: "mp-menu__e" }, e), t(n), el("b", { "data-nobopo": "1" }, p))));
+function MP_RULER() {
+  const g = svg("svg", { viewBox: "0 0 340 90", class: "mp-ruler" });
+  g.appendChild(svg("rect", { x: 10, y: 20, width: 320, height: 40, fill: "#fff6d6", stroke: "#3b3a4a", "stroke-width": 2 }));
+  for (let i = 0; i <= 15; i++) { const x = 20 + i * 20; g.appendChild(svg("line", { x1: x, y1: 20, x2: x, y2: 38, stroke: "#3b3a4a", "stroke-width": 2 })); g.appendChild(svg("text", { x, y: 54, "text-anchor": "middle", "font-size": 12, fill: "#3b3a4a" }, document.createTextNode(String(i)))); }
+  g.appendChild(svg("line", { x1: 80, y1: 12, x2: 160, y2: 12, stroke: "#e0393e", "stroke-width": 4 }));
+  [80, 160].forEach(x => g.appendChild(svg("line", { x1: x, y1: 6, x2: x, y2: 20, stroke: "#e0393e", "stroke-width": 3 })));
+  g.appendChild(svg("rect", { x: 300, y: 66, width: 20, height: 20, fill: "#fff", stroke: "#3b3a4a", "stroke-width": 2 }));
+  g.appendChild(svg("text", { x: 296, y: 81, "text-anchor": "end", "font-size": 12, fill: "#3b3a4a" }, document.createTextNode("1cm")));
+  return g;
+}
+function MP_CUPS() {
+  const g = svg("svg", { viewBox: "0 0 260 130", class: "mp-cups" });
+  [[40, 1, "甲"], [160, 0.5, "乙"]].forEach(([x, f, n]) => {
+    g.appendChild(svg("rect", { x, y: 20 + 80 * (1 - f), width: 60, height: 80 * f, fill: "#9ec9ff" }));
+    g.appendChild(svg("path", { d: `M ${x} 20 L ${x} 100 L ${x + 60} 100 L ${x + 60} 20`, fill: "none", stroke: "#3b3a4a", "stroke-width": 3 }));
+    g.appendChild(svg("text", { x: x + 30, y: 122, "text-anchor": "middle", "font-size": 16, fill: "#3b3a4a" }, document.createTextNode(n)));
+  });
+  return g;
+}
+const MID_G2_MATH = { id: "g2m2", grade: "g2", g2: true, math: true, title: "數學期中複習卷(二)", sections: [
+  { no: "一", name: "早餐店", qs: [
+    { n: "(1)", text: "超好吃早餐店的簡易菜單。(1)小明有80元，買了一瓶牛奶後，小明還剩下幾元？", vis: MP_MENU, num: 52, unit: "元", tip: "80−28＝52，還剩52元。" },
+    { n: "(2)", text: "(2)小莉有64元，買了一個三明治後，小莉還剩下幾元？", vis: MP_MENU, num: 29, unit: "元", tip: "64−35＝29，還剩29元。" },
+    { n: "(3)", text: "(3)早餐店打算開始賣蛋餅。老闆想把蛋餅的價格訂得比漢堡便宜35元，請問蛋餅賣多少元？", vis: MP_MENU, num: 25, unit: "元", tip: "漢堡60元，便宜35元：60−35＝25。" },
+  ] },
+  { no: "二", name: "驗算", qs: [
+    { n: "1", text: "用驗算檢查，算對了嗎？阿力：34−18＝16", opts: ["○ 對", "× 錯"], ans: 0, tip: "驗算：16＋18＝34，跟34一樣，所以算對了，畫○。" },
+    { n: "2", text: "用驗算檢查，算對了嗎？阿宏：65−47＝13", opts: ["○ 對", "× 錯"], ans: 1, tip: "驗算：13＋47＝60，不是65，所以算錯了，打×（正確是18）。" },
+  ] },
+  { no: "四", name: "應用題", qs: [
+    { n: "1", text: "參加露營的男生有89人，女生比男生多26人，參加露營的女生有幾人？", num: 115, unit: "人", tip: "女生比男生多，用加：89＋26＝115。" },
+    { n: "2", text: "柳丁園開放免費摘柳丁，媽媽摘了73個，妹妹摘了15個，媽媽比妹妹多摘幾個柳丁？", num: 58, unit: "個", tip: "比多少，用減：73−15＝58。" },
+    { n: "3", text: "哥哥有45元，弟弟有20元，爸爸給弟弟20元後，誰的錢比較多？", opts: ["哥哥", "弟弟", "一樣多"], ans: 0, tip: "弟弟變成20＋20＝40元，45＞40，哥哥比較多。" },
+    { n: "4(1)", text: "一個花椰菜比一個高麗菜便宜26元，一個花椰菜是幾元？", vis: MP_VEG, num: 69, unit: "元", tip: "高麗菜95元，便宜26元：95−26＝69。" },
+    { n: "4(2)", text: "一條絲瓜比一根玉米貴45元，一條絲瓜是幾元？", vis: MP_VEG, num: 63, unit: "元", tip: "玉米18元，貴45元：18＋45＝63。" },
+    { n: "5", text: "袋子裡原有28片餅乾，小悅再放進一些後，全部有34片，小悅放進幾片餅乾？", num: 6, unit: "片", tip: "全部減原來的：34−28＝6。個位4不夠減8，要向十位借1。" },
+    { n: "6(1)", text: "商店裡有牛奶和果汁共31罐，其中果汁有13罐，牛奶有幾罐？", num: 18, unit: "罐", tip: "全部減果汁：31−13＝18。" },
+    { n: "6(2)", text: "31−13＝18，要怎麼驗算？", opts: ["18＋13＝31", "31＋13＝44", "18−13＝5"], ans: 0, tip: "減法用加法驗算：答案加減掉的數，18＋13＝31。" },
+  ] },
+  { no: "五", name: "填入＞、＜或＝", qs: [
+    ["12＋9 ◯ 21", 2, "12＋9＝21，一樣大，用＝。"], ["269 ◯ 266", 0, "百位、十位一樣，比個位：9比6大，用＞。"], ["104 ◯ 207", 1, "比百位：1比2小，用＜。"],
+    ["16＋18 ◯ 24", 0, "16＋18＝34，34比24大，用＞。"], ["14＋15 ◯ 39−10", 2, "14＋15＝29，39−10＝29，一樣大，用＝。"],
+  ].map(([text, ans, tip], k) => ({ n: String(k + 1), text, opts: ["＞", "＜", "＝"], ans, tip })) },
+  { no: "六", name: "選擇題", qs: [
+    { n: "1", text: "鉛筆的長度約多少公分？", opts: ["200公分", "20公分", "2公分"], ans: 1, tip: "一枝鉛筆大約20公分（差不多一個手掌再長一點）。" },
+    { n: "2", text: "一個□是1公分，從刻度3到刻度7的長度是幾公分？", vis: MP_RULER, opts: ["3公分", "4公分", "5公分"], ans: 1, tip: "7−3＝4，從3數到7有4格，是4公分。" },
+    { n: "3", text: "下面哪個容器可以再裝水？", vis: MP_CUPS, opts: ["甲", "乙", "都可以"], ans: 1, tip: "甲已經裝滿了；乙只裝一半，還可以再裝。" },
+  ] },
+] };
+MID_PAPERS.g2m2 = MID_G2_MATH;
+function mpMathQuestions(P) {
+  return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: 1, qs: sec.qs.map(q => {
+    const prompt = el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.vis ? q.vis() : null, el("div", { class: "b2-text mp-mtext" }, t(q.text)));
+    const base = { prompt, say: () => speakZh(q.text.replace(/◯/g, "，填大於、小於還是等於")), review: t(q.text), tip: q.tip, rec: ok => recordMath("midpaper", ok) };
+    if (q.num != null) return { ...base, mount: pick => mpNumInput(q.num, q.unit, pick), answerText: `${q.num}${q.unit || ""}` };
+    return { ...base, options: q.opts.map((o, i) => ({ label: /[一-鿿]/.test(o) ? t(o) : el("span", { class: "ex-en", "data-nobopo": "1" }, o), text: o, ok: i === q.ans })) };
+  }) }));
 }
