@@ -2603,3 +2603,4 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .ex-q { margin-bottom: 10px; }
 .ex-en { font-size: calc(24px * var(--font-scale)); font-weight: 800; }
 .bp-missed__q { font-weight: 800; flex-basis: 100%; line-height: 1.8; }
+.mt-row { margin-bottom: 10px; }
