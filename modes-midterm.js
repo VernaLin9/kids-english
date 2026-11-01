@@ -103,7 +103,7 @@ function mpQuestions(P) {
       const review = el("div", {}, q.emoji ? el("span", { class: "mp-emoji" }, q.emoji) : null, mpBopoLine(q.prompt));
       return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.emoji ? el("div", { class: "mp-emoji" }, q.emoji) : null,
           mpBopoLine(q.emoji ? q.prompt : "（　） （　）"), el("div", { class: "m-hint" }, t(q.emoji ? "看圖，把注音拼出來" : "按🔊聽，把聽到的詞拼出來"))),
-        say: () => speakZh(q.emoji ? `這是${q.zh}` : q.zh), review, tip: `答案是「${q.bopo}」。一個字一個字慢慢念，先聽第一個聲音，再聽聲調。`,
+        listen: !q.emoji, say: () => speakZh(q.emoji ? `這是${q.zh}` : q.zh), review, tip: `答案是「${q.bopo}」。一個字一個字慢慢念，先聽第一個聲音，再聽聲調。`,
         mount: pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })),
         answerText: q.bopo, rec: ok => recordZh(`期中卷:${q.zh}`, ok) };
     }

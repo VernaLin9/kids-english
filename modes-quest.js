@@ -127,8 +127,8 @@ function mountChoiceCard(item, items, subject, container, onDone, onWrong) {
     return b;
   }));
   container.replaceChildren(el("div", { class: "qz-prompt" }, el("div", { class: "qz-prompt__q" }, q.prompt),
-    el("button", { class: "icon-btn icon-btn--accent qz-speak", onclick: () => q.say(), "aria-label": "念題目" }, "🔊")), opts, feedback, teach);
-  setTimeout(() => q.say(), 250);
+    el("button", { class: `icon-btn icon-btn--accent qz-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": "念題目" }, "🔊")), opts, feedback, teach);
+  setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
 }
 
 function questProfile() {

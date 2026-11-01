@@ -319,6 +319,13 @@ function renderParentDashboard() {
     el("div", { class: "add-kid" }, nameInput, el("div", { class: "kid-card__label" }, "年級"), pickerWrap,
       el("button", { class: "btn btn--accent btn--full", style: "margin-top: 10px;", onclick: addKid }, "新增"))));
 
+  // 📖 題目朗讀（小孩會一直按🔊聽題目、不看注音自己讀）
+  const readOpts = [["wait", "先自己讀10秒才能按🔊（建議）"], ["off", "不能朗讀題目"], ["free", "不限制（題目會自動念）"]];
+  app.appendChild(el("div", { class: "section" },
+    el("div", { class: "section__title" }, "📖 題目朗讀"),
+    el("div", { class: "log-legend" }, "考試（模擬考）一律不能朗讀題目；聽寫、聽力這種本來就要用聽的題目不受影響。答錯一次後就可以按🔊。"),
+    el("div", { class: "read-opts" }, readOpts.map(([v, label]) => el("button", { class: `btn ${(STORE.settings.readAloud || "wait") === v ? "btn--accent" : "btn--ghost"}`, onclick: () => { STORE.settings.readAloud = v; saveStore(); route(); } }, label)))));
+
   // Settings
   app.appendChild(el("div", { class: "section" },
     el("div", { class: "section__title" }, "⚙️ 設定"),

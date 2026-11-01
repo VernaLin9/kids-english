@@ -2639,3 +2639,8 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .mp-menu__e { font-size: 28px; }
 .mp-ruler, .mp-cups { width: 100%; max-width: 340px; height: auto; }
 .mp-mtext { text-align: left; }
+/* 📖 題目朗讀：還不能按時變淡並顯示倒數；考試時藏起來 */
+.m-speak--wait, .qz-speak.m-speak--wait { opacity: 0.4; position: relative; }
+.m-speak--wait::after { content: attr(data-left); position: absolute; right: -4px; top: -4px; background: #ffb020; color: #fff; border-radius: 10px; font-size: 12px; font-weight: 900; min-width: 18px; height: 18px; line-height: 18px; text-align: center; }
+.m-speak--off { display: none !important; }
+.read-opts { display: grid; gap: 8px; }

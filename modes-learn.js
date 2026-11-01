@@ -142,7 +142,7 @@ function learnQuestion(item, focus, subject) {
     const w = item.w;
     const variants = bopoVariants(w.bopo).slice(0, 3);
     return { item, key: w.zh, subject, prompt: el("span", { class: "g-prompt__inner" }, el("span", { class: "g-prompt__emoji" }, w.emoji), el("span", { class: "g-prompt__zhword", "data-nobopo": "1" }, w.zh)),
-      say: () => speakZh(w.zh), sayAnswer: () => speakZh(w.zh),
+      listen: true, say: () => speakZh(w.zh), sayAnswer: () => speakZh(w.zh), // 一年級看不懂國字，這題本來就要用聽的
       options: shuffle([w.bopo, ...variants]).map(b => ({ node: bopoWordEl(b, { class: "bopo-word--sm" }), ok: b === w.bopo })) };
   }
   const c = item.c;

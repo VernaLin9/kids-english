@@ -102,3 +102,40 @@ new MutationObserver(muts => {
     if (hit && !hit.closest(GUARD_SKIP)) { guard.shownAt = Date.now(); guard.wrongs = 0; guard.lockUntil = 0; guardClearTip(); return; }
   }
 }).observe(document.documentElement, { childList: true, subtree: true });
+
+// 📖 題目朗讀規則（家長：小孩會一直按🔊聽題目，就不看注音自己讀）
+// 家長模式設定 STORE.settings.readAloud：wait＝先自己讀 10 秒才能按🔊（預設）、off＝不能朗讀、free＝不限制（題目也會自動念）
+// 考試（.is-exam：模擬考、期中考複習卷模擬考版）一律不能朗讀題目；本來就要用聽的題目（聽寫、聽力，按鈕有 .m-speak--listen）不限制
+// 題目朗讀鈕＝.m-speak、.qz-speak；答錯一次後可以馬上按
+const READ_WAIT = 10000;
+const readMode = () => (typeof STORE !== "undefined" && STORE.settings.readAloud) || "wait";
+const READ_BTN = ".m-speak:not(.m-speak--listen), .qz-speak:not(.m-speak--listen)";
+// 題目出來時要不要自動念：只有「不限制」才自動念（考試不念）
+function autoRead(fn) { if (readMode() === "free" && !document.querySelector("#app .is-exam")) fn(); }
+function readBlocked(btn) {
+  if (btn.closest(".is-exam")) return "考試要自己看注音讀題目喔";
+  const m = readMode();
+  if (m === "off") return "題目要自己看注音讀喔（家長設定）";
+  if (m === "wait" && guard.wrongs === 0) { const left = Math.ceil((READ_WAIT - (Date.now() - guard.shownAt)) / 1000); if (left > 0) return `先自己看注音讀一讀，${left}秒後才能按🔊`; }
+  return null;
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest?.(READ_BTN);
+  if (!btn) return;
+  const why = readBlocked(btn);
+  if (!why) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  btn.parentElement?.querySelector(".guard-toast")?.remove();
+  btn.after(el("div", { class: "guard-toast" }, t(why)));
+  setTimeout(() => btn.parentElement?.querySelector(".guard-toast")?.remove(), 1800);
+}, true);
+// 按鈕上顯示倒數（還不能按時變淡、考試時藏起來）
+setInterval(() => {
+  document.querySelectorAll(READ_BTN).forEach(btn => {
+    const exam = !!btn.closest(".is-exam") || readMode() === "off";
+    btn.classList.toggle("m-speak--off", exam);
+    const left = !exam && readMode() === "wait" && guard.wrongs === 0 ? Math.ceil((READ_WAIT - (Date.now() - guard.shownAt)) / 1000) : 0;
+    btn.classList.toggle("m-speak--wait", left > 0);
+    if (left > 0) btn.dataset.left = left; else delete btn.dataset.left;
+  });
+}, 500);

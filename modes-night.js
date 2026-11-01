@@ -141,8 +141,8 @@ function renderNightBooth(id, subject, c) {
       });
     });
     area.replaceChildren(el("div", { class: "qz-prompt" }, el("div", { class: "qz-prompt__q" }, q.prompt),
-      el("button", { class: "icon-btn icon-btn--accent qz-speak", onclick: () => q.say(), "aria-label": "念題目" }, "🔊")), stage.el, feedback, teach);
-    setTimeout(() => q.say(), 250);
+      el("button", { class: `icon-btn icon-btn--accent qz-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": "念題目" }, "🔊")), stage.el, feedback, teach);
+    setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
   };
   const end = () => {
     sh.progress.textContent = "";
