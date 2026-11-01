@@ -5,6 +5,11 @@
 
 const ZH_DATA = {
   g1: {
+    // 學校的考試（課後照顧行事曆 115-1：11/10 G1 注音符號總結性評量、11/16 注音符號闖關活動）→ 首頁倒數提醒
+    exams: [
+      { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/bopo/exam", go: "模擬考 ›" },
+      { date: "2026-11-16", subject: "注音", label: "注音符號闖關活動", hash: "#/bopo", go: "去練習 ›" },
+    ],
     lessons: [
       {
         id: "L6", exam: { date: "2026-10-16", label: "圈詞聽寫", mode: "spell" },
@@ -139,6 +144,10 @@ const ZH_DATA = {
   // 二年級上學期 第六課〈從自己開始〉（課本 p.48-55；p.52「我會寫的字」18 個生字，考部首、筆畫）
   // chars：{ zh, bopo, radical 部首, extra 部首外筆畫, strokes 總筆畫, word 例詞, confuse 長得像的字（選國字用）}
   g2: {
+    // 課後照顧行事曆 115-1：11/4(三)～11/5(四) G2-G6 期中評量
+    exams: [
+      { date: "2026-11-04", subject: "國語、數學、英文", label: "期中評量（11/4～11/5）", hash: "#/midterm", go: "去複習 ›" },
+    ],
     lessons: [
       {
         id: "L6", kind: "chars", exam: { date: "2026-10-22", label: "第六課 生字（部首、筆畫）", mode: "lesson" },

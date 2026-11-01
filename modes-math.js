@@ -299,6 +299,26 @@ function renderChoiceExam(cfg) {
   return root;
 }
 
+// === 📝 期中考複習（#/midterm）：把各科的模擬考集中在一頁，首頁的期中考提醒卡會開這裡 ===
+function renderMidterm() {
+  const root = el("div", {});
+  root.appendChild(renderHeader("📝 期中考複習", { back: "#/" }));
+  const app = el("main", { class: "app" });
+  const exam = (ZH?.exams || []).find(x => x.hash === "#/midterm");
+  if (exam) app.appendChild(el("div", { class: "m-hint" }, t(`${exam.label}：每一科都考考看，錯的看怎麼記`)));
+  const row = (label, hash, key) => el("div", { class: "mt-row" },
+    el("button", { class: "btn btn--full btn--xl", onclick: () => navigate(hash) }, t(label)),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(key))));
+  const sec = (title, rows) => rows.length ? app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t(title)), rows)) : null;
+  sec("📖 國語", (ZH?.lessons || []).filter(l => l.kind === "chars").map(l => row(`${l.title}・模擬小考`, `#/zhplay/exam?l=${l.id}`, `zh:${l.id}`))
+    .concat((ZH?.lessons || []).some(l => l.kind !== "chars") ? [row("🔤 注音大會考", "#/bopo/exam", "zh:bopo")] : []));
+  sec("➕ 數學", (MATH?.units || []).filter(u => u.kind === "calc" || (typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id]) || u.id === "u2").map(u => row(`${u.title}・模擬小考`, `#/mathplay/exam?u=${u.id}`, mockKey(u))));
+  const en = typeof nextExam === "function" ? nextExam() : null;
+  sec("🔤 英文", en ? [row(`${en.title}・模擬小考`, `#/play/mock?set=${encodeURIComponent(en.setKey)}`, `en:${en.setKey}`)] : []);
+  root.appendChild(app);
+  return root;
+}
+
 // === 單元頁：選題型 / 小考 ===
 function renderMathUnit(id) {
   const u = mathUnit(id);

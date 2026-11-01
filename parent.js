@@ -534,6 +534,7 @@ function route() {
   else if (path[0] === "zhplay" && path[1]) view = renderZhPlay(path[1], query.l);
   else if (path[0] === "tonedrill") view = renderToneDrill(query.l);
   else if (path[0] === "bopo") view = renderBopo(path[1]);
+  else if (path[0] === "midterm") view = renderMidterm();
   else if (path[0] === "games") view = renderGames(query.s, query.c);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);
