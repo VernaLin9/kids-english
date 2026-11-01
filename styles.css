@@ -2644,3 +2644,7 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .m-speak--wait::after { content: attr(data-left); position: absolute; right: -4px; top: -4px; background: #ffb020; color: #fff; border-radius: 10px; font-size: 12px; font-weight: 900; min-width: 18px; height: 18px; line-height: 18px; text-align: center; }
 .m-speak--off { display: none !important; }
 .read-opts { display: grid; gap: 8px; }
+.mt-book { margin-top: 8px; border-color: #ffb020; background: #fffbea; } .ex-hint { margin-top: 8px; }
+.sw-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.sw-chip { min-height: 44px; padding: 4px 12px; border-radius: 22px; border: 2px solid #e0393e; background: #fff1f1; font-weight: 800; }
+.sw-flash { outline: 4px solid #e0393e !important; outline-offset: 3px; transition: outline 0.3s; }

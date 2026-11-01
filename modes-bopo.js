@@ -184,8 +184,9 @@ function renderBopoChart() {
   return root;
 }
 
-function renderBopoPractice(kind) {
-  const K = BP_KINDS[kind];
+// redo：交卷後「錯的再練一次」，只練這幾題
+function renderBopoPractice(kind, redo = null) {
+  const K = redo ? { emoji: "🔁", name: "錯題再練", make: () => redo } : BP_KINDS[kind];
   const root = el("div", {});
   const header = renderHeader(`${K.emoji} ${K.name}`, { back: "#/bopo" });
   root.appendChild(header);
@@ -198,7 +199,7 @@ function renderBopoPractice(kind) {
   const missed = [];
   const next = () => {
     if (i >= qs.length) {
-      app.replaceChildren(renderResultBlock(`第一次就答對 ${score} / ${total}`, score === total ? "🌟" : score >= total * 0.7 ? "🎉" : "💪", "再練一次", () => navigate(`#/bopo/${kind}?r=${Date.now()}`),
+      app.replaceChildren(renderResultBlock(`第一次就答對 ${score} / ${total}`, score === total ? "🌟" : score >= total * 0.7 ? "🎉" : "💪", redo ? "回注音總複習" : "再練一次", () => navigate(redo ? "#/bopo" : `#/bopo/${kind}?r=${Date.now()}`),
         missed.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t("要再記的：")),
           missed.map(q => el("div", { class: "bp-missed__row" }, el("span", { class: "bp-missed__emoji" }, q.w.emoji), rubyEl(q.w.zh, q.w.bopo, "span"),
             el("div", { class: "bp-missed__tip" }, t(bpTipOf(q)))))) : null));
@@ -267,7 +268,8 @@ function renderBopoExam() {
           el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad" }, q.kind === "tone" ? BP_TONE_NAME[a] : q.kind === "word" ? bopoWordEl(a, { class: "bopo-word--sm" }) : a),
             t("，答案"), el("b", { class: "bp-missed__ok" }, q.kind === "tone" ? BP_TONE_NAME[q.answer] : q.kind === "word" ? bopoWordEl(q.answer, { class: "bopo-word--sm" }) : q.answer)),
           el("div", { class: "bp-missed__tip" }, t(bpTipOf(q, a)))))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
-      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/bopo/exam?r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
+      wrong.length ? el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { document.getElementById("app").replaceChildren(renderBopoPractice(null, wrong.map(([q]) => ({ ...q, options: shuffle([...q.options]) })))); window.scrollTo(0, 0); } }, t(`🔁 錯的${wrong.length}題再練一次（有記一記教你）`)) : null,
+      el("button", { class: `btn ${wrong.length ? "" : "btn--accent"} btn--full btn--xl`, onclick: () => navigate(`#/bopo/exam?r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/bopo") }, t("回注音總複習"))));
     window.scrollTo(0, 0);
   };

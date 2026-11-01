@@ -113,12 +113,29 @@ function mpQuestions(P) {
   }) }));
 }
 
+// 📒 錯題本：profile.wrongBook["mid:<id>"]＝錯過的題目 id（大題-第幾題）；之後答對了就拿掉
+const mpBookKey = id => `mid:${id}`;
+const mpBook = (id, p = getProfile()) => p?.wrongBook?.[mpBookKey(id)] || [];
+function mpBookSave(id, qs, picks) {
+  const p = getProfile(); if (!p) return;
+  const set = new Set(mpBook(id, p));
+  qs.forEach((q, k) => { if (q.noScore || !q.id || !picks[k]) return; if (picks[k].ok) set.delete(q.id); else set.add(q.id); });
+  p.wrongBook = p.wrongBook || {}; p.wrongBook[mpBookKey(id)] = [...set]; saveStore();
+}
 function renderMidPaper(id, mode) {
   const P = MID_PAPERS[id];
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
-  const exam = mode === "exam";
-  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
-    practice: !exam, percent: !!P.g2, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : ""}`, sections: P.math ? mpMathQuestions(P) : P.g2 ? mpG2Questions(P) : mpQuestions(P) });
+  const exam = mode === "exam", book = mode === "book";
+  let sections = P.math ? mpMathQuestions(P) : P.g2 ? mpG2Questions(P) : mpQuestions(P);
+  sections.forEach(sec => sec.qs.forEach((q, k) => { q.id = `${sec.no}-${k}`; }));
+  if (book) {
+    const ids = new Set(mpBook(id));
+    sections = sections.map(sec => ({ ...sec, qs: sec.qs.filter(q => ids.has(q.id)) })).filter(sec => sec.qs.length);
+    if (!sections.length) return renderEmpty("#/midterm", "錯題本是空的，錯的題目都會了 🌟");
+  }
+  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
+    practice: !exam, review: book, percent: !!P.g2 && !book, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : ""}`,
+    sections, onFinish: ({ qs, picks }) => mpBookSave(id, qs, picks) });
 }
 
 // === 二年級用的作答方式 ===

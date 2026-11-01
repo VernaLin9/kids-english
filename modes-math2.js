@@ -488,7 +488,8 @@ function renderMath2Exam(u) {
           el("div", { class: "bp-missed__q" }, t(q.text)),
           el("div", { class: "bp-missed__tip" }, t(`💡 ${q.hint || "把題目再念一次，想想是合起來還是拿走，再算一次"}`)),
           calcOf(q) ? el("button", { class: "btn btn--ghost", onclick: () => openBlocksTeach(calcOf(q)) }, t("🧱 用積木看怎麼算")) : null))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
-      el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/exam?u=${u.id}&r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
+      wrong.length ? el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { document.getElementById("app").replaceChildren(renderMath2Run(u, "🔁 錯題再練", `#/math/${u.id}`, `#/mathplay/exam?u=${u.id}`, wrong.map(({ q }) => () => q))); window.scrollTo(0, 0); } }, t(`🔁 錯的${wrong.length}題再練一次（有提示和積木）`)) : null,
+      el("button", { class: `btn ${wrong.length ? "" : "btn--accent"} btn--full btn--xl`, onclick: () => navigate(`#/mathplay/exam?u=${u.id}&r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學"))));
     window.scrollTo(0, 0);
   };
