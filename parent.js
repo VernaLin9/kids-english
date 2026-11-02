@@ -520,8 +520,11 @@ function renderParentKidDetail(name) {
 }
 
 // === Router ===
+// 📜 國語直排（家長：只要是國語都照課本、考卷直的）：國語的頁面在 body 加 zh-v，CSS 把題目、課文、注音詞改成直排（遊樂場的遊戲不改）
+const ZH_VERTICAL_RE = /^#\/(zh\/|zhplay\/|bopo|tonedrill|midpaper\/(g1zh|g2zh))/;
 function route() {
   applySettings();
+  document.body.classList.toggle("zh-v", ZH_VERTICAL_RE.test(location.hash));
   // Profile gate first — except for parent mode (PIN gate) which works without active child
   if (!STORE.active && location.hash !== "#/profile" && !location.hash.startsWith("#/parent")) {
     const root = $("#app");

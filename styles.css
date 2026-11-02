@@ -2717,3 +2717,11 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .mp-how__vcol { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pen-ans--v { --c: clamp(46px, 12vw, 66px); }
 .pen-row--v { flex-direction: column; flex-wrap: nowrap; align-items: center; gap: 10px; }
+/* 📜 國語直排（body.zh-v，parent.js route() 依頁面加）：注音詞、課文、句子由上往下，一行一行從右往左 */
+.zh-v .bopo-word { flex-direction: column; gap: 0.45em; }
+.zh-v .zh-text { display: block; writing-mode: vertical-rl; height: min(70vh, 560px); max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 4px 2px; }
+.zh-v .zh-text__line { display: block; height: 100%; margin: 0 0 0 10px; padding: 14px 8px; text-align: start; }
+.zh-v .zh-text__line .zh-pair, .zh-v .zh-text__line .bopo-word, .zh-v .zh-text__line .zh-para { writing-mode: horizontal-tb; }
+.zh-v .zh-note__line--right { text-align: end; }
+.zh-v .mp-sent, .zh-v .zh-sent { writing-mode: vertical-rl; flex-wrap: wrap; align-items: center; align-content: center; justify-content: flex-start; max-height: min(62vh, 420px); margin-left: auto; margin-right: auto; }
+.zh-v :is(.mp-sent, .zh-sent) :is(.zh-pair, .mp-tgt, .mp-oth, .bopo-word, button, .zh-sent__emoji, .zh-sent__blank) { writing-mode: horizontal-tb; }
