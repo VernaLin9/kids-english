@@ -364,7 +364,10 @@ function renderChoiceExam(cfg) {
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(cfg.back) }, t("回上一頁"))));
     window.scrollTo(0, 0);
   };
-  if (gate) gate.el.querySelector(".btn--accent").addEventListener("click", () => ask()); else ask();
+  // cfg.intro：先看教學卡（例如「選擇題怎麼寫」），按「我知道了」才開始
+  if (gate) gate.el.querySelector(".btn--accent").addEventListener("click", () => ask());
+  else if (cfg.intro) body.replaceChildren(cfg.intro, el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { ask(); window.scrollTo(0, 0); } }, t("我知道了，開始練習 ▶")));
+  else ask();
   return root;
 }
 
@@ -388,6 +391,7 @@ function renderMidterm() {
       el("div", { class: "mt-paper__btns" },
         el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/midpaper/${P.id}?mode=exam`) }, t("📝 模擬考")),
         el("button", { class: "btn btn--xl", onclick: () => navigate(`#/midpaper/${P.id}`) }, t("📄 練習（馬上對答案）"))),
+      P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=format`) }, t("✏️ 考卷題目怎麼寫（選擇題、填入）")) : null,
       P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=school`) }, t(`🏫 ${P.school.label}${P.school.ids.length}題・再練`)) : null,
       mpBook(P.id).length ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=book`) }, t(`📒 錯題本：${mpBook(P.id).length}題要再練`)) : null,
       el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(`mid:${P.id}`)))))));

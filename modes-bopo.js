@@ -210,6 +210,7 @@ function renderBopo(sub) {
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/bopo/exam") }, t("📝 注音大會考（模擬考）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(key))),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midterm") }, t("📄 11/1複習日老師的考卷")),
+    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midpaper/g1zh?mode=format") }, t("✏️ 考卷題目怎麼寫（選擇題、填入）")),
     typeof MID_PAPERS !== "undefined" && MID_PAPERS.g1zh?.school ? el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midpaper/g1zh?mode=school") }, t(`🏫 ${MID_PAPERS.g1zh.school.label}${MID_PAPERS.g1zh.school.ids.length}題・再練`)) : null,
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/weak") }, t("🎯 常錯的地方：ㄣㄥ、ㄨㄩ、ㄌㄖ、聲調")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/chart") }, t("📋 37個注音表（點了會念）"))));

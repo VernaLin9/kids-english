@@ -2692,3 +2692,19 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .pen-popup__btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
 .pen-popup__btns .fs-pad__key { min-width: 64px; padding: 0 14px; }
 .ex-back { margin-top: 10px; }
+/* ✏️ 照紙本寫法：選擇題號碼寫進 ( )、填入題 */
+.mp-popts { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin-top: 8px; }
+.mp-popt { display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 8px; }
+.mp-popt__no { font-size: 22px; font-weight: 900; color: var(--ink); }
+.mp-popt--ok { outline: 3px solid #1e9e6a; background: #eafaf2; border-radius: 8px; }
+.mp-pchoice { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 8px; font-size: 22px; }
+.pen-paren { font-size: calc(var(--c) * 0.9); line-height: 1; color: var(--ink); font-weight: 300; align-self: center; }
+.mp-how { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.mp-how__step { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid #eef0f6; border-radius: 12px; padding: 8px 10px; font-size: 18px; }
+.mp-how__no { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.mp-how__step .l-say__btn { margin-left: auto; }
+.mp-how__ex { background: #fffdf0; border: 2px dashed #e0b84a; border-radius: 14px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mp-how__paren { font-size: 30px; font-weight: 300; }
+.mp-how__paren b { color: #e0393e; font-size: 34px; font-weight: 900; padding: 0 10px; }
+.mp-how__write { display: flex; align-items: center; gap: 8px; font-size: 18px; color: #1e9e6a; }
+.mp-how__check { text-align: center; font-size: 18px; font-weight: 900; color: var(--ink); padding: 6px; }

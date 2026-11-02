@@ -300,6 +300,14 @@ function penNum(answer, unit, pick, n = Math.max(2, String(answer).length)) {
   const d = penDigitsEl(n, answer, text => pick(text ? { text: `${text}${unit || ""}`, ok: !text.includes("？") && Number(text) === answer } : null));
   return el("div", { class: "pen-num" }, el("div", { class: "m-hint" }, t(`把答案寫在格子裡，一格寫一個數字${unit ? `（單位：${unit}）` : ""}`)), d.el);
 }
+// 選擇題照紙本：在 ( ) 裡寫答案的號碼 1～4
+function penParenNum(answer, pick) {
+  const d = penDigitsEl(1, answer, text => pick(text ? { text: text.includes("？") ? text : "①②③④"[Number(text) - 1] || text, ok: Number(text) === answer } : null));
+  const pad = d.el.querySelector(".pen-row");
+  pad.prepend(el("span", { class: "pen-paren" }, "("));
+  pad.append(el("span", { class: "pen-paren" }, ")"));
+  return el("div", { class: "pen-num" }, d.el);
+}
 // 數字＋「寫好了」（二年級數學一步一步的題目）：onSubmit(數字, reset)
 function penNumSubmit(answer, onSubmit) {
   let text = "";
