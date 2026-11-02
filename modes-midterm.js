@@ -4,9 +4,11 @@
 // 練習版：選完按「下一題」馬上對答案，錯了看答案和怎麼記；模擬考版：寫完才看分數（renderChoiceExam）。
 
 // 一年級：課照國語期中複習卷（注音符號總評量練習卷），題目卷 PDF＋第一、二頁解答照片
-// 第六大題第 6 題（青蛙在狂歡會表演什麼節目）老師解答沒有寫答案 → 先不放
+// 第六大題第 6 題（青蛙在狂歡會時表演什麼節目）：解答照片沒寫，弟弟批改過的考卷（11/2 家長上傳）老師寫 ③ 大合唱
+// school：弟弟 11/1 在學校寫錯的題目 id（照批改過的考卷：聽寫 6、造詞 2、填入 4、看圖填字 3）→ #/midpaper/g1zh?mode=school
 const MID_G1_ZH = {
-  id: "g1zh", grade: "g1", title: "注音符號總評量練習卷", sub: "課照 國語期中複習卷（11/1 複習日）",
+  id: "g1zh", grade: "g1", title: "注音符號總評量練習卷", sub: "課照 國語期中複習卷（11/1 複習日）", percent: true,
+  school: { label: "11/1學校考卷寫錯的", ids: ["一-0", "一-2", "一-4", "一-5", "一-8", "一-9", "二-1", "二-2", "三-0", "三-1", "三-3", "三-4", "五-1", "五-2", "五-3"] },
   sections: [
     { no: "一", name: "聽寫", pts: 3, qs: [
       ["國歌", "ㄍㄨㄛˊ ㄍㄜ"], ["炒麵", "ㄔㄠˇ ㄇㄧㄢˋ"], ["上學", "ㄕㄤˋ ㄒㄩㄝˊ"], ["松鼠", "ㄙㄨㄥ ㄕㄨˇ"], ["球鞋", "ㄑㄧㄡˊ ㄒㄧㄝˊ"],
@@ -45,8 +47,9 @@ const MID_G1_ZH = {
       { line: "ㄨㄛˇ ㄉㄜ˙ □ ㄨㄤˋ ㄕˋ ㄧㄤˇ ㄧˋ ㄓ ㄍㄡˇ", say: "我的什麼望是養一隻狗？", options: ["ㄩㄢˊ", "ㄧㄢˋ", "ㄩㄢˋ", "ㄨㄢˋ"], answer: 2, tip: "願望：ㄩㄢˋ ㄨㄤˋ，第四聲。" },
       { line: "ㄨㄛˇ ㄏㄢˋ ㄆㄥˊ ㄧㄡˇ □ ㄕㄡˇ", say: "我和朋友什麼手？", options: ["ㄨㄚˋ", "ㄨㄥˋ", "ㄨㄢˋ", "ㄨㄛˋ"], answer: 3, tip: "握手：ㄨㄛˋ ㄕㄡˇ。" },
       { line: "ㄏㄜˊ ㄌㄧˊ ㄇㄤˊ ㄓㄜ˙ □ □", say: "河狸忙著什麼？", options: ["ㄗㄨˇ ㄔㄜ", "ㄓㄨˊ ㄔㄠˊ", "ㄓㄠˋ ㄌㄨˋ", "ㄇㄧˋ ㄗㄠˇ"], answer: 1, tip: "河狸忙著築巢：ㄓㄨˊ ㄔㄠˊ，蓋自己的家。" },
+      { line: "ㄑㄧㄥ ㄨㄚ ㄗㄞˋ ㄎㄨㄤˊ ㄏㄨㄢ ㄏㄨㄟˋ ㄕˊ ㄅㄧㄠˇ ㄧㄢˇ ㄕㄣˊ ˙ㄇㄜ ㄐㄧㄝˊ ㄇㄨˋ ？", say: "青蛙在狂歡會時表演什麼節目？", options: ["ㄅㄧㄢˋ ㄇㄛˊ ㄕㄨˋ", "ㄍㄨㄣˇ ㄉㄚˋ ㄑㄧㄡˊ", "ㄉㄚˋ ㄏㄜˊ ㄔㄤˋ", "ㄑㄧㄠ ㄉㄚˋ ㄍㄨˇ"], answer: 2, tip: "青蛙在狂歡會表演大合唱：ㄉㄚˋ ㄏㄜˊ ㄔㄤˋ，大家一起唱歌。" },
       { line: "ㄒㄧㄚˋ ㄇㄧㄢˋ ㄋㄚˇ ㄧˊ ㄍㄜ˙ ㄕˋ ㄑㄧㄥ ㄨㄚ ㄔㄤˋ ㄍㄜ ㄉㄜ˙ ㄕㄥ ㄧㄣ ？", say: "下面哪一個是青蛙唱歌的聲音？", options: ["ㄍㄨㄤ ㄍㄨㄤ ㄍㄨㄤ", "ㄏㄨㄤ ㄏㄨㄤ ㄏㄨㄤ", "ㄍㄨㄛ ㄍㄨㄛ ㄍㄨㄛ", "ㄎㄨㄤ ㄎㄨㄤ ㄎㄨㄤ"], answer: 2, tip: "青蛙唱歌：ㄍㄨㄛ ㄍㄨㄛ ㄍㄨㄛ（嘓嘓嘓）。" },
-    ].map((x, k) => ({ kind: "choice", n: [1, 2, 3, 4, 5, 7][k], hint: "選出對的答案", ...x })) },
+    ].map((x, k) => ({ kind: "choice", n: k + 1, hint: "選出對的答案", ...x })) },
   ],
 };
 const MID_PAPERS = { g1zh: MID_G1_ZH };
@@ -125,17 +128,18 @@ function mpBookSave(id, qs, picks) {
 function renderMidPaper(id, mode) {
   const P = MID_PAPERS[id];
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
-  const exam = mode === "exam", book = mode === "book";
-  // 模擬考：要寫的題目用手寫（像拿筆寫考卷）；練習、錯題本用點的比較快
-  let sections = P.math ? mpMathQuestions(P, exam) : P.g2 ? mpG2Questions(P, exam) : mpQuestions(P, exam);
+  const exam = mode === "exam", book = mode === "book", school = mode === "school" && !!P.school;
+  // 模擬考：要寫的題目用手寫（像拿筆寫考卷）；練習、錯題本用點的比較快；學校考卷寫錯的（多半是聽寫）用手寫再練
+  const pen = exam || school;
+  let sections = P.math ? mpMathQuestions(P, pen) : P.g2 ? mpG2Questions(P, pen) : mpQuestions(P, pen);
   sections.forEach(sec => sec.qs.forEach((q, k) => { q.id = `${sec.no}-${k}`; }));
-  if (book) {
-    const ids = new Set(mpBook(id));
+  if (book || school) {
+    const ids = new Set(book ? mpBook(id) : P.school.ids);
     sections = sections.map(sec => ({ ...sec, qs: sec.qs.filter(q => ids.has(q.id)) })).filter(sec => sec.qs.length);
     if (!sections.length) return renderEmpty("#/midterm", "錯題本是空的，錯的題目都會了 🌟");
   }
-  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
-    practice: !exam, review: book, percent: !!P.g2 && !book, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : ""}`,
+  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : school ? `🏫 ${P.school.label}・再練` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
+    practice: !exam, review: book || school, percent: !!P.percent && !book && !school, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : school ? "?mode=school" : ""}`,
     sections, onFinish: ({ qs, picks }) => mpBookSave(id, qs, picks) });
 }
 
@@ -224,7 +228,7 @@ function mpG2Questions(P, pen = false) {
       tip: `答案是「${q.opts[q.ans]}」。`, options: q.opts.map((o, i) => ({ label: t(o), text: o, ok: i === q.ans })), rec: ok => recordZh(`期中卷:${q.text.slice(0, 12)}`, ok) };
   }) }));
 }
-Object.entries(MID_G2_ZH).forEach(([id, P]) => { MID_PAPERS[id] = { ...P, id, grade: "g2", g2: true }; });
+Object.entries(MID_G2_ZH).forEach(([id, P]) => { MID_PAPERS[id] = { ...P, id, grade: "g2", g2: true, percent: true }; });
 
 // === 二年級數學：課照數學期中複習卷(二)（tools/midterm/m2.json，答案照老師紅字）===
 // 原卷前兩題沒有大題標題，這裡叫「早餐店」「驗算」；寫算式的題目在網站上只填最後答案（數字鍵盤）
@@ -249,7 +253,7 @@ function MP_CUPS() {
   });
   return g;
 }
-const MID_G2_MATH = { id: "g2m2", grade: "g2", g2: true, math: true, title: "數學期中複習卷(二)", sections: [
+const MID_G2_MATH = { id: "g2m2", grade: "g2", g2: true, math: true, percent: true, title: "數學期中複習卷(二)", sections: [
   { no: "一", name: "早餐店", qs: [
     { n: "(1)", text: "超好吃早餐店的簡易菜單。(1)小明有80元，買了一瓶牛奶後，小明還剩下幾元？", vis: MP_MENU, num: 52, unit: "元", tip: "80−28＝52，還剩52元。" },
     { n: "(2)", text: "(2)小莉有64元，買了一個三明治後，小莉還剩下幾元？", vis: MP_MENU, num: 29, unit: "元", tip: "64−35＝29，還剩29元。" },

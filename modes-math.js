@@ -224,7 +224,7 @@ function mockGate(body, u, practiceHash, key = mockKey(u)) {
   const gate = el("section", { class: "mock-gate" },
     el("div", { class: "mock-gate__icon" }, "📝"),
     el("div", { class: "mock-gate__title" }, t("模擬小考")),
-    el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看題目寫", "不會念的字可以按🔊聽", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
+    el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看注音讀題目，用手指寫答案", "寫錯了可以按「◀ 上一題」回去改", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
     el("div", { class: "mock-gate__hist" }, t(mockSummary(key))),
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); } }, t("✏️ 開始考試")),
     el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(practiceHash) }, t("先練習一次")));
@@ -388,6 +388,7 @@ function renderMidterm() {
       el("div", { class: "mt-paper__btns" },
         el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/midpaper/${P.id}?mode=exam`) }, t("📝 模擬考")),
         el("button", { class: "btn btn--xl", onclick: () => navigate(`#/midpaper/${P.id}`) }, t("📄 練習（馬上對答案）"))),
+      P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=school`) }, t(`🏫 ${P.school.label}${P.school.ids.length}題・再練`)) : null,
       mpBook(P.id).length ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=book`) }, t(`📒 錯題本：${mpBook(P.id).length}題要再練`)) : null,
       el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(`mid:${P.id}`)))))));
   const en = typeof nextExam === "function" ? nextExam() : null;
