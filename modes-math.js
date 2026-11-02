@@ -263,11 +263,18 @@ function renderChoiceExam(cfg) {
   app.append(...(gate ? [gate.el] : []), body);
   const qs = cfg.sections.flatMap(sec => sec.qs.map(q => ({ ...q, sec, src: q })));
   const picks = [];
+  // 模擬考可以按「◀ 上一題」回去看、改答案（小孩反應）：每一題的畫面留著（寫的字、選的答案都還在），答案交卷時才記
+  const views = [];
   let i = 0;
   const ask = () => {
     if (i >= qs.length) return finish();
-    const q = qs[i];
+    const q = qs[i], idx = i;
     progressLabel.textContent = `第${i + 1}/${qs.length}題`;
+    if (!cfg.practice && views[idx]) {
+      body.replaceChildren(views[idx]);
+      if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }
+      return;
+    }
     let picked = null, checked = false;
     const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 && !cfg.practice ? "✅ 交卷" : cfg.practice ? "✅ 對答案" : "下一題 ▶"));
     const fb = el("div", {});
@@ -281,8 +288,10 @@ function renderChoiceExam(cfg) {
     nextBtn.addEventListener("click", () => {
       if (!picked) return;
       if (checked) return go();
-      picks.push(picked); q.rec?.(!!picked.ok);
-      if (!cfg.practice || q.noScore) return go();
+      picks[idx] = picked;
+      if (!cfg.practice) return go();
+      q.rec?.(!!picked.ok);
+      if (q.noScore) return go();
       // 練習版：馬上對答案
       checked = true;
       const right = q.options ? q.options.find(o => o.ok).text : q.answerText;
@@ -300,9 +309,12 @@ function renderChoiceExam(cfg) {
           el("button", { class: "l-say__btn", "aria-label": "念給我聽", onclick: e => { e.stopPropagation(); speakZh(typeof q.tip === "string" ? q.tip : q.tip.textContent); } }, "🔊"))));
       nextBtn.replaceChildren(t(i === qs.length - 1 ? "看成績 ▶" : "我懂了，下一題 ▶"));
     });
-    body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
+    const backBtn = !cfg.practice && idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 上一題（可以回去改）")) : null;
+    const view = el("div", {}, el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
       el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: `icon-btn icon-btn--accent m-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": q.listen ? "聽題目" : "念題目" }, "🔊")),
-      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.pen ? "寫好了再按（一定要寫）" : q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
+      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.pen ? "寫好了再按（一定要寫）" : q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn, backBtn);
+    views[idx] = view;
+    body.replaceChildren(view);
     if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }
     setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
   };
@@ -327,6 +339,7 @@ function renderChoiceExam(cfg) {
     const rows = cfg.sections.map(sec => ({ no: sec.no, got: 0, max: sec.qs.filter(q => !q.noScore).length * sec.pts })).filter(r => r.max > 0);
     let score = 0;
     const wrong = [];
+    if (!cfg.practice) qs.forEach((q, k) => q.rec?.(!!picks[k]?.ok)); // 模擬考可以回去改，交卷時才記學習紀錄
     qs.forEach((q, k) => { if (q.noScore) return; const r = rows.find(x => x.no === q.sec.no); if (picks[k].ok) { score += q.sec.pts; r.got += q.sec.pts; } else wrong.push([q, picks[k]]); });
     if (cfg.percent) { const max = rows.reduce((n, r) => n + r.max, 0); score = max ? Math.round(score * 100 / max) : 0; }
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();

@@ -235,11 +235,13 @@ function renderBopoExam() {
   app.append(gate.el, body);
   const qs = BP_EXAM.flatMap(([kind, n, no]) => BP_KINDS[kind].make().slice(0, n).map(q => ({ ...q, sec: no })));
   const answers = [];
+  const views = []; // 可以按「◀ 上一題」回去改：畫面留著，寫的字還在
   let i = 0;
   const ask = () => {
     if (i >= qs.length) return finish();
-    const q = qs[i];
+    const q = qs[i], idx = i;
     progressLabel.textContent = `第${i + 1}/${qs.length}題`;
+    if (views[idx]) { body.replaceChildren(views[idx]); setTimeout(() => speakZh(q.w.zh), 250); return; }
     let picked = null;
     const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 ? "✅ 交卷" : "下一題 ▶"));
     // 用手寫（像拿筆寫考卷）：蓋住的注音寫在格子裡、聲調寫在右邊、聽詞寫出整個詞的注音
@@ -248,11 +250,13 @@ function renderBopoExam() {
       : q.kind === "tone" ? penToneAns(bpSyls(q.w.bopo)[q.si], q.answer, pick) : penBopo(q.w.bopo, pick);
     nextBtn.addEventListener("click", () => {
       if (picked === null) return;
-      answers.push(picked); recordZh(bpKey(q), !!picked.ok);
-      i++; ask(); window.scrollTo(0, 0);
+      answers[idx] = picked;
+      i = idx + 1; ask(); window.scrollTo(0, 0);
     });
-    body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec}大題・${BP_EXAM_NAME[q.kind]}`)), bpQuestionHead(q, BP_EXAM_HINT[q.kind]), grid,
-      el("div", { class: "bp-next__hint" }, t("寫好了再按下一題（一定要寫）")), nextBtn);
+    const backBtn = idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 上一題（可以回去改）")) : null;
+    views[idx] = el("div", {}, el("div", { class: "bp-sec" }, t(`第${q.sec}大題・${BP_EXAM_NAME[q.kind]}`)), bpQuestionHead(q, BP_EXAM_HINT[q.kind]), grid,
+      el("div", { class: "bp-next__hint" }, t("寫好了再按下一題（一定要寫）")), nextBtn, backBtn);
+    body.replaceChildren(views[idx]);
     setTimeout(() => speakZh(q.w.zh), 250);
   };
   const finish = () => {
@@ -260,6 +264,7 @@ function renderBopoExam() {
     let score = 0;
     const rows = BP_EXAM.map(([kind, n, no]) => ({ no, got: 0, max: n * 4 }));
     const wrong = [];
+    qs.forEach((q, k) => recordZh(bpKey(q), !!answers[k].ok)); // 交卷時才記（可以回去改）
     qs.forEach((q, k) => { const ok = !!answers[k].ok; const r = rows.find(x => x.no === q.sec); if (ok) { score += 4; r.got += 4; } else wrong.push([q, answers[k]]); });
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
     body.replaceChildren(el("div", { class: "ws-result" },
