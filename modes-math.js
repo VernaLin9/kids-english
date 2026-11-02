@@ -224,7 +224,7 @@ function mockGate(body, u, practiceHash, key = mockKey(u)) {
   const gate = el("section", { class: "mock-gate" },
     el("div", { class: "mock-gate__icon" }, "📝"),
     el("div", { class: "mock-gate__title" }, t("模擬小考")),
-    el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看注音讀題目，用手指寫答案", "寫錯了可以按「◀ 上一題」回去改", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
+    el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看注音讀題目", "還沒交卷都可以回去改答案", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
     el("div", { class: "mock-gate__hist" }, t(mockSummary(key))),
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); } }, t("✏️ 開始考試")),
     el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(practiceHash) }, t("先練習一次")));
