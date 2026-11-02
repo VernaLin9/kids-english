@@ -286,22 +286,43 @@ function renderChoiceExam(cfg) {
       // 練習版：馬上對答案
       checked = true;
       const right = q.options ? q.options.find(o => o.ok).text : q.answerText;
+      if (picked.check) { // 手寫國字、連不到網路：自己對對看
+        fb.replaceChildren(el("div", { class: "guard-tip" }, el("div", { class: "guard-tip__head" }, t("✍️ 網路連不到，自己對對看")),
+          el("div", { class: "ex-fb__ans" }, t("你寫"), el("img", { class: "pen-img", src: picked.img, alt: "" }), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, right))));
+        nextBtn.replaceChildren(t(i === qs.length - 1 ? "看成績 ▶" : "下一題 ▶"));
+        return;
+      }
       if (picked.ok) { dingCorrect(); fb.replaceChildren(el("div", { class: "quiz-feedback quiz-feedback--correct pop" }, t("答對了！🎉"))); setTimeout(go, 900); nextBtn.disabled = true; return; }
       buzzWrong();
       fb.replaceChildren(el("div", { class: "guard-tip" }, el("div", { class: "guard-tip__head" }, t("📌 記一記")),
-        el("div", { class: "ex-fb__ans" }, t("你寫"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, picked.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, right)),
+        el("div", { class: "ex-fb__ans" }, t("你寫"), picked.img ? el("img", { class: "pen-img", src: picked.img, alt: "" }) : el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, picked.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, right)),
         el("div", { class: "guard-tip__body" }, el("div", { class: "guard-tip__text" }, typeof q.tip === "string" ? t(q.tip) : q.tip),
           el("button", { class: "l-say__btn", "aria-label": "念給我聽", onclick: e => { e.stopPropagation(); speakZh(typeof q.tip === "string" ? q.tip : q.tip.textContent); } }, "🔊"))));
       nextBtn.replaceChildren(t(i === qs.length - 1 ? "看成績 ▶" : "我懂了，下一題 ▶"));
     });
     body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
       el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: `icon-btn icon-btn--accent m-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": q.listen ? "聽題目" : "念題目" }, "🔊")),
-      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
+      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.pen ? "寫好了再按（一定要寫）" : q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn);
     if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }
     setTimeout(() => q.listen ? q.say() : autoRead(q.say), 250);
   };
   const finish = () => {
     progressLabel.textContent = "交卷了";
+    // 手寫的國字電腦沒辦法看（連不到網路）→ 請大人看一看寫對了沒有，再算分數
+    const pend = qs.map((q, k) => [q, picks[k]]).filter(([, p]) => p?.check);
+    if (pend.length) {
+      const rows = pend.map(([q, p]) => {
+        const mark = ok => { p.ok = ok; p.check = false; p.text = ok ? q.answerText : "寫錯了"; row.querySelectorAll(".pen-chk__btn").forEach((b, i) => b.classList.toggle("pen-chk__btn--on", i === (ok ? 0 : 1))); if (pend.every(([, x]) => !x.check)) go.disabled = false; };
+        const row = el("div", { class: "pen-chk__row" }, el("img", { class: "pen-img pen-img--big", src: p.img, alt: "" }),
+          el("div", { class: "pen-chk__ans" }, t("答案："), el("b", { "data-nobopo": "1" }, q.answerText)),
+          el("div", { class: "pen-chk__btns" }, el("button", { class: "btn btn--ghost pen-chk__btn", onclick: () => mark(true) }, t("✓ 寫對了")), el("button", { class: "btn btn--ghost pen-chk__btn", onclick: () => mark(false) }, t("✗ 寫錯了"))));
+        return row;
+      });
+      const go = el("button", { class: "btn btn--accent btn--full btn--xl", disabled: true, onclick: finish }, t("看成績 ▶"));
+      body.replaceChildren(el("div", { class: "pen-chk" }, el("div", { class: "zh-missed__title" }, t("✍️ 網路連不到，電腦看不到手寫的國字，請爸爸媽媽對一對：")), rows, go));
+      window.scrollTo(0, 0);
+      return;
+    }
     // noScore（照樣寫短語、造句這種沒有標準答案的）不計分；percent：原卷沒寫配分，照答對幾題換成 100 分
     const rows = cfg.sections.map(sec => ({ no: sec.no, got: 0, max: sec.qs.filter(q => !q.noScore).length * sec.pts })).filter(r => r.max > 0);
     let score = 0;
@@ -319,7 +340,7 @@ function renderChoiceExam(cfg) {
     };
     const wrongList = wrong.length ? el("div", { class: "bp-missed ex-wrong" }, el("div", { class: "zh-missed__title" }, t(`❌ 錯了${wrong.length}題，錯在這裡：`)),
       wrong.map(([q, p]) => el("div", { class: "bp-missed__row" }, el("div", { class: "bp-missed__q" }, typeof q.review === "string" ? t(q.review) : q.review),
-        el("span", { class: "bp-missed__ans" }, t("你寫"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options ? q.options.find(o => o.ok).text : q.answerText)),
+        el("span", { class: "bp-missed__ans" }, t("你寫"), p.img ? el("img", { class: "pen-img", src: p.img, alt: "" }) : el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, p.text), t("，答案是"), el("b", { class: "bp-missed__ok", "data-nobopo": "1" }, q.options ? q.options.find(o => o.ok).text : q.answerText)),
         el("div", { class: "bp-missed__tip" }, "📌 ", typeof q.tip === "string" ? t(q.tip) : q.tip)))) : null;
     body.replaceChildren(el("div", { class: "ws-result" },
       el("div", { class: "ws-result__big" }, `${score} 分`),

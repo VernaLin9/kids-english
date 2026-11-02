@@ -71,6 +71,7 @@ const FILL_SHEETS = {
 
 // 選數字的小鍵盤（0～10），點空格時跳出來；不擋題目，放在畫面最下面
 let fsPadEl = null;
+let fsPen = false; // 模擬小考：空格用手寫（penPopup，像拿筆寫考卷）
 function fsOpenPad(onPick) {
   fsPadEl?.remove();
   const close = () => { fsPadEl?.remove(); fsPadEl = null; };
@@ -84,6 +85,7 @@ function fsOpenPad(onPick) {
 // exam＝模擬小考：先按「開始考試」才出題、圖的順序打亂（考觀念不是背位置）、交卷後記分數
 function renderFillSheet(u, exam = false) {
   const S = exam ? fsShuffled(FILL_SHEETS[u.id]) : FILL_SHEETS[u.id];
+  fsPen = exam;
   const root = el("div", {});
   const header = renderHeader(exam ? "📝 模擬小考" : "📄 小A本原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
@@ -99,7 +101,7 @@ function renderFillSheet(u, exam = false) {
   const gate = exam ? mockGate(body, u, `#/mathplay/sheet?u=${u.id}`) : null;
   if (gate) app.appendChild(gate.el);
   app.appendChild(body);
-  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
+  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${exam ? (S.howto || "點(　)或□選數字，連連看先點上面再點下面").replace("選數字", "用手指寫數字").replace("選代號", "寫代號") : S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
@@ -110,7 +112,7 @@ function renderFillSheet(u, exam = false) {
     const b = el("button", { class: `fs-blank fs-blank--${style}`, "aria-label": "填數字" });
     const draw = () => b.replaceChildren(style === "paren" ? el("span", { class: "fs-blank__p" }, "(") : "", el("span", { class: "fs-blank__v", "data-nobopo": "" }, val == null ? "　" : String(val)), style === "paren" ? el("span", { class: "fs-blank__p" }, ")") : "");
     draw();
-    b.addEventListener("click", () => { if (locked) return; app.querySelectorAll(".fs-blank--on").forEach(x => x.classList.remove("fs-blank--on")); b.classList.add("fs-blank--on"); fsOpenPad(n => { val = n; draw(); b.classList.remove("fs-blank--on"); update(); }); });
+    b.addEventListener("click", () => { if (locked) return; app.querySelectorAll(".fs-blank--on").forEach(x => x.classList.remove("fs-blank--on")); b.classList.add("fs-blank--on"); const done = n => { val = n; draw(); b.classList.remove("fs-blank--on"); update(); }; if (fsPen) penPopup("num", PEN_DIGITS, done, ans); else fsOpenPad(done); });
     blanks.push({ node: b, get: () => val, ans, pts, show: ok => { b.classList.add(ok ? "fs-blank--ok" : "fs-blank--bad"); if (!ok) b.append(el("span", { class: "fs-blank__ans", "data-nobopo": "" }, String(ans))); } });
     return b;
   };
@@ -434,7 +436,8 @@ function fsCodesQ(sec, addBlank, isLocked, update) {
     box.addEventListener("click", () => {
       if (isLocked()) return;
       wrap.querySelectorAll(".fs-codes__box--on").forEach(x => x.classList.remove("fs-codes__box--on")); box.classList.add("fs-codes__box--on");
-      fsOpenCodePad(codes, val, picked => { val = picked; draw(); box.classList.remove("fs-codes__box--on"); update(); });
+      const done = picked => { val = picked; draw(); box.classList.remove("fs-codes__box--on"); update(); };
+      if (fsPen) penPopup("codes", codes, done); else fsOpenCodePad(codes, val, done);
     });
     boxes.appendChild(el("div", { class: "fs-codes__cell" }, el("div", { class: "fs-codes__label" }, t(label)), box));
     addBlank({ node: box, get: () => val.length ? val.join("") : null, ans, pts: sec.pts,

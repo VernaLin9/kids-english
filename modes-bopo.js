@@ -1,7 +1,7 @@
 // 🔤 注音總複習・大會考（一年級期中考：37 個注音全部都考）
 // 題型：聲母（蓋住第一個注音）、韻母（蓋住後面的注音）、聲調（蓋住聲調）、聽詞選注音；每題都先聽詞（念國字，Google 念得準）
 // 練習：答錯要自己再選對，旁邊出現「記一記」教怎麼分（ㄅㄆ 送不送氣、ㄓㄗ 翹不翹舌…），錯的 2 題後再考
-// 模擬考：一題一題寫，選好按「下一題」才會換（一定要作答，不能跳過），交卷才看分數，紀錄在 profile.mockExams["zh:bopo"]
+// 模擬考：一題一題用手寫（modes-pen.js），寫好按「下一題」才會換（一定要作答，不能跳過），交卷才看分數，紀錄在 profile.mockExams["zh:bopo"]
 const BP_INITIALS = [..."ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ"];
 const BP_FINALS = [..."ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ"];
 // 每個注音的代表詞：[注音, 國字, 注音（教育部）, 圖]；韻母的詞裡要有這個注音
@@ -102,13 +102,16 @@ function bpOptionNode(q, o) {
   if (q.kind === "word") return bopoWordEl(o, { class: "bopo-word--lg" });
   return el("span", { class: "bp-sym" }, o);
 }
-function bpQuestionHead(q) {
+function bpQuestionHead(q, hint) {
   return el("div", { class: "quiz-prompt bp-prompt" },
     el("div", { class: "quiz-prompt__emoji" }, q.w.emoji || "🔊"),
     el("button", { class: "icon-btn icon-btn--big icon-btn--accent", onclick: () => speakZh(q.w.zh), "aria-label": "再聽一次" }, "🔊"),
     q.kind === "word" ? null : bpBlankWord(q),
-    el("div", { class: "quiz-prompt__hint" }, t(BP_KINDS[q.kind].hint)));
+    el("div", { class: "quiz-prompt__hint" }, t(hint || BP_KINDS[q.kind].hint)));
 }
+// 模擬考用手寫
+const BP_EXAM_NAME = { init: "寫聲母", final: "寫韻母", tone: "寫聲調", word: "聽寫注音" };
+const BP_EXAM_HINT = { init: "聽一聽，把蓋住的注音寫在格子裡", final: "聽一聽，把蓋住的注音寫在格子裡", tone: "聽一聽，把蓋住的聲調寫上去", word: "聽一聽，把整個詞的注音寫出來" };
 function bpTipOf(q, picked) {
   if (q.kind === "tone") return `這個字是${BP_TONE_NAME[q.answer]}。${BP_TONE_TIP}`;
   if (q.kind === "word") return "一個字一個字對：先聽第一個聲音，再看韻母，最後看聲調。";
@@ -239,18 +242,17 @@ function renderBopoExam() {
     progressLabel.textContent = `第${i + 1}/${qs.length}題`;
     let picked = null;
     const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 ? "✅ 交卷" : "下一題 ▶"));
-    const grid = el("div", { class: `zh-opts bp-opts bp-opts--${q.kind}` }, q.options.map(o => {
-      const b = el("button", { class: "zh-opt bp-opt" }, bpOptionNode(q, o));
-      b.addEventListener("click", () => { picked = o; grid.querySelectorAll(".bp-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b)); nextBtn.disabled = false; nextBtn.classList.remove("bp-next--wait"); });
-      return b;
-    }));
+    // 用手寫（像拿筆寫考卷）：蓋住的注音寫在格子裡、聲調寫在右邊、聽詞寫出整個詞的注音
+    const pick = p => { picked = p; nextBtn.disabled = !p; };
+    const grid = q.kind === "init" || q.kind === "final" ? penSymbol(q.answer, pick)
+      : q.kind === "tone" ? penToneAns(bpSyls(q.w.bopo)[q.si], q.answer, pick) : penBopo(q.w.bopo, pick);
     nextBtn.addEventListener("click", () => {
       if (picked === null) return;
-      answers.push(picked); recordZh(bpKey(q), picked === q.answer);
+      answers.push(picked); recordZh(bpKey(q), !!picked.ok);
       i++; ask(); window.scrollTo(0, 0);
     });
-    body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec}大題・${BP_KINDS[q.kind].name}`)), bpQuestionHead(q), grid,
-      el("div", { class: "bp-next__hint" }, t("選好了再按下一題（一定要選一個）")), nextBtn);
+    body.replaceChildren(el("div", { class: "bp-sec" }, t(`第${q.sec}大題・${BP_EXAM_NAME[q.kind]}`)), bpQuestionHead(q, BP_EXAM_HINT[q.kind]), grid,
+      el("div", { class: "bp-next__hint" }, t("寫好了再按下一題（一定要寫）")), nextBtn);
     setTimeout(() => speakZh(q.w.zh), 250);
   };
   const finish = () => {
@@ -258,16 +260,16 @@ function renderBopoExam() {
     let score = 0;
     const rows = BP_EXAM.map(([kind, n, no]) => ({ no, got: 0, max: n * 4 }));
     const wrong = [];
-    qs.forEach((q, k) => { const ok = answers[k] === q.answer; const r = rows.find(x => x.no === q.sec); if (ok) { score += 4; r.got += 4; } else wrong.push([q, answers[k]]); });
+    qs.forEach((q, k) => { const ok = !!answers[k].ok; const r = rows.find(x => x.no === q.sec); if (ok) { score += 4; r.got += 4; } else wrong.push([q, answers[k]]); });
     if (!wrong.length) { dingCorrect(); confetti(); } else buzzWrong();
     body.replaceChildren(el("div", { class: "ws-result" },
       el("div", { class: "ws-result__big" }, `${score} 分`),
       mockResult(u, score, gate.secs(), rows, key),
       wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼記：`)),
         wrong.map(([q, a]) => el("div", { class: "bp-missed__row" }, el("span", { class: "bp-missed__emoji" }, q.w.emoji), rubyEl(q.w.zh, q.w.bopo, "span"),
-          el("span", { class: "bp-missed__ans" }, t("你選"), el("b", { class: "bp-missed__bad" }, q.kind === "tone" ? BP_TONE_NAME[a] : q.kind === "word" ? bopoWordEl(a, { class: "bopo-word--sm" }) : a),
+          el("span", { class: "bp-missed__ans" }, t("你寫"), el("b", { class: "bp-missed__bad", "data-nobopo": "1" }, a.text),
             t("，答案"), el("b", { class: "bp-missed__ok" }, q.kind === "tone" ? BP_TONE_NAME[q.answer] : q.kind === "word" ? bopoWordEl(q.answer, { class: "bopo-word--sm" }) : q.answer)),
-          el("div", { class: "bp-missed__tip" }, t(bpTipOf(q, a)))))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
+          el("div", { class: "bp-missed__tip" }, t(bpTipOf(q, a.text)))))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
       wrong.length ? el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { document.getElementById("app").replaceChildren(renderBopoPractice(null, wrong.map(([q]) => ({ ...q, options: shuffle([...q.options]) })))); window.scrollTo(0, 0); } }, t(`🔁 錯的${wrong.length}題再練一次（有記一記教你）`)) : null,
       el("button", { class: `btn ${wrong.length ? "" : "btn--accent"} btn--full btn--xl`, onclick: () => navigate(`#/bopo/exam?r=${Date.now()}`) }, t("🔁 再考一次（題目會換）")),
       el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/bopo") }, t("回注音總複習"))));

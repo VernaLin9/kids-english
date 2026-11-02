@@ -2648,3 +2648,46 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .sw-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .sw-chip { min-height: 44px; padding: 4px 12px; border-radius: 22px; border: 2px solid #e0393e; background: #fff1f1; font-weight: 800; }
 .sw-flash { outline: 4px solid #e0393e !important; outline-offset: 3px; transition: outline 0.3s; }
+
+/* ✍️ 手寫作答（modes-pen.js）：模擬考像拿筆寫考卷 */
+.pen-ans { --c: clamp(54px, 15vw, 84px); display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0 6px; }
+.pen-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.pen-pad { display: block; touch-action: none; -webkit-user-select: none; user-select: none; background-color: #fff; border: 2px solid #b9c3e6; border-radius: 10px; cursor: crosshair; }
+.pen-pad--sym, .pen-pad--digit, .pen-pad--big, .pen-pad--zh {
+  background-image: linear-gradient(90deg, transparent calc(50% - 1px), #e3e8f7 calc(50% - 1px), #e3e8f7 calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(0deg, transparent calc(50% - 1px), #e3e8f7 calc(50% - 1px), #e3e8f7 calc(50% + 1px), transparent calc(50% + 1px)); }
+.pen-pad--sym { width: var(--c); height: var(--c); border-radius: 0; margin-top: -2px; }
+.pen-pad--digit { width: var(--c); height: calc(var(--c) * 1.15); }
+.pen-pad--big { width: calc(var(--c) * 1.7); height: calc(var(--c) * 1.7); }
+.pen-pad--zh { width: calc(var(--c) * 1.9); height: calc(var(--c) * 1.9); border-color: #e0393e; }
+.pen-pad--dot { width: var(--c); height: calc(var(--c) * 0.42); border-style: dashed; border-radius: 8px 8px 0 0; }
+.pen-pad--tone { width: calc(var(--c) * 0.5); height: calc(var(--c) * 3 - 4px); border-style: dashed; border-radius: 0 8px 8px 0; }
+.pen-syl { display: grid; grid-template-columns: var(--c) calc(var(--c) * 0.5); grid-template-rows: auto auto; column-gap: 2px; row-gap: 2px; }
+.pen-syl__dot { grid-column: 1; grid-row: 1; }
+.pen-syl__col { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; }
+.pen-syl__col .pen-pad--sym:first-child { margin-top: 0; }
+.pen-syl__tone { grid-column: 2; grid-row: 2; }
+.pen-syl--print .pen-pad--tone { height: calc(var(--c) * var(--rows, 1)); }
+.pen-print { display: flex; align-items: center; justify-content: center; width: var(--c); height: var(--c); font-size: calc(var(--c) * 0.7); color: var(--ink); background: #f6f7fb; border: 2px solid #dfe3f0; margin-top: -2px; }
+.pen-print:first-child { margin-top: 0; }
+.pen-read { min-height: 28px; font-size: 18px; color: var(--ink-soft); text-align: center; }
+.pen-read__label { font-size: 14px; }
+.pen-read b { font-size: 22px; color: #3b6bff; letter-spacing: 2px; }
+.pen-tools { display: flex; gap: 10px; justify-content: center; }
+.pen-tool { min-height: 44px; padding: 6px 14px; }
+.pen-first { min-height: 48px; }
+.pen-first--on { background: var(--primary-soft); border-color: var(--primary); font-weight: 900; }
+.pen-num { display: flex; flex-direction: column; align-items: center; }
+.pen-ok { margin-top: 6px; max-width: 360px; }
+.pen-img { height: 40px; vertical-align: middle; border: 1px solid #dfe3f0; border-radius: 6px; background: #fff; margin: 0 4px; }
+.pen-img--big { height: 80px; }
+.pen-chk { display: flex; flex-direction: column; gap: 12px; }
+.pen-chk__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px; background: #fff; border: 2px solid #eef0f6; border-radius: 14px; }
+.pen-chk__ans { font-size: 20px; }
+.pen-chk__ans b { font-size: 28px; color: #1e9e6a; }
+.pen-chk__btns { display: flex; gap: 8px; margin-left: auto; }
+.pen-chk__btn { min-height: 48px; }
+.pen-chk__btn--on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 900; }
+.pen-popup { --c: clamp(60px, 17vw, 84px); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pen-popup__btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+.pen-popup__btns .fs-pad__key { min-width: 64px; padding: 0 14px; }
