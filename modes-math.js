@@ -191,6 +191,7 @@ const MATH_TOPICS = {
 // === 首頁區塊 ===
 function renderMathHomeSection() {
   const wrap = el("div", {});
+  const mid = renderMidEntry("math"); if (mid) wrap.appendChild(mid);
   const prog = mathProgressOf();
   MATH.units.forEach(u => {
     const done = u.topics.reduce((s, tp) => s + (prog[tp]?.correct || 0), 0);
@@ -369,6 +370,18 @@ function renderChoiceExam(cfg) {
   else if (cfg.intro) body.replaceChildren(cfg.intro, el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { ask(); window.scrollTo(0, 0); } }, t("我知道了，開始練習 ▶")));
   else ask();
   return root;
+}
+
+// 首頁入口：📄 期中考複習卷（家長：首頁找不到考卷）；kind＝zh 國語卷、math 數學卷，這個年級沒有就不顯示
+function renderMidEntry(kind) {
+  if (typeof MID_PAPERS === "undefined") return null;
+  const ps = Object.values(MID_PAPERS).filter(P => P.grade === profileGrade(getProfile()) && (kind === "math" ? P.math : !P.math));
+  if (!ps.length) return null;
+  return el("button", { class: "tp-home mid-home", onclick: () => navigate("#/midterm") },
+    el("span", { class: "tp-home__icon mid-home__icon" }, "📄"),
+    el("span", { class: "tp-home__text" }, t("期中考複習卷（老師的考卷）"),
+      el("span", { class: "tp-home__sub" }, t(ps.map(P => P.title).join("、")))),
+    el("span", { class: "tp-home__go" }, "▶"));
 }
 
 // === 📝 期中考複習（#/midterm）：把各科的模擬考集中在一頁，首頁的期中考提醒卡會開這裡 ===

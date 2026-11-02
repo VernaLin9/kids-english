@@ -2725,3 +2725,5 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .zh-v .zh-note__line--right { text-align: end; }
 .zh-v .mp-sent, .zh-v .zh-sent { writing-mode: vertical-rl; flex-wrap: wrap; align-items: center; align-content: center; justify-content: flex-start; max-height: min(62vh, 420px); margin-left: auto; margin-right: auto; }
 .zh-v :is(.mp-sent, .zh-sent) :is(.zh-pair, .mp-tgt, .mp-oth, .bopo-word, button, .zh-sent__emoji, .zh-sent__blank) { writing-mode: horizontal-tb; }
+.mid-home { border-color: #e0a100; background: #fffbea; }
+.mid-home__icon { font-size: 30px; background: #fff3c4; }
