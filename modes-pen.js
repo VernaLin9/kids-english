@@ -237,7 +237,8 @@ function penSyl(g) {
   return { el: node, read };
 }
 // 寫一個詞的注音（聽寫、看圖寫注音、寫出國字的注音）；全部的字都有寫才算作答
-function penBopo(bopo, pick) {
+// vertical：照紙本直排，一個詞的字由上往下排（聽寫格子）
+function penBopo(bopo, pick, vertical = false) {
   const exp = bopo.trim().split(/\s+/);
   const readBox = penReadEl();
   const update = () => {
@@ -247,8 +248,8 @@ function penBopo(bopo, pick) {
   };
   const g = penGroup(update);
   const syls = exp.map(() => penSyl(g));
-  return el("div", { class: "pen-ans" }, el("div", { class: "m-hint" }, t("一個字寫一行：注音由上往下寫，二三四聲寫在右邊，輕聲寫在上面，一聲不用寫")),
-    el("div", { class: "pen-row" }, syls.map(s => s.el)), readBox, g.tools());
+  return el("div", { class: `pen-ans${vertical ? " pen-ans--v" : ""}` }, el("div", { class: "m-hint" }, t(vertical ? "字由上往下寫：注音直直寫，二三四聲寫在右邊，輕聲寫在上面，一聲不用寫" : "一個字寫一行：注音由上往下寫，二三四聲寫在右邊，輕聲寫在上面，一聲不用寫")),
+    el("div", { class: `pen-row${vertical ? " pen-row--v" : ""}` }, syls.map(s => s.el)), readBox, g.tools());
 }
 // 寫一個注音符號（注音大會考：把蓋住的注音寫出來）
 function penSymbol(answer, pick, set = PEN_SYMS) {

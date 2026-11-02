@@ -7,7 +7,7 @@
 // 第六大題第 6 題（青蛙在狂歡會時表演什麼節目）：解答照片沒寫，弟弟批改過的考卷（11/2 家長上傳）老師寫 ③ 大合唱
 // school：弟弟 11/1 在學校寫錯的題目 id（照批改過的考卷：聽寫 6、造詞 2、填入 4、看圖填字 3）→ #/midpaper/g1zh?mode=school
 const MID_G1_ZH = {
-  id: "g1zh", grade: "g1", title: "注音符號總評量練習卷", sub: "課照 國語期中複習卷（11/1 複習日）", percent: true,
+  id: "g1zh", grade: "g1", title: "注音符號總評量練習卷", sub: "課照 國語期中複習卷（11/1 複習日）", percent: true, vertical: true, // vertical：題目照紙本直排
   school: { label: "11/1學校考卷寫錯的", ids: ["一-0", "一-2", "一-4", "一-5", "一-8", "一-9", "二-1", "二-2", "三-0", "三-1", "三-3", "三-4", "五-1", "五-2", "五-3"] },
   sections: [
     { no: "一", name: "聽寫", pts: 3, qs: [
@@ -56,9 +56,12 @@ const MID_PAPERS = { g1zh: MID_G1_ZH };
 
 // 注音一句話（原卷只有注音）：空白分開；（　）、□ 畫成空格
 const mpSylRe = /^[ㄅ-ㄩ]+[ˊˇˋ˙]?$/;
-function mpBopoLine(line) {
-  return el("div", { class: "mp-line" }, line.split(/\s+/).filter(Boolean).map(tok =>
-    tok === "（　）" ? el("span", { class: "mp-blank" }, "（　）") : tok === "□" ? el("span", { class: "mp-box" }) : mpSylRe.test(tok) ? bopoColEl(tok) : el("span", { class: "mp-punct" }, tok)));
+// vertical：照紙本考卷直排（由上往下、一行一行從右往左）
+function mpBopoLine(line, vertical = false) {
+  const VF = { "（": "︵", "）": "︶", "：": "︰" }; // 直排用直的括號、冒號
+  return el("div", { class: `mp-line${vertical ? " mp-line--v" : ""}` }, line.split(/\s+/).filter(Boolean).map(tok =>
+    tok === "（　）" ? (vertical ? el("span", { class: "mp-blank mp-blank--v" }, el("span", {}, "︵"), el("span", { class: "mp-blank__gap" }), el("span", {}, "︶")) : el("span", { class: "mp-blank" }, "（　）")) :
+    vertical && VF[tok] ? el("span", { class: "mp-punct" }, VF[tok]) : tok === "□" ? el("span", { class: "mp-box" }) : mpSylRe.test(tok) ? bopoColEl(tok) : el("span", { class: "mp-punct" }, tok)));
 }
 const mpNorm = bopo => bopo.trim().split(/\s+/).map(s => { const tn = (s.match(/[ˊˇˋ˙]/) || [""])[0]; return s.replace(/[ˊˇˋ˙]/g, "") + tn; }).join(" ");
 
@@ -101,29 +104,32 @@ function mpSpell(bopo, onAnswer) {
 
 // 把卷子轉成 renderChoiceExam 的題目
 function mpQuestions(P, pen = false) {
+  const V = !!P.vertical;
   return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: sec.pts, qs: sec.qs.map(q => {
     if (q.kind === "spell") {
       const review = el("div", {}, q.emoji ? el("span", { class: "mp-emoji" }, q.emoji) : null, mpBopoLine(q.prompt));
       return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.emoji ? el("div", { class: "mp-emoji" }, q.emoji) : null,
-          mpBopoLine(q.emoji ? q.prompt : "（　） （　）"), el("div", { class: "m-hint" }, t(q.emoji ? `看圖，把注音${pen ? "寫" : "拼"}出來` : `按🔊聽，把聽到的詞${pen ? "寫" : "拼"}出來`))),
+          mpBopoLine(q.emoji ? q.prompt : V ? "□ □" : "（　） （　）", V), el("div", { class: "m-hint" }, t(q.emoji ? `看圖，把注音${pen ? "寫" : "拼"}出來` : `按🔊聽，把聽到的詞${pen ? "寫" : "拼"}出來`))),
         listen: !q.emoji, say: () => speakZh(q.emoji ? `這是${q.zh}` : q.zh), review, tip: `答案是「${q.bopo}」。一個字一個字慢慢念，先聽第一個聲音，再聽聲調。`,
-        mount: pen ? pick => penBopo(q.bopo, pick) : pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })), pen,
+        mount: pen ? pick => penBopo(q.bopo, pick, V) : pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })), pen,
         answerText: q.bopo, rec: ok => recordZh(`期中卷:${q.zh}`, ok) };
     }
     // 照紙本考卷的寫法（手寫的時候）：選擇題把號碼寫在前面的 ( ) 裡；填入題從括號裡的詞選一個，把注音寫在空格裡
     if (pen && q.paper === "num") {
       const opts = el("div", { class: "mp-popts" }, q.options.map((o, i) => el("span", { class: "mp-popt" }, el("span", { class: "mp-popt__no" }, "①②③④"[i]), bopoWordEl(o, { class: "bopo-word--sm" }))));
-      return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line), opts, el("div", { class: "m-hint" }, t("想一想哪一個對，把那個答案的號碼寫在下面的 (　) 裡"))),
+      // 直排：選項跟在題目後面同一行往下（跟紙本一樣）
+      const body = V ? mpBopoLine(`${q.line} ${q.options.map((o, i) => `${"①②③④"[i]} ${o}`).join(" ")}`, true) : el("div", {}, mpBopoLine(q.line), opts);
+      return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), body, el("div", { class: "m-hint" }, t("想一想哪一個對，把那個答案的號碼寫在下面的 (　) 裡"))),
         say: () => speakZh(q.say), review: el("div", {}, mpBopoLine(q.line), opts.cloneNode(true)), tip: `答案是${"①②③④"[q.answer]}。${q.tip}`, pen: true,
         mount: pick => penParenNum(q.answer + 1, pick), answerText: "①②③④"[q.answer], rec: ok => recordZh(`期中卷:${q.say}`, ok) };
     }
     if (pen && q.paper === "fill") {
-      const line = el("div", {}, mpBopoLine(q.line), el("div", { class: "mp-pchoice" }, t("（"), q.options.map((o, i) => [i ? t(" ／ ") : null, bopoWordEl(o, { class: "bopo-word--sm" })]).flat().filter(Boolean), t("）")));
+      const line = V ? mpBopoLine(`（ ${q.options.join(" ／ ")} ） ・ ${q.line}`, true) : el("div", {}, mpBopoLine(q.line), el("div", { class: "mp-pchoice" }, t("（"), q.options.map((o, i) => [i ? t(" ／ ") : null, bopoWordEl(o, { class: "bopo-word--sm" })]).flat().filter(Boolean), t("）")));
       return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), line, el("div", { class: "m-hint" }, t("括號裡選一個對的，把它的注音寫在下面的格子裡"))),
         say: () => speakZh(q.say), review: line.cloneNode(true), tip: q.tip, pen: true,
         mount: pick => penBopo(q.options[q.answer], pick), answerText: q.options[q.answer], rec: ok => recordZh(`期中卷:${q.say}`, ok) };
     }
-    return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line), el("div", { class: "m-hint" }, t(q.hint))),
+    return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line, V), el("div", { class: "m-hint" }, t(q.hint))),
       say: () => speakZh(q.say), review: mpBopoLine(q.line), tip: q.tip,
       options: (q.shuffle ? shuffle : x => x)(q.options.map((o, k) => ({ label: bopoWordEl(o, { class: "bopo-word--lg" }), text: o, ok: k === q.answer }))), rec: ok => recordZh(`期中卷:${q.say}`, ok) };
   }) }));
@@ -133,11 +139,13 @@ function mpQuestions(P, pen = false) {
 function mpFormatIntro() {
   const step = (no, text) => el("div", { class: "mp-how__step" }, el("span", { class: "mp-how__no" }, no), el("span", {}, t(text)),
     el("button", { class: "l-say__btn", "aria-label": "念給我聽", onclick: () => speakZh(text) }, "🔊"));
-  const ex1 = el("div", { class: "mp-how__ex" }, el("span", { class: "mp-how__paren" }, "(", el("b", {}, "3"), ")"), mpBopoLine("ㄅㄚˇ ㄉㄨㄟˋ ㄉㄜ˙ □ ㄑㄧˇ ㄌㄞˊ"),
-    el("div", { class: "mp-popts" }, ["ㄐㄧㄢ", "ㄑㄧㄢ", "ㄑㄩㄢ", "ㄒㄩㄢ"].map((o, i) => el("span", { class: `mp-popt${i === 2 ? " mp-popt--ok" : ""}` }, el("span", { class: "mp-popt__no" }, "①②③④"[i]), bopoWordEl(o, { class: "bopo-word--sm" })))));
-  const ex2 = el("div", { class: "mp-how__ex" }, mpBopoLine("ㄉㄨ ㄕˋ ㄌㄧˇ ㄉㄠˋ ㄔㄨˋ ㄕˋ （　） ㄌㄡˊ ㄉㄚˋ ㄒㄧㄚˋ"),
-    el("div", { class: "mp-pchoice" }, t("（"), bopoWordEl("ㄉㄠˋ", { class: "bopo-word--sm" }), t(" ／ "), bopoWordEl("ㄍㄠ", { class: "bopo-word--sm mp-popt--ok" }), t("）")),
-    el("div", { class: "mp-how__write" }, t("空格裡寫："), bopoWordEl("ㄍㄠ", { class: "bopo-word--lg" })));
+  // 範例照紙本直排：( 3 ) 寫在題目最上面，選項跟在題目後面往下
+  const ex1 = el("div", { class: "mp-how__ex" }, el("div", { class: "mp-how__vcol" },
+    el("span", { class: "mp-how__paren" }, "(", el("b", {}, "3"), ")"),
+    mpBopoLine("ㄅㄚˇ ㄉㄨㄟˋ ㄉㄜ˙ □ ㄑㄧˇ ㄌㄞˊ ： ① ㄐㄧㄢ ② ㄑㄧㄢ ③ ㄑㄩㄢ ④ ㄒㄩㄢ", true)),
+    el("div", { class: "m-hint" }, t("答案是③，所以在最上面的括號裡寫3")));
+  const ex2 = el("div", { class: "mp-how__ex" }, mpBopoLine("（ ㄉㄠˋ ／ ㄍㄠ ） ・ ㄉㄨ ㄕˋ ㄌㄧˇ ㄉㄠˋ ㄔㄨˋ ㄕˋ （　） ㄌㄡˊ ㄉㄚˋ ㄒㄧㄚˋ", true),
+    el("div", { class: "mp-how__write" }, t("ㄍㄠ（高）念起來才對，空格裡寫："), bopoWordEl("ㄍㄠ", { class: "bopo-word--lg" })));
   return el("div", { class: "mp-how" },
     el("div", { class: "section__title" }, t("☝️ 選擇題怎麼寫")),
     step("1", "先把題目念一遍。"), step("2", "把①②③④四個答案都念一遍。"), step("3", "想一想，哪一個放進題目裡最對。"),
