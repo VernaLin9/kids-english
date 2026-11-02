@@ -396,3 +396,67 @@ function penPopup(kind, set, onDone, answer) {
     el("div", { class: "pen-popup__btns" }, g.tools(), el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: close }, "✕"), done));
   document.body.appendChild(fsPadEl);
 }
+
+// =====================================================================
+// ✍️ 選好再描（家長：手寫辨識不準，大人寫也認不出來 → 改回用選的；選好以後照著淡淡的字描一次，練習寫工整，不算分）
+// 描的格子底下是淡淡的字，描到夠長才算描好（不判斷寫得對不對、好不好看）
+// =====================================================================
+const penInk = pad => pad.strokes.reduce((n, s) => n + s.reduce((m, p, i) => i ? m + Math.hypot(p.x - s[i - 1].x, p.y - s[i - 1].y) : 0, 0), 0);
+// units：注音一個字一格（"ㄍㄨㄛˊ"），國字一個字一格；kind＝"bopo"|"zh"；描好每一格就呼叫 onDone()
+function traceBox(units, kind, onDone) {
+  let done = false;
+  const status = el("div", { class: "trace-status" }, t("照著淡淡的字，一筆一筆描一次"));
+  const check = () => {
+    if (done) return;
+    if (cells.every(c => penInk(c.pad) >= c.need())) { done = true; status.replaceChildren(t("👍 描好了，可以按下一題")); status.classList.add("trace-status--ok"); onDone(); }
+  };
+  const cells = units.map(u => {
+    const pad = penPad("pen-pad--trace", check);
+    const n = kind === "zh" ? 1 : Math.max(1, splitSyl(u).symbols.length);
+    const guide = kind === "zh" ? el("span", { class: "trace-guide trace-guide--zh", "data-nobopo": "1" }, u) : el("span", { class: "trace-guide" }, bopoColEl(u));
+    const cell = el("div", { class: `trace-cell trace-cell--${kind}`, style: `--n: ${n + (/˙/.test(u) ? 0.7 : 0)}` }, guide, pad.el);
+    return { pad, cell, need: () => { const { w, h } = pad.size(); return kind === "zh" ? Math.max(w, h) * 1.2 : h * 0.55; } };
+  });
+  return el("div", { class: "trace" },
+    el("div", { class: "trace__title" }, t("✍️ 照著描一次（練習寫工整，不算分）")),
+    el("div", { class: "m-hint" }, t(kind === "zh" ? "筆順：先上後下、先左後右、先橫後豎，寫在格子中間" : "注音由上往下寫，每一筆從上面、從左邊開始，聲調寫在右上角")),
+    el("div", { class: `trace-row${penVertical() ? " trace-row--v" : ""}` }, cells.map(c => c.cell)),
+    status,
+    el("button", { class: "btn btn--ghost pen-tool", onclick: () => cells.forEach(c => c.pad.clear()) }, t("🧹 擦掉重描")));
+}
+// 四選一 → 選好的那個照著描（描好才算作答）；options：[{ label, text, ok, trace:[...] }]
+function pickTrace(options, kind, pick) {
+  const traceWrap = el("div", {});
+  const grid = el("div", { class: "zh-opts ex-opts" }, options.map(o => {
+    const b = el("button", { class: "zh-opt bp-opt ex-opt" }, o.label);
+    b.addEventListener("click", () => {
+      grid.querySelectorAll(".ex-opt").forEach(x => x.classList.toggle("bp-opt--on", x === b));
+      if (!o.trace) { traceWrap.replaceChildren(); return pick({ text: o.text, ok: o.ok }); } // 不用描的（聲調）選了就算
+      pick(null);
+      traceWrap.replaceChildren(traceBox(o.trace, kind, () => pick({ text: o.text, ok: o.ok })));
+    });
+    return b;
+  }));
+  return el("div", {}, grid, traceWrap);
+}
+// 點注音拼出來（mpSpell）→ 拼好的照著描
+function spellTrace(bopo, pick) {
+  const traceWrap = el("div", {});
+  const sp = mpSpell(bopo, ans => {
+    pick(null);
+    if (ans == null) return traceWrap.replaceChildren();
+    traceWrap.replaceChildren(traceBox(ans.split(" "), "bopo", () => pick({ text: ans, ok: mpNorm(ans) === mpNorm(bopo) })));
+  });
+  return el("div", {}, sp, traceWrap);
+}
+// 選擇題照紙本：點號碼，號碼放進 ( ) 裡（考卷上要用筆寫進去）
+function parenPick(answer, pick) {
+  const box = el("span", { class: "paren-pick__box", "data-nobopo": "1" }, "　");
+  const btns = [1, 2, 3, 4].map(n => {
+    const b = el("button", { class: "zh-opt bp-opt ex-opt paren-pick__btn", "data-nobopo": "1" }, "①②③④"[n - 1]);
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.toggle("bp-opt--on", x === b)); box.textContent = String(n); pick({ text: "①②③④"[n - 1], ok: n === answer }); });
+    return b;
+  });
+  return el("div", { class: "paren-pick" }, el("div", { class: "paren-pick__paren" }, "(", box, ")"),
+    el("div", { class: "m-hint" }, t("點答案的號碼，號碼會放進括號裡（考卷上要用筆寫進去）")), el("div", { class: "paren-pick__btns" }, btns));
+}

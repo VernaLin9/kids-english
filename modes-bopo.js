@@ -153,9 +153,9 @@ function bpQuestionHead(q, hint) {
     q.kind === "word" || q.kind === "weak" ? null : bpBlankWord(q),
     el("div", { class: "quiz-prompt__hint" }, t(hint || BP_KINDS[q.kind].hint)));
 }
-// 模擬考用手寫
-const BP_EXAM_NAME = { init: "寫聲母", final: "寫韻母", tone: "寫聲調", word: "聽寫注音" };
-const BP_EXAM_HINT = { init: "聽一聽，把蓋住的注音寫在格子裡", final: "聽一聽，把蓋住的注音寫在格子裡", tone: "聽一聽，把蓋住的聲調寫上去", word: "聽一聽，把整個詞的注音寫出來" };
+// 模擬考：選好照著描
+const BP_EXAM_NAME = { init: "聲母", final: "韻母", tone: "聲調", word: "聽詞選注音" };
+const BP_EXAM_HINT = { init: "聽一聽，選出蓋住的注音，再描一次", final: "聽一聽，選出蓋住的注音，再描一次", tone: "聽一聽，蓋住的是第幾聲？", word: "聽一聽，選出正確的注音，再描一次" };
 function bpTipOf(q, picked) {
   if (q.kind === "tone") return `這個字是${BP_TONE_NAME[q.answer]}。${BP_TONE_TIP}`;
   if (q.kind === "word") return "一個字一個字對：先聽第一個聲音，再看韻母，最後看聲調。";
@@ -294,8 +294,8 @@ function renderBopoExam() {
     const nextBtn = el("button", { class: "btn btn--accent btn--full btn--xl bp-next", disabled: true }, t(i === qs.length - 1 ? "✅ 交卷" : "下一題 ▶"));
     // 用手寫（像拿筆寫考卷）：蓋住的注音寫在格子裡、聲調寫在右邊、聽詞寫出整個詞的注音
     const pick = p => { picked = p; nextBtn.disabled = !p; };
-    const grid = q.kind === "init" || q.kind === "final" ? penSymbol(q.answer, pick)
-      : q.kind === "tone" ? penToneAns(bpSyls(q.w.bopo)[q.si], q.answer, pick) : penBopo(q.w.bopo, pick);
+    // 用選的，選好照著描一次（手寫辨識不準，家長要求改回；描的不算分）；聲調選了就算
+    const grid = pickTrace(q.options.map(o => ({ label: bpOptionNode(q, o), text: q.kind === "tone" ? BP_TONE_NAME[o] : o, ok: o === q.answer, trace: q.kind === "tone" ? null : bpSyls(o) })), "bopo", pick);
     nextBtn.addEventListener("click", () => {
       if (picked === null) return;
       answers[idx] = picked;
@@ -303,7 +303,7 @@ function renderBopoExam() {
     });
     const backBtn = idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 上一題（可以回去改）")) : null;
     views[idx] = el("div", {}, el("div", { class: "bp-sec" }, t(`第${q.sec}大題・${BP_EXAM_NAME[q.kind]}`)), bpQuestionHead(q, BP_EXAM_HINT[q.kind]), grid,
-      el("div", { class: "bp-next__hint" }, t("寫好了再按下一題（一定要寫）")), nextBtn, backBtn);
+      el("div", { class: "bp-next__hint" }, t(q.kind === "tone" ? "選好了再按下一題" : "選好、描好再按下一題（描的不算分）")), nextBtn, backBtn);
     body.replaceChildren(views[idx]);
     setTimeout(() => speakZh(q.w.zh), 250);
   };

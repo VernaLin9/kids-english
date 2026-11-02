@@ -377,8 +377,7 @@ function mountMath2Q(q, container, onDone, onWrong, exam = false) {
         return b;
       })));
     } else if (s.type === "num") {
-      // 模擬小考：答案用手寫（像拿筆寫考卷）
-      const pad = exam ? penNumSubmit(s.answer, v => { if (v === s.answer) pass(); else fail(); }) : numPad((v, reset) => {
+      const pad = numPad((v, reset) => {
         if (v === s.answer) { pad.flash(true); pass(); } else { pad.flash(false); fail(); setTimeout(reset, 600); }
       });
       stepWrap.replaceChildren(label || "", el("div", { class: "b2-num-row" }, s.unit ? el("span", { class: "b2-unit" }, t(`答：□ ${s.unit}`)) : null), pad);

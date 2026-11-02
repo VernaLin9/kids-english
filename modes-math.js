@@ -313,7 +313,7 @@ function renderChoiceExam(cfg) {
     const backBtn = !cfg.practice && idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 上一題（可以回去改）")) : null;
     const view = el("div", {}, el("div", { class: "bp-sec" }, t(`第${q.sec.no}大題・${q.sec.name}`)),
       el("div", { class: "c-qcard ex-q" }, q.prompt, el("button", { class: `icon-btn icon-btn--accent m-speak${q.listen ? " m-speak--listen" : ""}`, onclick: () => q.say(), "aria-label": q.listen ? "聽題目" : "念題目" }, "🔊")),
-      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.pen ? "寫好了再按（一定要寫）" : q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn, backBtn);
+      grid, hintBtn || "", fb, el("div", { class: "bp-next__hint" }, t(q.pen ? "選好、描好再按下一題（描的不算分）" : q.mount ? "拼好了再按（一定要作答）" : "選好了再按下一題（一定要選一個）")), nextBtn, backBtn);
     views[idx] = view;
     body.replaceChildren(view);
     if (typeof guard !== "undefined") { guard.shownAt = Date.now(); guard.wrongs = 0; }

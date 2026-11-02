@@ -232,26 +232,26 @@ function renderZh2Quiz(l) {
   });
 }
 
-// 📝 模擬小考：寫國字 10（手寫）、部首 5、筆畫 5（手寫數字），每題 5 分；選好按下一題、交卷才看分數，錯的列出怎麼記
+// 📝 模擬小考：選國字＋描寫 10、部首 5、筆畫 5，每題 5 分；選好按下一題、交卷才看分數，錯的列出怎麼記
 function renderZh2Exam(l) {
   const memo = c => (typeof ZH2_MNEMONIC !== "undefined" && ZH2_MNEMONIC[c.zh]) || `「${c.zh}」是${c.word}的${c.zh}`;
   const wrap = (c, q, review, tip) => ({ prompt: q.prompt, say: () => speakZh(q.say), review, tip,
     options: q.options.map(o => ({ label: o.label, ok: o.ok, text: o.label.textContent.replace(/[ㄅ-ㄩˊˇˋ˙]/g, "") })), rec: ok => recordZh(c.zh, ok) });
-  // 手寫（像拿筆寫考卷）：看注音寫國字（Google 手寫辨識）、筆畫數寫數字；部首照舊用選的
+  // 寫國字：選出國字，再照著描一次（手寫辨識不準，家長要求改回用選的；描的不算分）
   const writeQ = c => {
     const chars = [...(c.word || c.zh)], bs = (c.wordBopo || "").split(/\s+/), idx = chars.indexOf(c.zh);
     const line = idx < 0 ? el("div", { class: "mp-sent" }, el("span", { class: "mp-tgt" }, el("span", { class: "mp-tgt__q" }, "？"), bopoWordEl(c.bopo)))
       : el("div", { class: "mp-sent" }, chars.map((ch, i) => i === idx ? el("span", { class: "mp-tgt" }, el("span", { class: "mp-tgt__q" }, "？"), bopoWordEl(bs[i] || c.bopo)) : bs[i] ? rubyEl(ch, bs[i], "span") : t(ch)));
-    return { prompt: el("div", { class: "mp-q" }, line, el("div", { class: "m-hint" }, t("看注音，把「？」的國字寫在格子裡"))), say: () => speakZh(c.word || c.zh),
-      review: `${c.word}的「${c.zh}」`, tip: memo(c), pen: true, mount: pick => penHanzi(c.zh, pick), answerText: c.zh, rec: ok => recordZh(c.zh, ok) };
+    const pq = zh2PickQuestion(l, c);
+    return { prompt: el("div", { class: "mp-q" }, line, el("div", { class: "m-hint" }, t("看注音，選出「？」的國字，再照著描一次"))), say: () => speakZh(c.word || c.zh),
+      review: `${c.word}的「${c.zh}」`, tip: memo(c), pen: true, answerText: c.zh, rec: ok => recordZh(c.zh, ok),
+      mount: pick => pickTrace(pq.options.map(o => { const ch = o.label.textContent.replace(/[ㄅ-ㄩˊˇˋ˙\s]/g, ""); return { label: o.label, text: ch, ok: o.ok, trace: [...ch] }; }), "zh", pick) };
   };
-  const strokeQ = (c, kind) => { const q = zh2StrokeQuestion(l, c, kind), ans = kind === "extra" ? c.extra : c.strokes;
-    return { prompt: el("div", {}, q.prompt, q.sub ? el("div", { class: "m-hint" }, t(q.sub)) : null), say: () => speakZh(q.say), pen: true, mount: pick => penNum(ans, "畫", pick, 2), answerText: `${ans}畫`,
-      review: `「${c.zh}」${kind === "extra" ? "部首以外" : "總共"}幾畫`, tip: `「${c.zh}」總共${c.strokes}畫，部首「${c.radical}」以外${c.extra}畫。用手指一筆一筆寫，邊寫邊數。`, rec: ok => recordZh(c.zh, ok) }; };
+  const strokeQ = (c, kind) => wrap(c, zh2StrokeQuestion(l, c, kind), `「${c.zh}」${kind === "extra" ? "部首以外" : "總共"}幾畫`, `「${c.zh}」總共${c.strokes}畫，部首「${c.radical}」以外${c.extra}畫。用手指一筆一筆寫，邊寫邊數。`);
   const cs = shuffle(l.chars);
   const at = k => cs[k % cs.length];
   const sections = [
-    { no: "一", name: "寫國字", pts: 5, qs: Array.from({ length: 10 }, (_, k) => writeQ(at(k))) },
+    { no: "一", name: "選國字・描一描", pts: 5, qs: Array.from({ length: 10 }, (_, k) => writeQ(at(k))) },
     { no: "二", name: "部首", pts: 5, qs: Array.from({ length: 5 }, (_, k) => { const c = at(k + 10); return wrap(c, zh2RadicalQuestion(l, c), `「${c.zh}」的部首`, `「${c.zh}」的部首是「${radicalLabel(c.radical)}」。${memo(c)}`); }) },
     { no: "三", name: "筆畫數", pts: 5, qs: Array.from({ length: 5 }, (_, k) => strokeQ(at(k + 15), k % 2 ? "extra" : "total")) },
   ];
