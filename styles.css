@@ -1,19 +1,22 @@
 /* === Design tokens === */
 :root {
   --font-scale: 1;
-  --bg: #fff8f0;
-  --bg-soft: #fffdf7;
-  --ink: #2d2a4a;
-  --ink-soft: #5a567e;
-  --primary: #6b8cff;
-  --primary-soft: #cdd9ff;
-  --accent: #ff6fa3;
-  --accent-soft: #ffd6e7;
-  --success: #4ec9a8;
+  /* 🎨 閱讀配色（家長：適合小孩練習閱讀）：米白紙張底、深棕灰字（對比 13:1）、注音也用深色；按鈕顏色加深，白字對比都 ≥ 4.5:1 */
+  --bopo: #3f3a34;
+  --line: #e7dccb;
+  --bg: #faf6ee;
+  --bg-soft: #fffdf8;
+  --ink: #2a2622;
+  --ink-soft: #5b554d;
+  --primary: #3d5fc9;
+  --primary-soft: #d5defa;
+  --accent: #c2306b;
+  --accent-soft: #fbe1ec;
+  --success: #1c7d58;
   --success-soft: #c8f0e3;
-  --warn: #ff9f43;
+  --warn: #b35900;
   --warn-soft: #ffe2c2;
-  --danger: #ff6b6b;
+  --danger: #c0392b;
   --danger-soft: #ffd1d1;
   --candy-1: #ffd6e0;
   --candy-2: #cdeafe;
@@ -2727,3 +2730,24 @@ body { background: radial-gradient(circle at 10% 0%, #ffe9f2 0, transparent 35%)
 .zh-v :is(.mp-sent, .zh-sent) :is(.zh-pair, .mp-tgt, .mp-oth, .bopo-word, button, .zh-sent__emoji, .zh-sent__blank) { writing-mode: horizontal-tb; }
 .mid-home { border-color: #e0a100; background: #fffbea; }
 .mid-home__icon { font-size: 30px; background: #fff3c4; }
+
+/* === 🎨 閱讀配色（家長：適合小孩練習閱讀）===
+   原則：底色像紙（米白，不刺眼）、字用深棕灰（不是純黑，對比 13:1）、注音跟字一樣深；
+   文字底下不放漸層和花紋；鮮豔顏色只留給主要按鈕，白字對比都 ≥ 4.5:1（WCAG AA） */
+body { background: var(--bg); background-attachment: scroll; color: var(--ink); }
+.zh-bopo { color: var(--bopo); }
+.header { background: rgba(250, 246, 238, 0.95); box-shadow: 0 1px 0 var(--line); }
+.hero { background: #fff; border: 2px solid var(--line); box-shadow: 0 3px 0 rgba(0,0,0,0.04); }
+.hero::after { display: none; }
+.subject-tab--en.subject-tab--on { background: var(--primary); }
+.subject-tab--zh.subject-tab--on { background: var(--accent); }
+.subject-tab--math.subject-tab--on { background: var(--success); }
+.subject-tab--en.subject-tab--on::after { border-top-color: var(--primary); } .subject-tab--zh.subject-tab--on::after { border-top-color: var(--accent); } .subject-tab--math.subject-tab--on::after { border-top-color: var(--success); }
+.btn--accent { box-shadow: 0 5px 0 #8f2150; }
+.btn--accent:active { box-shadow: 0 2px 0 #8f2150; }
+.btn--accent:disabled, .btn:disabled { opacity: 0.45; }
+.g-home { background: #fff4e0; border: 2px solid #f0d6a8; box-shadow: 0 3px 0 rgba(0,0,0,0.04); }
+.tp-home { border-width: 2px; }
+.c-qcard, .m-card, .zh-card, .write-card, .quiz-prompt, .zh-text__line { background: #fff; border-color: var(--line); }
+.zh-opt, .quiz-option, .mode-btn { background: #fff; color: var(--ink); }
+.m-hint, .progress-note, .quiz-prompt__hint { color: var(--ink-soft); }
