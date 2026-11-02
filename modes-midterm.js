@@ -97,14 +97,14 @@ function mpSpell(bopo, onAnswer) {
 }
 
 // 把卷子轉成 renderChoiceExam 的題目
-function mpQuestions(P) {
+function mpQuestions(P, pen = false) {
   return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: sec.pts, qs: sec.qs.map(q => {
     if (q.kind === "spell") {
       const review = el("div", {}, q.emoji ? el("span", { class: "mp-emoji" }, q.emoji) : null, mpBopoLine(q.prompt));
       return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.emoji ? el("div", { class: "mp-emoji" }, q.emoji) : null,
-          mpBopoLine(q.emoji ? q.prompt : "（　） （　）"), el("div", { class: "m-hint" }, t(q.emoji ? "看圖，把注音拼出來" : "按🔊聽，把聽到的詞拼出來"))),
+          mpBopoLine(q.emoji ? q.prompt : "（　） （　）"), el("div", { class: "m-hint" }, t(q.emoji ? `看圖，把注音${pen ? "寫" : "拼"}出來` : `按🔊聽，把聽到的詞${pen ? "寫" : "拼"}出來`))),
         listen: !q.emoji, say: () => speakZh(q.emoji ? `這是${q.zh}` : q.zh), review, tip: `答案是「${q.bopo}」。一個字一個字慢慢念，先聽第一個聲音，再聽聲調。`,
-        mount: pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })),
+        mount: pen ? pick => penBopo(q.bopo, pick) : pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })), pen,
         answerText: q.bopo, rec: ok => recordZh(`期中卷:${q.zh}`, ok) };
     }
     return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line), el("div", { class: "m-hint" }, t(q.hint))),
@@ -126,7 +126,8 @@ function renderMidPaper(id, mode) {
   const P = MID_PAPERS[id];
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
   const exam = mode === "exam", book = mode === "book";
-  let sections = P.math ? mpMathQuestions(P) : P.g2 ? mpG2Questions(P) : mpQuestions(P);
+  // 模擬考：要寫的題目用手寫（像拿筆寫考卷）；練習、錯題本用點的比較快
+  let sections = P.math ? mpMathQuestions(P, exam) : P.g2 ? mpG2Questions(P, exam) : mpQuestions(P, exam);
   sections.forEach(sec => sec.qs.forEach((q, k) => { q.id = `${sec.no}-${k}`; }));
   if (book) {
     const ids = new Set(mpBook(id));
@@ -193,7 +194,7 @@ function mpOpen(q, pick) {
     el("button", { class: "btn btn--ghost btn--full", onclick: e => { e.currentTarget.replaceWith(el("div", { class: "mp-open__ans" }, t(`參考答案：${q.sample}`))); pick({ text: "看過了", ok: true }); } }, t("💡 想好了，看參考答案")));
   return box;
 }
-function mpG2Questions(P) {
+function mpG2Questions(P, pen = false) {
   const pool = P.sections.flatMap(s => s.qs).filter(q => q.k === "zhw").map(q => q.ans);
   return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: 1, qs: sec.qs.map((q, k) => {
     const no = el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n || k + 1}`));
@@ -201,15 +202,18 @@ function mpG2Questions(P) {
       const opts = [q.ans, ...mpWordDistractors(q.ans, shuffle(pool.filter(a => a.length === q.ans.length && a !== q.ans)).slice(0, 2))];
       while (opts.length < 4) { const x = shuffle(pool.filter(a => a.length === q.ans.length && !opts.includes(a)))[0]; if (!x) break; opts.push(x); }
       const memo = q.ans.length === 1 && typeof ZH2_MNEMONIC !== "undefined" && ZH2_MNEMONIC[q.ans] ? `。${ZH2_MNEMONIC[q.ans]}` : "";
+      if (pen) return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "zhw"), el("div", { class: "m-hint" }, t("看注音，把「？」的國字寫在格子裡"))),
+        say: () => speakZh(q.full), review: mpSegsEl(q.segs, "zhw"), tip: `${q.full}（「${q.ans}」）${memo}`, pen: true,
+        mount: pick => penHanzi(q.ans, pick), answerText: q.ans, rec: ok => recordZh(`期中卷:${q.ans}`, ok) };
       return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "zhw"), el("div", { class: "m-hint" }, t("看注音，選出「？」要寫的國字"))),
         say: () => speakZh(q.full), review: mpSegsEl(q.segs, "zhw"), tip: `${q.full}（「${q.ans}」）${memo}`,
         options: shuffle(opts).map(o => ({ label: el("span", { class: "c-opt__zh", "data-nobopo": "1" }, o), text: o, ok: o === q.ans })), rec: ok => recordZh(`期中卷:${q.ans}`, ok) };
     }
     if (q.k === "bopow") {
       const ch = q.segs.find(s => s[0] === "t")[1];
-      return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "bopow"), el("div", { class: "m-hint" }, t("看國字，把「？」的注音拼出來"))),
-        say: () => speakZh("看國字，把它的注音拼出來"), review: mpSegsEl(q.segs, "bopow"), tip: `「${ch}」念「${q.ans}」，${q.full}`,
-        mount: pick => mpSpell(q.ans, a => pick(a == null ? null : { text: a, ok: mpNorm(a) === mpNorm(q.ans) })), answerText: q.ans, rec: ok => recordZh(`期中卷:${ch}`, ok) };
+      return { prompt: el("div", { class: "mp-q" }, no, mpSegsEl(q.segs, "bopow"), el("div", { class: "m-hint" }, t(`看國字，把「？」的注音${pen ? "寫" : "拼"}出來`))),
+        say: () => speakZh(`看國字，把它的注音${pen ? "寫" : "拼"}出來`), review: mpSegsEl(q.segs, "bopow"), tip: `「${ch}」念「${q.ans}」，${q.full}`, pen,
+        mount: pen ? pick => penBopo(q.ans, pick) : pick => mpSpell(q.ans, a => pick(a == null ? null : { text: a, ok: mpNorm(a) === mpNorm(q.ans) })), answerText: q.ans, rec: ok => recordZh(`期中卷:${ch}`, ok) };
     }
     if (q.k === "punct") return { prompt: el("div", { class: "mp-q" }, no, el("div", { class: "m-hint" }, t("填入標點符號"))), say: () => speakZh(q.text),
       review: t(q.text), tip: `答案：${q.ans.join(" ")}。說話的話用「」，問句用？，驚訝或高興用！，句子說完用。`,
@@ -276,11 +280,11 @@ const MID_G2_MATH = { id: "g2m2", grade: "g2", g2: true, math: true, title: "數
   ] },
 ] };
 MID_PAPERS.g2m2 = MID_G2_MATH;
-function mpMathQuestions(P) {
+function mpMathQuestions(P, pen = false) {
   return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: 1, qs: sec.qs.map(q => {
     const prompt = el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.vis ? q.vis() : null, el("div", { class: "b2-text mp-mtext" }, t(q.text)));
     const base = { prompt, say: () => speakZh(q.text.replace(/◯/g, "，填大於、小於還是等於")), review: t(q.text), tip: q.tip, rec: ok => recordMath("midpaper", ok) };
-    if (q.num != null) return { ...base, mount: pick => mpNumInput(q.num, q.unit, pick), answerText: `${q.num}${q.unit || ""}` };
+    if (q.num != null) return { ...base, pen, mount: pen ? pick => penNum(q.num, q.unit, pick, 3) : pick => mpNumInput(q.num, q.unit, pick), answerText: `${q.num}${q.unit || ""}` };
     return { ...base, options: q.opts.map((o, i) => ({ label: /[一-鿿]/.test(o) ? t(o) : el("span", { class: "ex-en", "data-nobopo": "1" }, o), text: o, ok: i === q.ans })) };
   }) }));
 }
