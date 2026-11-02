@@ -182,6 +182,7 @@ function bopoVariants(bopo) {
 function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
+  const mid = renderMidEntry("zh"); if (mid) wrap.appendChild(mid); // 📄 期中考複習卷（老師的考卷）
   if (ZH.lessons.some(l => l.kind !== "chars")) wrap.append(renderBopoEntry(), renderToneDrillEntry()); // 一年級：注音總複習（期中考考全部注音）、聲調位置特訓
   ZH.lessons.forEach(l => {
     const items = l.kind === "chars" ? l.chars : l.words;
