@@ -29,7 +29,7 @@ const MID_G1_ZH = {
       { line: "ㄉㄨ ㄕˋ ㄌㄧˇ ㄉㄠˋ ㄔㄨˋ ㄕˋ （　） ㄌㄡˊ ㄉㄚˋ ㄒㄧㄚˋ", say: "都市裡到處是什麼樓大廈？", options: ["ㄉㄠˋ", "ㄍㄠ"], answer: 1, tip: "都市裡到處是高樓大廈：很高的樓。ㄍㄠ是高，ㄉㄠˋ是到。" },
       { line: "ㄨ （　） （　） ㄓㄜ˙ ㄊㄨˋ ㄗ˙ ㄆㄠˇ", say: "烏什麼什麼著兔子跑？", options: ["ㄍㄨㄟ ㄓㄨㄟ", "ㄓㄨㄟ ㄍㄨㄟ"], answer: 0, tip: "烏龜追著兔子跑：先是烏龜的「ㄍㄨㄟ」，再是追的「ㄓㄨㄟ」。" },
       { line: "ㄨㄛˇ ㄇㄣ˙ ㄒㄧˇ ㄏㄨㄢ （　） ㄐㄧㄝ", say: "我們喜歡什麼街？", options: ["ㄏㄨㄤˋ", "ㄍㄨㄤˋ"], answer: 1, tip: "我們喜歡逛街：ㄍㄨㄤˋ ㄐㄧㄝ。ㄏㄨㄤˋ是搖晃的晃。" },
-    ].map((x, k) => ({ kind: "choice", n: k + 1, hint: "選出適合的字或詞", ...x })) },
+    ].map((x, k) => ({ kind: "choice", paper: "fill", n: k + 1, hint: "選出適合的字或詞", ...x })) },
     { no: "四", name: "連連看", pts: 2, qs: [
       { line: "ㄈㄟ ㄐㄧ ㄏㄣˇ （　）", say: "飛機很什麼？", options: ["ㄎㄜˇ ㄞˋ", "ㄕㄤˋ ㄒㄩㄝˊ", "ㄉㄚˋ"], answer: 2, tip: "飛機很大。" },
       { line: "ㄊㄨˋ ㄗ˙ ㄏㄣˇ （　）", say: "兔子很什麼？", options: ["ㄎㄜˇ ㄞˋ", "ㄕㄤˋ ㄒㄩㄝˊ", "ㄉㄚˋ"], answer: 0, tip: "兔子很可愛。" },
@@ -49,7 +49,7 @@ const MID_G1_ZH = {
       { line: "ㄏㄜˊ ㄌㄧˊ ㄇㄤˊ ㄓㄜ˙ □ □", say: "河狸忙著什麼？", options: ["ㄗㄨˇ ㄔㄜ", "ㄓㄨˊ ㄔㄠˊ", "ㄓㄠˋ ㄌㄨˋ", "ㄇㄧˋ ㄗㄠˇ"], answer: 1, tip: "河狸忙著築巢：ㄓㄨˊ ㄔㄠˊ，蓋自己的家。" },
       { line: "ㄑㄧㄥ ㄨㄚ ㄗㄞˋ ㄎㄨㄤˊ ㄏㄨㄢ ㄏㄨㄟˋ ㄕˊ ㄅㄧㄠˇ ㄧㄢˇ ㄕㄣˊ ˙ㄇㄜ ㄐㄧㄝˊ ㄇㄨˋ ？", say: "青蛙在狂歡會時表演什麼節目？", options: ["ㄅㄧㄢˋ ㄇㄛˊ ㄕㄨˋ", "ㄍㄨㄣˇ ㄉㄚˋ ㄑㄧㄡˊ", "ㄉㄚˋ ㄏㄜˊ ㄔㄤˋ", "ㄑㄧㄠ ㄉㄚˋ ㄍㄨˇ"], answer: 2, tip: "青蛙在狂歡會表演大合唱：ㄉㄚˋ ㄏㄜˊ ㄔㄤˋ，大家一起唱歌。" },
       { line: "ㄒㄧㄚˋ ㄇㄧㄢˋ ㄋㄚˇ ㄧˊ ㄍㄜ˙ ㄕˋ ㄑㄧㄥ ㄨㄚ ㄔㄤˋ ㄍㄜ ㄉㄜ˙ ㄕㄥ ㄧㄣ ？", say: "下面哪一個是青蛙唱歌的聲音？", options: ["ㄍㄨㄤ ㄍㄨㄤ ㄍㄨㄤ", "ㄏㄨㄤ ㄏㄨㄤ ㄏㄨㄤ", "ㄍㄨㄛ ㄍㄨㄛ ㄍㄨㄛ", "ㄎㄨㄤ ㄎㄨㄤ ㄎㄨㄤ"], answer: 2, tip: "青蛙唱歌：ㄍㄨㄛ ㄍㄨㄛ ㄍㄨㄛ（嘓嘓嘓）。" },
-    ].map((x, k) => ({ kind: "choice", n: k + 1, hint: "選出對的答案", ...x })) },
+    ].map((x, k) => ({ kind: "choice", paper: "num", n: k + 1, hint: "選出對的答案", ...x })) },
   ],
 };
 const MID_PAPERS = { g1zh: MID_G1_ZH };
@@ -110,10 +110,41 @@ function mpQuestions(P, pen = false) {
         mount: pen ? pick => penBopo(q.bopo, pick) : pick => mpSpell(q.bopo, ans => pick(ans == null ? null : { text: ans, ok: mpNorm(ans) === mpNorm(q.bopo) })), pen,
         answerText: q.bopo, rec: ok => recordZh(`期中卷:${q.zh}`, ok) };
     }
+    // 照紙本考卷的寫法（手寫的時候）：選擇題把號碼寫在前面的 ( ) 裡；填入題從括號裡的詞選一個，把注音寫在空格裡
+    if (pen && q.paper === "num") {
+      const opts = el("div", { class: "mp-popts" }, q.options.map((o, i) => el("span", { class: "mp-popt" }, el("span", { class: "mp-popt__no" }, "①②③④"[i]), bopoWordEl(o, { class: "bopo-word--sm" }))));
+      return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line), opts, el("div", { class: "m-hint" }, t("想一想哪一個對，把那個答案的號碼寫在下面的 (　) 裡"))),
+        say: () => speakZh(q.say), review: el("div", {}, mpBopoLine(q.line), opts.cloneNode(true)), tip: `答案是${"①②③④"[q.answer]}。${q.tip}`, pen: true,
+        mount: pick => penParenNum(q.answer + 1, pick), answerText: "①②③④"[q.answer], rec: ok => recordZh(`期中卷:${q.say}`, ok) };
+    }
+    if (pen && q.paper === "fill") {
+      const line = el("div", {}, mpBopoLine(q.line), el("div", { class: "mp-pchoice" }, t("（"), q.options.map((o, i) => [i ? t(" ／ ") : null, bopoWordEl(o, { class: "bopo-word--sm" })]).flat().filter(Boolean), t("）")));
+      return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), line, el("div", { class: "m-hint" }, t("括號裡選一個對的，把它的注音寫在下面的格子裡"))),
+        say: () => speakZh(q.say), review: line.cloneNode(true), tip: q.tip, pen: true,
+        mount: pick => penBopo(q.options[q.answer], pick), answerText: q.options[q.answer], rec: ok => recordZh(`期中卷:${q.say}`, ok) };
+    }
     return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), mpBopoLine(q.line), el("div", { class: "m-hint" }, t(q.hint))),
       say: () => speakZh(q.say), review: mpBopoLine(q.line), tip: q.tip,
       options: (q.shuffle ? shuffle : x => x)(q.options.map((o, k) => ({ label: bopoWordEl(o, { class: "bopo-word--lg" }), text: o, ok: k === q.answer }))), rec: ok => recordZh(`期中卷:${q.say}`, ok) };
   }) }));
+}
+
+// ✏️ 考卷題目怎麼寫（家長：弟弟不知道選擇題要把號碼寫進 ( )，在答案上畫圈、括號空白；填入題也空白）
+function mpFormatIntro() {
+  const step = (no, text) => el("div", { class: "mp-how__step" }, el("span", { class: "mp-how__no" }, no), el("span", {}, t(text)),
+    el("button", { class: "l-say__btn", "aria-label": "念給我聽", onclick: () => speakZh(text) }, "🔊"));
+  const ex1 = el("div", { class: "mp-how__ex" }, el("span", { class: "mp-how__paren" }, "(", el("b", {}, "3"), ")"), mpBopoLine("ㄅㄚˇ ㄉㄨㄟˋ ㄉㄜ˙ □ ㄑㄧˇ ㄌㄞˊ"),
+    el("div", { class: "mp-popts" }, ["ㄐㄧㄢ", "ㄑㄧㄢ", "ㄑㄩㄢ", "ㄒㄩㄢ"].map((o, i) => el("span", { class: `mp-popt${i === 2 ? " mp-popt--ok" : ""}` }, el("span", { class: "mp-popt__no" }, "①②③④"[i]), bopoWordEl(o, { class: "bopo-word--sm" })))));
+  const ex2 = el("div", { class: "mp-how__ex" }, mpBopoLine("ㄉㄨ ㄕˋ ㄌㄧˇ ㄉㄠˋ ㄔㄨˋ ㄕˋ （　） ㄌㄡˊ ㄉㄚˋ ㄒㄧㄚˋ"),
+    el("div", { class: "mp-pchoice" }, t("（"), bopoWordEl("ㄉㄠˋ", { class: "bopo-word--sm" }), t(" ／ "), bopoWordEl("ㄍㄠ", { class: "bopo-word--sm mp-popt--ok" }), t("）")),
+    el("div", { class: "mp-how__write" }, t("空格裡寫："), bopoWordEl("ㄍㄠ", { class: "bopo-word--lg" })));
+  return el("div", { class: "mp-how" },
+    el("div", { class: "section__title" }, t("☝️ 選擇題怎麼寫")),
+    step("1", "先把題目念一遍。"), step("2", "把①②③④四個答案都念一遍。"), step("3", "想一想，哪一個放進題目裡最對。"),
+    step("4", "把那個答案前面的號碼，寫在題目前面的括號裡。不是在答案上畫圈喔！"), ex1,
+    el("div", { class: "section__title", style: "margin-top: 14px;" }, t("✌️ 填入適合的字或詞")),
+    step("1", "括號裡有兩個詞，兩個都放進句子念念看。"), step("2", "選念起來對的那一個，把它的注音寫在空格裡。"), ex2,
+    el("div", { class: "mp-how__check" }, t("✅ 寫完檢查：每個括號、每個空格都有寫嗎？")));
 }
 
 // 📒 錯題本：profile.wrongBook["mid:<id>"]＝錯過的題目 id（大題-第幾題）；之後答對了就拿掉
@@ -128,18 +159,19 @@ function mpBookSave(id, qs, picks) {
 function renderMidPaper(id, mode) {
   const P = MID_PAPERS[id];
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
-  const exam = mode === "exam", book = mode === "book", school = mode === "school" && !!P.school;
+  const exam = mode === "exam", book = mode === "book", school = mode === "school" && !!P.school, format = mode === "format" && !P.g2;
   // 模擬考：要寫的題目用手寫（像拿筆寫考卷）；練習、錯題本用點的比較快；學校考卷寫錯的（多半是聽寫）用手寫再練
-  const pen = exam || school;
+  const pen = exam || school || format;
   let sections = P.math ? mpMathQuestions(P, pen) : P.g2 ? mpG2Questions(P, pen) : mpQuestions(P, pen);
   sections.forEach(sec => sec.qs.forEach((q, k) => { q.id = `${sec.no}-${k}`; }));
+  if (format) sections = sections.filter(sec => sec.no === "三" || sec.no === "六");
   if (book || school) {
     const ids = new Set(book ? mpBook(id) : P.school.ids);
     sections = sections.map(sec => ({ ...sec, qs: sec.qs.filter(q => ids.has(q.id)) })).filter(sec => sec.qs.length);
     if (!sections.length) return renderEmpty("#/midterm", "錯題本是空的，錯的題目都會了 🌟");
   }
-  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : school ? `🏫 ${P.school.label}・再練` : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
-    practice: !exam, review: book || school, percent: !!P.percent && !book && !school, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : school ? "?mode=school" : ""}`,
+  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : school ? `🏫 ${P.school.label}・再練` : format ? "✏️ 考卷題目怎麼寫" : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
+    practice: !exam, review: book || school || format, intro: format ? mpFormatIntro() : null, percent: !!P.percent && !book && !school, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : school ? "?mode=school" : format ? "?mode=format" : ""}`,
     sections, onFinish: ({ qs, picks }) => mpBookSave(id, qs, picks) });
 }
 
