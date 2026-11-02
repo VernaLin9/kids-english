@@ -1121,3 +1121,20 @@ function renderListPage(setKey) {
   setInterval(check, 3 * 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
 })();
+
+// 📴 離線版：註冊 sw.js（連網打開一次以後，沒網路也能用；家長模式看得到有沒有存好）
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+// 離線版存好了沒：index.html 和全部 JS／CSS 都在平板裡才算
+async function offlineStatus() {
+  if (!("serviceWorker" in navigator) || !window.caches) return "這台平板的瀏覽器不支援離線版";
+  try {
+    const cache = await caches.open("kids-english-offline");
+    const need = [...document.querySelectorAll('script[src*="?v="], link[rel="stylesheet"][href*="?v="]')].map(x => new URL(x.getAttribute("src") || x.getAttribute("href"), location.href).href);
+    const have = await Promise.all(need.map(u => cache.match(u)));
+    const page = await cache.match(new URL("index.html", location.href).href);
+    const n = have.filter(Boolean).length;
+    return page && n === need.length ? "✅ 已經存在這台平板，沒有網路也能用" : `⏳ 還在存（${n}/${need.length}），連著網路開著網頁一下下`;
+  } catch (e) { return "這台平板的瀏覽器不支援離線版"; }
+}

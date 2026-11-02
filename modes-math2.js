@@ -465,14 +465,17 @@ function renderMath2Exam(u) {
   const makers = [...book, ...gens];
   const results = [];
   let i = 0;
+  const made = []; // 回上一題：同一題重新作答（題目、數字不變），答完回到原本寫到的那一題
+  let far = 0;
   const ask = () => {
     if (i >= makers.length) return finish();
-    const q = makers[i]();
+    const idx = i, q = made[idx] = made[idx] || makers[idx]();
     progressLabel.textContent = `第${i + 1}/${makers.length}題`;
     const box = el("div", {});
+    const backBtn = idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 回上一題重新作答")) : null;
     body.replaceChildren(el("div", { class: "bp-sec" }, t(q.sec === "一" && book.length ? "第一大題・課本原題" : `第${q.sec}大題・練習題`)), box,
-      el("div", { class: "bp-next__hint" }, t("想好再作答，答完自動換下一題")));
-    mountMath2Q(q, box, missed => { results.push({ q, ok: !missed }); i++; setTimeout(() => { ask(); window.scrollTo(0, 0); }, 250); }, null, true);
+      el("div", { class: "bp-next__hint" }, t("想好再作答，答完自動換下一題")), backBtn || "");
+    mountMath2Q(q, box, missed => { results[idx] = { q, ok: !missed }; far = Math.max(far, idx + 1); i = far; setTimeout(() => { ask(); window.scrollTo(0, 0); }, 250); }, null, true);
   };
   const finish = () => {
     progressLabel.textContent = "交卷了";
