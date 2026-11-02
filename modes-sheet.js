@@ -85,7 +85,6 @@ function fsOpenPad(onPick) {
 // exam＝模擬小考：先按「開始考試」才出題、圖的順序打亂（考觀念不是背位置）、交卷後記分數
 function renderFillSheet(u, exam = false) {
   const S = exam ? fsShuffled(FILL_SHEETS[u.id]) : FILL_SHEETS[u.id];
-  fsPen = exam;
   const root = el("div", {});
   const header = renderHeader(exam ? "📝 模擬小考" : "📄 小A本原題", { back: `#/math/${u.id}` });
   root.appendChild(header);
@@ -101,7 +100,7 @@ function renderFillSheet(u, exam = false) {
   const gate = exam ? mockGate(body, u, `#/mathplay/sheet?u=${u.id}`) : null;
   if (gate) app.appendChild(gate.el);
   app.appendChild(body);
-  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${exam ? (S.howto || "點(　)或□選數字，連連看先點上面再點下面").replace("選數字", "用手指寫數字").replace("選代號", "寫代號") : S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
+  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
