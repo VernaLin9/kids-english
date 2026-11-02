@@ -238,7 +238,8 @@ function penSyl(g) {
 }
 // 寫一個詞的注音（聽寫、看圖寫注音、寫出國字的注音）；全部的字都有寫才算作答
 // vertical：照紙本直排，一個詞的字由上往下排（聽寫格子）
-function penBopo(bopo, pick, vertical = false) {
+const penVertical = () => document.body.classList.contains("zh-v"); // 國語頁面照課本直排
+function penBopo(bopo, pick, vertical = penVertical()) {
   const exp = bopo.trim().split(/\s+/);
   const readBox = penReadEl();
   const update = () => {
@@ -367,7 +368,8 @@ function penHanzi(ans, pick) {
     update();
   });
   chars.forEach(() => g.pad("pen-pad--zh"));
-  return el("div", { class: "pen-ans" }, el("div", { class: "pen-row" }, g.pads.map(p => p.el)), readBox, g.tools());
+  const v = chars.length > 1 && penVertical(); // 兩個字以上：直排由上往下
+  return el("div", { class: "pen-ans" }, el("div", { class: `pen-row${v ? " pen-row--v" : ""}` }, g.pads.map(p => p.el)), readBox, g.tools());
 }
 
 // 原題卷（一年級數學）的空格：跳出手寫小格，寫好按「好了」

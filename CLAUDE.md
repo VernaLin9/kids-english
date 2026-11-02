@@ -48,6 +48,11 @@ https://vernalin9.github.io/kids-english/ （合併到 `main` 後約 1-2 分鐘�
 | `modes-night.js` | 🏮 夜市遊戲（不計時，`#/night/ring|fish|claw?s=&c=`）：套圈圈、撈金魚（金魚慢慢游、不會游走）、夾娃娃。一輪一題四選一，答對拿彩票（第一次對 2 張、改對 1 張），答錯先看「記一記」（數學是 🧱 積木）再選，錯的 2 輪後再出；10 輪後 3 張彩票換 1 個獎品（`profile.quest.prizes` 獎品櫃）。數學只在加減單元（u4）出現 |
 | `parent.js` | 家長模式（PIN、每個小孩的年級／切換／統計）、router `route()` |
 
+## 📜 國語直排
+- 家長要求：只要是國語都照課本、考卷直排（由上往下、一行一行從右往左）。`parent.js` `route()` 在國語頁面（`ZH_VERTICAL_RE`：`#/zh/`、`#/zhplay/`、`#/bopo`、`#/tonedrill`、`#/midpaper/g1zh|g2zh*`）給 body 加 `zh-v`；遊樂場遊戲、首頁、英文、數學不加。
+- CSS（styles.css 最後）：`.zh-v .bopo-word` 注音詞的字上下排；`.zh-v .zh-text` 課文直排（固定高度、超過寬度在框裡左右滑，從右邊開始讀）；`.zh-v .mp-sent / .zh-sent` 句子直排，裡面的 `.zh-pair`、`.mp-tgt`、按鈕維持橫的（國字右邊是注音）。一年級注音卷另外用 `mp-line--v`。手寫 `penBopo`／`penHanzi`（兩個字以上）在 `zh-v` 頁面自動上下排（`penVertical()`）。
+- 新增國語畫面時：題目文字放在 `.mp-sent`／`.zh-text__line` 這類容器才會直排；放在一般 div 會維持橫的。
+
 ## 資料格式
 - 英文單字：`"word": { zh, bopo, emoji, category, speak? }`，`bopo` 每個國字一段、空白分隔，數量必須等於國字數。
 - 週次：`{ num, dateRange, start, end, progress, words }`；`progress` 寫 `Unit N Quiz N` / `Midterm (Unit a-b)` 讓 `nextExam()` 找到考試範圍。
