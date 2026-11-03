@@ -208,8 +208,29 @@ const GRADE2 = (() => {
     { id: "review-19", name: "第 19 週 複習新字",     emoji: "📦", color: "#e0e0e0", words: weeksWords(19) },
   ];
 
-  // 每週一句：二年級尚未提供每週一句資料，暫為空（有資料後依一年級格式補上）
-  const SENTENCES = [];
+  // 每週一句：115-1 二年級英語每週一句（學校講義，家長 11/3 拍照；英文、中文照講義，注音照課本標變調）
+  const SENTENCES = [
+    { week: 1, en: "I love ___ class!", zh: "我愛___課！", bopo: "ㄨㄛˇ ㄞˋ ㄎㄜˋ", blank: { hint: "科目", suggest: ["English", "art", "music", "P.E.", "math"] } },
+    { week: 2, en: "Will we play a game today?", zh: "我們今天會玩遊戲嗎？", bopo: "ㄨㄛˇ ㄇㄣ˙ ㄐㄧㄣ ㄊㄧㄢ ㄏㄨㄟˋ ㄨㄢˊ ㄧㄡˊ ㄒㄧˋ ㄇㄚ˙" },
+    { week: 3, en: "Can you please be quiet?", zh: "可以請你安靜嗎？", bopo: "ㄎㄜˇ ㄧˇ ㄑㄧㄥˇ ㄋㄧˇ ㄢ ㄐㄧㄥˋ ㄇㄚ˙" },
+    { week: 4, en: "Shhh! I can't hear the teacher.", zh: "噓！我聽不見老師說話。", bopo: "ㄒㄩ ㄨㄛˇ ㄊㄧㄥ ㄅㄨˊ ㄐㄧㄢˋ ㄌㄠˇ ㄕ ㄕㄨㄛ ㄏㄨㄚˋ" },
+    { week: 5, en: "What do I need for class?", zh: "上課要準備什麼？", bopo: "ㄕㄤˋ ㄎㄜˋ ㄧㄠˋ ㄓㄨㄣˇ ㄅㄟˋ ㄕㄣˊ ㄇㄜ˙" },
+    { week: 6, en: "Sorry, I don't have my ___.", zh: "對不起，我沒有帶___。", bopo: "ㄉㄨㄟˋ ㄅㄨˋ ㄑㄧˇ ㄨㄛˇ ㄇㄟˊ ㄧㄡˇ ㄉㄞˋ", blank: { hint: "學用品", suggest: ["notebook", "marker", "glue", "scissors", "paintbrush"] } },
+    { week: 7, en: "I lost my ___. Can you share?", zh: "我的___不見了。可以跟同學一起嗎？", bopo: "ㄨㄛˇ ㄉㄜ˙ ㄅㄨˊ ㄐㄧㄢˋ ㄌㄜ˙ ㄎㄜˇ ㄧˇ ㄍㄣ ㄊㄨㄥˊ ㄒㄩㄝˊ ㄧˋ ㄑㄧˇ ㄇㄚ˙", blank: { hint: "學用品", suggest: ["marker", "glue", "scissors", "paintbrush"] } },
+    { week: 8, en: "I didn't understand today's lesson.", zh: "我不懂今天的課程。", bopo: "ㄨㄛˇ ㄅㄨˋ ㄉㄨㄥˇ ㄐㄧㄣ ㄊㄧㄢ ㄉㄜ˙ ㄎㄜˋ ㄔㄥˊ" },
+    { week: 9, en: "Can you please speak slower?", zh: "可以請你說慢一些嗎？", bopo: "ㄎㄜˇ ㄧˇ ㄑㄧㄥˇ ㄋㄧˇ ㄕㄨㄛ ㄇㄢˋ ㄧˋ ㄒㄧㄝ ㄇㄚ˙" },
+    { week: 10, en: "I have a question.", zh: "我有一個問題。", bopo: "ㄨㄛˇ ㄧㄡˇ ㄧˊ ㄍㄜ˙ ㄨㄣˋ ㄊㄧˊ" },
+    { week: 11, en: "Can you help me say this word?", zh: "可以教我說這個字嗎？", bopo: "ㄎㄜˇ ㄧˇ ㄐㄧㄠ ㄨㄛˇ ㄕㄨㄛ ㄓㄜˋ ㄍㄜ˙ ㄗˋ ㄇㄚ˙" },
+    { week: 12, en: "Can you repeat that again?", zh: "可以再說一遍嗎？", bopo: "ㄎㄜˇ ㄧˇ ㄗㄞˋ ㄕㄨㄛ ㄧˊ ㄅㄧㄢˋ ㄇㄚ˙" },
+    { week: 13, en: "Can you help me spell ___.", zh: "可以教我拼___這個字嗎？", bopo: "ㄎㄜˇ ㄧˇ ㄐㄧㄠ ㄨㄛˇ ㄆㄧㄣ ㄓㄜˋ ㄍㄜ˙ ㄗˋ ㄇㄚ˙", blank: { hint: "英文字", suggest: ["basketball", "baseball", "soccer", "kite"] } },
+    { week: 14, en: "I don't know where ___ is.", zh: "我不知道___在哪裡。", bopo: "ㄨㄛˇ ㄅㄨˋ ㄓ ㄉㄠˋ ㄗㄞˋ ㄋㄚˇ ㄌㄧˇ", blank: { hint: "東西", suggest: ["my ball", "my bike", "my kite", "the playground"] } },
+    { week: 15, en: "Which page are we working on?", zh: "我們現在上哪一頁？", bopo: "ㄨㄛˇ ㄇㄣ˙ ㄒㄧㄢˋ ㄗㄞˋ ㄕㄤˋ ㄋㄚˇ ㄧˊ ㄧㄝˋ" },
+    { week: 16, en: "Can I go to the board?", zh: "我可以去黑板嗎？", bopo: "ㄨㄛˇ ㄎㄜˇ ㄧˇ ㄑㄩˋ ㄏㄟ ㄅㄢˇ ㄇㄚ˙" },
+    { week: 17, en: "Is this what you wanted?", zh: "這是你要的嗎？", bopo: "ㄓㄜˋ ㄕˋ ㄋㄧˇ ㄧㄠˋ ㄉㄜ˙ ㄇㄚ˙" },
+    { week: 18, en: "Can I fix my answer?", zh: "我可以修正答案嗎？", bopo: "ㄨㄛˇ ㄎㄜˇ ㄧˇ ㄒㄧㄡ ㄓㄥˋ ㄉㄚˊ ㄢˋ ㄇㄚ˙" },
+    { week: 19, en: "English first! Speak English, please.", zh: "老師說要使用英文。", bopo: "ㄌㄠˇ ㄕ ㄕㄨㄛ ㄧㄠˋ ㄕˇ ㄩㄥˋ ㄧㄥ ㄨㄣˊ" },
+    { week: 20, en: "I forgot what I was going to say.", zh: "我忘了我要說什麼。", bopo: "ㄨㄛˇ ㄨㄤˋ ㄌㄜ˙ ㄨㄛˇ ㄧㄠˋ ㄕㄨㄛ ㄕㄣˊ ㄇㄜ˙" },
+  ];
 
   const CATEGORIES = [
     { id: "numbers",   name: "數字",   bopo: "ㄕㄨˋ ㄗˋ",           nameEn: "Numbers",   emoji: "🔢", color: "#e0c3fc" },
