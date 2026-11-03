@@ -2752,17 +2752,17 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .zh-opt, .quiz-option, .mode-btn { background: #fff; color: var(--ink); }
 .m-hint, .progress-note, .quiz-prompt__hint { color: var(--ink-soft); }
 /* ✍️ 選好再描（不算分） */
-.trace { --c: clamp(56px, 16vw, 84px); margin-top: 14px; padding: 12px; background: #fffdf8; border: 2px dashed var(--line); border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.trace { --c: clamp(72px, 21vw, 112px); --zh: min(80vw, 320px); margin-top: 14px; padding: 12px; background: #fffdf8; border: 2px dashed var(--line); border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .trace__title { font-weight: 900; font-size: calc(18px * var(--font-scale)); }
 .trace-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 .trace-row--v { flex-direction: column; align-items: center; }
 .trace-cell { position: relative; background: #fff; border: 2px solid #c9bfae; border-radius: 10px; }
 .trace-cell--bopo { width: calc(var(--c) * 1.5); height: calc(var(--c) * (var(--n) + 0.4)); }
-.trace-cell--zh { width: calc(var(--c) * 2); height: calc(var(--c) * 2);
+.trace-cell--zh { width: var(--zh); height: var(--zh);
   background-image: linear-gradient(90deg, transparent calc(50% - 1px), #efe6d8 calc(50% - 1px), #efe6d8 calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(0deg, transparent calc(50% - 1px), #efe6d8 calc(50% - 1px), #efe6d8 calc(50% + 1px), transparent calc(50% + 1px)); }
 .trace-guide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #cfc6b8; }
 .trace-guide .zh-bopo { font-size: var(--c) !important; color: #cfc6b8; margin: 0; }
-.trace-guide--zh { font-size: calc(var(--c) * 1.55); font-family: "BiauKai", "DFKai-SB", "Kaiti TC", "PingFang TC", serif; line-height: 1; }
+.trace-guide--zh { font-size: calc(var(--zh) * 0.8); font-family: "BiauKai", "DFKai-SB", "Kaiti TC", "PingFang TC", serif; line-height: 1; }
 .pen-pad--trace { position: absolute; inset: 0; width: 100%; height: 100%; background: transparent !important; border: 0; border-radius: 10px; }
 .trace-status { font-weight: 800; color: var(--ink-soft); }
 .trace-status--ok { color: var(--success); }
@@ -2776,3 +2776,5 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .hero__sentence-body { flex: 1; }
 .hero__sentence-tag { font-size: calc(13px * var(--font-scale)); font-weight: 800; color: var(--primary); margin-bottom: 2px; }
 .hero__sentence-go { font-size: 28px; font-weight: 900; color: var(--primary); }
+
+/* 描寫格放大（家長：描的地方太小）：國字格最大 320px、注音一格最大 112px */
