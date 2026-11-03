@@ -2778,3 +2778,7 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .hero__sentence-go { font-size: 28px; font-weight: 900; color: var(--primary); }
 
 /* 描寫格放大（家長：描的地方太小）：國字格最大 320px、注音一格最大 112px */
+/* 直排句子修正（家長：題目被擋住）：包字的 span 拆開（display: contents），每個字自己排一格，國字右邊的注音不會壓到旁邊；課文行距加寬 */
+.zh-v :is(.mp-sent, .zh-sent) > span:not(.zh-pair):not(.mp-tgt):not(.mp-oth):not(.zh-sent__emoji):not(.zh-sent__blank):not(.mp-pslot) { display: contents; }
+.zh-v :is(.mp-sent, .zh-sent) { gap: 4px 14px; }
+.zh-v .zh-text__line { line-height: 2.2; }
