@@ -2782,3 +2782,17 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .zh-v :is(.mp-sent, .zh-sent) > span:not(.zh-pair):not(.mp-tgt):not(.mp-oth):not(.zh-sent__emoji):not(.zh-sent__blank):not(.mp-pslot) { display: contents; }
 .zh-v :is(.mp-sent, .zh-sent) { gap: 4px 14px; }
 .zh-v .zh-text__line { line-height: 2.2; }
+/* ✍️ 平板手寫區放大（家長：用平板，描寫格、手寫區要再大一點） */
+@media (min-width: 700px) {
+  .trace { --c: clamp(110px, 16vw, 160px); --zh: min(72vw, 60vh, 540px); }
+  .trace-cell--bopo { width: calc(var(--c) * 1.8); }
+  .trace-cell { border-width: 3px; }
+  .write-canvas { height: 360px; }
+  .write-guide { font-size: 150px; }
+  .write-guide--small { font-size: 96px; }
+  .zh-write-canvas { height: min(62vh, 560px); }
+  .c-guide__zh { font-size: min(48vh, 400px); }
+  .tw-board { max-width: 620px; height: 500px; }
+  .tw-syl { font-size: 104px; }
+  .pen-ans, .pen-popup { --c: clamp(80px, 11vw, 120px); }
+}
