@@ -893,9 +893,12 @@ function renderHome() {
     hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/play/flashcard?set=unmastered") }, t("▶ 開始複習")));
   }
   if (cs) {
-    hero.appendChild(el("button", { class: "hero__sentence", onclick: () => navigate("#/sentences") },
+    // 本週一句：整張卡可以點，進每週一句練習（家長找不到句子練習 → 標清楚「點這裡練習」）
+    hero.appendChild(el("button", { class: "hero__sentence hero__sentence--go", onclick: () => navigate("#/sentences") },
       el("span", { class: "hero__sentence-icon" }, "💬"),
-      el("div", {}, el("div", { class: "hero__sentence-en" }, cs.en), rubyEl(cs.zh, cs.bopo, "div", { class: "hero__sentence-zh" }))));
+      el("div", { class: "hero__sentence-body" }, el("div", { class: "hero__sentence-tag" }, t("本週一句・點這裡練習句子")),
+        el("div", { class: "hero__sentence-en" }, cs.en), rubyEl(cs.zh, cs.bopo, "div", { class: "hero__sentence-zh" })),
+      el("span", { class: "hero__sentence-go" }, "›")));
   }
   app.appendChild(hero);
 
