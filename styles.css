@@ -2801,3 +2801,4 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .mp15-cups__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; font-size: 18px; }
 .mp15-cups__big { font-size: 40px; }
 .mp15-cups__small { font-size: 22px; letter-spacing: 2px; }
+.sync-code { font-size: 32px; font-weight: 900; letter-spacing: 3px; text-align: center; padding: 10px; margin: 6px 0; background: #fff; border: 2px dashed var(--line); border-radius: 14px; color: var(--ink); }
