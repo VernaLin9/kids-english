@@ -1,0 +1,13 @@
+rules_version = '2';
+// kids-english 雲端同步的 Firestore 規則（貼到 Firebase 主控台 → Firestore Database → 規則 → 發布）
+// 一定要知道完整的家庭代碼（10 個字）才能讀寫；不能列出所有家庭、不能刪除
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /families/{fam} {
+      allow get, create, update: if request.auth != null && fam.size() == 10;
+      match /kids/{kid} {
+        allow get, create, update: if request.auth != null && fam.size() == 10;
+      }
+    }
+  }
+}

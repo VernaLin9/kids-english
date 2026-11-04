@@ -326,6 +326,9 @@ function renderParentDashboard() {
     el("div", { class: "log-legend" }, "考試（模擬考）一律不能朗讀題目；聽寫、聽力這種本來就要用聽的題目不受影響。答錯一次後就可以按🔊。"),
     el("div", { class: "read-opts" }, readOpts.map(([v, label]) => el("button", { class: `btn ${(STORE.settings.readAloud || "wait") === v ? "btn--accent" : "btn--ghost"}`, onclick: () => { STORE.settings.readAloud = v; saveStore(); route(); } }, label)))));
 
+  // ☁️ 雲端同步（sync.js）：家長手機看紀錄、換平板紀錄還在
+  if (typeof renderSyncSection === "function") app.appendChild(renderSyncSection());
+
   // 📴 離線版：存好了沒（sw.js）
   const offNote = el("div", { class: "log-legend" }, "檢查中…");
   offlineStatus().then(msg => { offNote.textContent = msg; });
