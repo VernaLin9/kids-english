@@ -324,9 +324,109 @@ const MID_G2_MATH = { id: "g2m2", grade: "g2", g2: true, math: true, percent: tr
   ] },
 ] };
 MID_PAPERS.g2m2 = MID_G2_MATH;
+
+// === 二年級數學：115-1 二上複習卷 單元1～5（家長 11/4 拍照，A-1、A-2 九大題共 100 分）===
+// 題目、數字、順序、配分照卷子；圖照卷子重畫（容器、杯子、尺、方格繩子的長度照卷子數過：ㄅ12、ㄆ10、ㄇ13）
+// 原卷要打 V／X、畫圖、寫算式的題目，網站改成選答案或填最後的數字（算式在提示裡）
+function M15_BOTTLES(k) {
+  const g = svg("svg", { viewBox: "0 0 260 162", class: "mp-cups" });
+  const bottle = (cx, w, h, level, label) => {
+    const x = cx - w / 2, top = 140 - h;
+    g.appendChild(svg("rect", { x: x + 2, y: 140 - h * level, width: w - 4, height: h * level, fill: "#9ec9ff" }));
+    g.appendChild(svg("path", { d: `M ${cx - 10} ${top - 14} L ${cx - 10} ${top} Q ${x} ${top} ${x} ${top + 16} L ${x} 140 L ${x + w} 140 L ${x + w} ${top + 16} Q ${x + w} ${top} ${cx + 10} ${top} L ${cx + 10} ${top - 14}`, fill: "none", stroke: "#3b3a4a", "stroke-width": 3 }));
+    g.appendChild(svg("text", { x: cx, y: 160, "text-anchor": "middle", "font-size": 17, fill: "#3b3a4a" }, document.createTextNode(label)));
+  };
+  if (k === 1) { bottle(70, 48, 104, 0.55, "①"); bottle(190, 100, 104, 0.55, "②"); }
+  else { bottle(70, 56, 104, 0.72, "①"); bottle(190, 56, 104, 0.42, "②"); }
+  return g;
+}
+const M15_CUPS = () => el("div", { class: "mp15-cups" }, [["①", "☕", 9], ["②", "🏺", 7]].map(([no, e, n]) =>
+  el("div", { class: "mp15-cups__row" }, el("b", { "data-nobopo": "1" }, no), el("span", { class: "mp15-cups__big" }, e), t("倒滿 →"), el("span", { class: "mp15-cups__small" }, "🥛".repeat(n)))));
+function M15_RULER(ok) { // 五：量東西要從 0 開始
+  const g = svg("svg", { viewBox: "0 0 300 120", class: "mp-ruler" }), u = 46, x0 = 40;
+  g.appendChild(svg("rect", { x: 14, y: 70, width: 272, height: 40, fill: "#fff6d6", stroke: "#3b3a4a", "stroke-width": 2 }));
+  for (let i = 0; i <= 10; i++) { const x = x0 + i * u / 2; g.appendChild(svg("line", { x1: x, y1: 70, x2: x, y2: i % 2 ? 80 : 88, stroke: "#3b3a4a", "stroke-width": 2 })); if (i % 2 === 0) g.appendChild(svg("text", { x, y: 104, "text-anchor": "middle", "font-size": 13, fill: "#3b3a4a" }, document.createTextNode(String(i / 2)))); }
+  const left = ok ? x0 : 14;
+  [0, 1, 2].forEach(r => g.appendChild(svg("rect", { x: left, y: 16 + r * 16, width: 120, height: 16, fill: "#fff", stroke: "#3b3a4a", "stroke-width": 2 })));
+  g.appendChild(svg("rect", { x: left + 120, y: 32, width: 32, height: 38, fill: "#fff", stroke: "#3b3a4a", "stroke-width": 2 }));
+  g.appendChild(svg("line", { x1: left, y1: 8, x2: left, y2: 112, stroke: "#e0393e", "stroke-width": 2, "stroke-dasharray": "4 3" }));
+  return g;
+}
+function M15_ROPE() { // 六(1)：繩子從刻度 5 到 13
+  const g = svg("svg", { viewBox: "0 0 300 110", class: "mp-ruler" }), x = c => 20 + (c - 2) * 20;
+  g.appendChild(svg("rect", { x: 10, y: 60, width: 282, height: 36, fill: "#fff6d6", stroke: "#3b3a4a", "stroke-width": 2 }));
+  for (let c = 2; c <= 15; c++) { g.appendChild(svg("line", { x1: x(c), y1: 60, x2: x(c), y2: 74, stroke: "#3b3a4a", "stroke-width": 2 })); g.appendChild(svg("text", { x: x(c), y: 90, "text-anchor": "middle", "font-size": 12, fill: "#3b3a4a" }, document.createTextNode(String(c)))); }
+  g.appendChild(svg("rect", { x: x(5), y: 28, width: x(13) - x(5), height: 12, fill: "#c98b5a", stroke: "#3b3a4a", "stroke-width": 1.5 }));
+  [5, 13].forEach(c => g.appendChild(svg("line", { x1: x(c), y1: 14, x2: x(c), y2: 60, stroke: "#3b3a4a", "stroke-width": 1.5, "stroke-dasharray": "4 3" })));
+  return g;
+}
+// 六(2)：10×4 方格，一格 1cm；繩子照卷子畫
+const M15_PATHS = {
+  "ㄅ": [[0, 1], [1, 1], [1, 2], [2, 2], [2, 3], [1, 3], [1, 4], [3, 4], [3, 1], [2, 1]],
+  "ㄆ": [[2, 0], [9, 0], [9, 1], [10, 1], [10, 2]],
+  "ㄇ": [[5, 1], [4, 1], [4, 2], [5, 2], [5, 3], [6, 3], [6, 4], [8, 4], [8, 2], [7, 2], [7, 1], [6, 1]],
+};
+const m15Len = k => M15_PATHS[k].reduce((n, p, i) => i ? n + Math.abs(p[0] - M15_PATHS[k][i - 1][0]) + Math.abs(p[1] - M15_PATHS[k][i - 1][1]) : 0, 0);
+function M15_GRID(hi) {
+  const c = 28, ox = 10, oy = 26, g = svg("svg", { viewBox: `0 0 ${ox * 2 + c * 10} ${oy + c * 4 + 8}`, class: "mp-ruler" });
+  for (let i = 0; i <= 10; i++) g.appendChild(svg("line", { x1: ox + i * c, y1: oy, x2: ox + i * c, y2: oy + 4 * c, stroke: "#c9c2b6", "stroke-width": 1 }));
+  for (let j = 0; j <= 4; j++) g.appendChild(svg("line", { x1: ox, y1: oy + j * c, x2: ox + 10 * c, y2: oy + j * c, stroke: "#c9c2b6", "stroke-width": 1 }));
+  Object.entries(M15_PATHS).forEach(([k, pts]) => g.appendChild(svg("polyline", { points: pts.map(([x, y]) => `${ox + x * c},${oy + y * c}`).join(" "), fill: "none", stroke: k === hi ? "#c2306b" : "#3b3a4a", "stroke-width": k === hi ? 5 : 3.5, "stroke-linejoin": "round" })));
+  [["ㄅ", 0.5, 1.6], ["ㄆ", 5.5, -0.25], ["ㄇ", 6.5, 2.65]].forEach(([k, x, y]) => g.appendChild(svg("text", { x: ox + x * c, y: oy + y * c, "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: k === hi ? "#c2306b" : "#3b3a4a" }, document.createTextNode(k))));
+  return g;
+}
+const m15Seq = k => ["294", "295", "296", "297", "298", "299", "300"].map((v, i) => [1, 3, 4, 6].includes(i) ? (i === k ? "(？)" : "(　)") : v).join(" → ");
+const MID_G2_REVIEW15 = { id: "g2m15", grade: "g2", g2: true, math: true, title: "二上複習卷 單元1～5", sections: [
+  { no: "一", name: "哪一個容器的水比較多", pts: 2, qs: [
+    { n: "(1)", text: "哪一個容器裡裝的水比較多？（卷子上：多的打V，少的打X）", vis: () => M15_BOTTLES(1), opts: ["①", "②"], ans: 1, tip: "水一樣高，瓶子比較粗的裝得比較多，所以②比較多。" },
+    { n: "(2)", text: "哪一個容器裡裝的水比較多？（卷子上：多的打V，少的打X）", vis: () => M15_BOTTLES(2), opts: ["①", "②"], ans: 0, tip: "兩個瓶子一樣大，水比較高的裝得比較多，所以①比較多。" },
+  ] },
+  { no: "二", name: "填填看", pts: 2, qs: [
+    ...[295, 297, 298, 300].map((num, k) => ({ n: "(1)", text: m15Seq([1, 3, 4, 6][k]), num, tip: "一個一個往上數，每次多1：294、295、296、297、298、299、300。" })),
+    { n: "(2)", text: "107的百位數字是(？)。", num: 1, tip: "107：百位是1，十位是0，個位是7。" },
+    { n: "(2)", text: "107的十位數字是(？)。", num: 0, tip: "107：百位是1，十位是0，個位是7。十位沒有，要寫0。" },
+    { n: "(2)", text: "107的個位數字是(？)。", num: 7, tip: "107：百位是1，十位是0，個位是7。" },
+    { n: "(3)", text: "2個百和17個一，可以換成2個百、1個十和(？)個一。", num: 7, tip: "17個一＝1個十和7個一，所以是7。" },
+    { n: "(4)", text: "2個百和9個一合起來是(？)。", num: 209, tip: "2個百是200，加9個一是209；十位沒有，要寫0。" },
+    { n: "(5)", text: "1個百、8個十和13個一合起來是(？)。", num: 193, tip: "13個一＝1個十和3個一，所以是1個百、9個十、3個一＝193。" },
+    { n: "(6)①", text: "44＋29＝73，73−44＝(？)", num: 29, tip: "加法和減法是一家人：44＋29＝73，所以73−44＝29。" },
+    { n: "(6)②", text: "44＋29＝73，73−29＝(？)", num: 44, tip: "加法和減法是一家人：44＋29＝73，所以73−29＝44。" },
+  ] },
+  { no: "三", name: "填入＞、＜或＝", pts: 2, qs: [
+    ["199 ◯ 299", 1, "百位1比2小，用＜。"], ["300 ◯ 200", 0, "百位3比2大，用＞。"], ["156 ◯ 165", 1, "百位一樣，比十位：5比6小，用＜。"],
+    ["25＋9 ◯ 34", 2, "25＋9＝34，一樣大，用＝。"], ["84−7 ◯ 78", 1, "84−7＝77，77比78小，用＜。"], ["70−15 ◯ 40＋15", 2, "70−15＝55，40＋15＝55，一樣大，用＝。"],
+  ].map(([text, ans, tip], k) => ({ n: `(${k + 1})`, text, opts: ["＞", "＜", "＝"], ans, tip })) },
+  { no: "四", name: "哪個容器容量比較多", pts: 2, qs: [
+    { n: "", text: "倒滿相同的小杯子，哪個容器容量比較多？（卷子上：在比較多的打V）", vis: M15_CUPS, opts: ["①", "②"], ans: 0, tip: "①倒滿9杯，②倒滿7杯，9比7多，所以①容量比較多。" },
+  ] },
+  { no: "五", name: "哪一種量法是正確的", pts: 2, qs: [
+    { n: "(1)", text: "這樣量正確嗎？（卷子上：正確打V，錯誤打X）", vis: () => M15_RULER(true), opts: ["正確（V）", "錯誤（X）"], ans: 0, tip: "東西的一頭對齊尺的0，這樣量是正確的。" },
+    { n: "(2)", text: "這樣量正確嗎？（卷子上：正確打V，錯誤打X）", vis: () => M15_RULER(false), opts: ["正確（V）", "錯誤（X）"], ans: 1, tip: "東西沒有對齊0，是對齊尺的邊邊，這樣量是錯誤的。" },
+  ] },
+  { no: "六", name: "看圖填填看", pts: 2, qs: [
+    { n: "(1)", text: "繩子大約長幾公分？", vis: M15_ROPE, num: 8, unit: "公分", tip: "繩子從5到13：13−5＝8，大約長8公分。" },
+    ...["ㄅ", "ㄆ", "ㄇ"].map((k, i) => ({ n: `(2)${"①②③"[i]}`, text: `數數看，一格是1公分，${k}繩長幾公分？`, vis: () => M15_GRID(k), num: m15Len(k), unit: "公分", tip: `沿著${k}繩一段一段數格子的邊，一格1公分，加起來是${m15Len(k)}公分。` })),
+  ] },
+  { no: "七", name: "畫畫看", pts: 2, qs: [
+    { n: "", text: "用100、⑩和①表示289，要畫幾個？", opts: ["2個100、8個⑩、9個①", "2個100、9個⑩、8個①", "8個100、2個⑩、9個①"], ans: 0, tip: "289：百位2、十位8、個位9，所以畫2個100、8個⑩、9個①。" },
+  ] },
+  { no: "八", name: "用直式算算看", pts: 3, qs: [
+    [34, "＋", 28, 62], [28, "＋", 91, 119], [54, "＋", 76, 130], [47, "＋", 86, 133], [38, "−", 5, 33], [67, "−", 26, 41], [81, "−", 53, 28], [93, "−", 75, 18],
+  ].map(([a, op, b, num], k) => ({ n: `(${k + 1})`, text: `${a}${op}${b}＝(？)`, num,
+    tip: op === "＋" ? `直式：個位先加，${a % 10}＋${b % 10}＝${a % 10 + b % 10}${a % 10 + b % 10 >= 10 ? "，滿10要進位到十位" : ""}；再加十位。答案${num}。`
+      : `直式：個位先減，${a % 10}${a % 10 < b % 10 ? `不夠減${b % 10}，向十位借1變成${a % 10 + 10}` : `−${b % 10}`}；再減十位。答案${num}。` })) },
+  { no: "九", name: "把做法用算式記下來", pts: 4, qs: [
+    { n: "(1)", text: "丸藤買了1塊65元的蛋糕和1杯88元的咖啡，他共要付幾元？", num: 153, unit: "元", tip: "合起來用加法：65＋88＝153，答：153元。" },
+    { n: "(2)", text: "立香有64顆彈珠，送給朋友49顆後，她還剩下幾顆彈珠？", num: 15, unit: "顆", tip: "送出去用減法：64−49＝15，答：15顆。個位4不夠減9，要向十位借1。" },
+    { n: "(3)", text: "一條71公分的紅繩和一條48公分的黃繩，相差幾公分？", num: 23, unit: "公分", tip: "相差用減法：71−48＝23，答：23公分。" },
+    { n: "(4)", text: "公車上原有35個人，有一些人下車後，剩下16個人，有幾個人下車？", vis: () => barModel([{ label: "下車", val: null }, { label: "剩下", val: 16 }], { label: "原有", val: 35 }, "個"), num: 19, unit: "人", tip: "原有的減剩下的：35−16＝19，答：19人。" },
+    { n: "(5)", text: "小瑪已經收集37張遊戲卡，還要再收集幾張，才能有90張遊戲卡？", vis: () => barModel([{ label: "已收集", val: 37 }, { label: "再收集", val: null }], { label: "共有", val: 90 }, "張"), num: 53, unit: "張", tip: "全部的減已經有的：90−37＝53，答：53張。" },
+  ] },
+] };
+MID_PAPERS.g2m15 = MID_G2_REVIEW15;
 function mpMathQuestions(P, pen = false) {
-  return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: 1, qs: sec.qs.map(q => {
-    const prompt = el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), q.vis ? q.vis() : null, el("div", { class: "b2-text mp-mtext" }, t(q.text)));
+  return P.sections.map(sec => ({ no: sec.no, name: sec.name, pts: sec.pts || 1, qs: sec.qs.map(q => {
+    const prompt = el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(q.n ? `${sec.no}・${q.n}` : sec.no)), q.vis ? q.vis() : null, el("div", { class: "b2-text mp-mtext" }, t(q.text)));
     const base = { prompt, say: () => speakZh(q.text.replace(/◯/g, "，填大於、小於還是等於")), review: t(q.text), tip: q.tip, rec: ok => recordMath("midpaper", ok) };
     if (q.num != null) return { ...base, mount: pick => mpNumInput(q.num, q.unit, pick), answerText: `${q.num}${q.unit || ""}` };
     return { ...base, options: q.opts.map((o, i) => ({ label: /[一-鿿]/.test(o) ? t(o) : el("span", { class: "ex-en", "data-nobopo": "1" }, o), text: o, ok: i === q.ans })) };

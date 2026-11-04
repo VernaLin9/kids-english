@@ -294,9 +294,10 @@ function numPad(onSubmit) {
   const key = (label, fn, cls = "") => { const b = el("button", { class: `b2-pad__key ${cls}` }, label); b.addEventListener("click", fn); return b; };
   const wrap = el("div", { class: "b2-pad" }, display,
     el("div", { class: "b2-pad__keys" },
-      ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => key(String(n), () => { if (val.length < 3) { val += n; show(); } })),
+      ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => key(String(n), () => { if (val === "0") val = String(n); else if (val.length < 3) val += n; show(); })),
       key("⌫", () => { val = val.slice(0, -1); show(); }, "b2-pad__key--soft"),
-      key("0", () => { if (val && val.length < 3) { val += "0"; show(); } }),
+      // 0：答案可以是 0（例：107 的十位數字是 0）；前面已經是 0 就不再加
+      key("0", () => { if (!val) val = "0"; else if (val !== "0" && val.length < 3) val += "0"; show(); }),
       key("✓", () => { if (val) onSubmit(Number(val), () => { val = ""; show(); }); }, "b2-pad__key--ok")));
   show();
   wrap.flash = ok => { display.classList.remove("b2-pad__display--ok", "b2-pad__display--bad"); display.classList.add(ok ? "b2-pad__display--ok" : "b2-pad__display--bad"); };
