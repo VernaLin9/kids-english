@@ -7,7 +7,7 @@
 // 什麼時候同步：打開網頁、切回網頁、進家長模式時拿最新的；存檔後 4 秒、離開網頁時把這台改過的小孩送上去。
 // 合併：學習紀錄 log、模擬考 mockExams 兩邊合起來（同一筆不重複）；其他（進度、星星、錯題本…）用比較新的那一邊（profile.updatedAt）。
 // 設定（PIN、朗讀規則…）不同步，每台自己設。
-const SYNC_CONFIG = window.SYNC_TEST_CONFIG || null; // { apiKey: "...", projectId: "..." }：家長開好 Firebase 專案後填（SYNC_TEST_CONFIG 給自動測試用）
+const SYNC_CONFIG = window.SYNC_TEST_CONFIG || { apiKey: "AIzaSyDVJHqSMdrcusyWFkGz98xKCnzvqBz1z0g", projectId: "kids-english-c2a55" }; // 家長的 Firebase 專案（網頁設定碼的 apiKey 本來就是公開的；安全靠 tools/firebase-rules.txt）；SYNC_TEST_CONFIG 給自動測試用
 
 const SYNC_AUTH_KEY = "kids-english:sync-auth";
 const SYNC_CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -42,7 +42,7 @@ async function syncToken() {
   }
   if (!a?.idToken || a.exp <= Date.now()) {
     r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${key}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
-    if (!r.ok) throw new Error("登入雲端失敗");
+    if (!r.ok) throw new Error("登入雲端失敗（Firebase 的「匿名」登入可能還沒啟用）");
     j = await r.json();
     a = { idToken: j.idToken, refreshToken: j.refreshToken, exp: Date.now() + (+j.expiresIn || 3600) * 1000 };
   }
@@ -54,13 +54,15 @@ const syncKidPath = (code, name) => `families/${code}/kids/${encodeURIComponent(
 async function syncGet(path) {
   const r = await fetch(syncDocUrl(path), { headers: { Authorization: `Bearer ${await syncToken()}` } });
   if (r.status === 404) return null;
-  if (!r.ok) throw new Error(`讀取失敗（${r.status}）`);
+  if (!r.ok) throw new Error(`讀取失敗（${r.status}）${syncHint(r.status)}`);
   return (await r.json()).fields || {};
 }
 async function syncPatch(path, fields, keepalive = false) {
   const r = await fetch(syncDocUrl(path), { method: "PATCH", keepalive, headers: { Authorization: `Bearer ${await syncToken()}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }) });
-  if (!r.ok) throw new Error(`寫入失敗（${r.status}）`);
+  if (!r.ok) throw new Error(`寫入失敗（${r.status}）${syncHint(r.status)}`);
 }
+// 家長設定漏了哪一步：403＝規則還沒發布、404＝Firestore 資料庫還沒建立
+const syncHint = st => st === 403 ? "：Firestore 規則可能還沒發布" : st === 404 ? "：Firestore 資料庫可能還沒建立" : "";
 const syncKidsOf = f => (f?.kids?.arrayValue?.values || []).map(v => v.stringValue).filter(Boolean);
 
 // === 合併兩邊的同一個小孩 ===
