@@ -802,13 +802,13 @@ function renderMathSheet(unitId, exam = false) {
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) dingCorrect(); else buzzWrong();
     const rows = S.sections.map(sec => { const gs = graders.filter(g => g.key.startsWith(`${sec.no}-`)); return { no: sec.no, got: gs.reduce((n, g) => n + (wrong.includes(g.key) ? 0 : g.points), 0), max: gs.reduce((n, g) => n + g.points, 0) }; });
-    result.replaceChildren(
+    result.replaceChildren(...[ // replaceChildren 會把 null 變成「null」字，要先拿掉
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} 題，錯的題目看一下綠色的正確答案 💪`)),
       sheetWrongNav(graders.filter(g => wrong.includes(g.key)).map(g => ({ label: `第${g.key.replace("-", "大題第")}題`, node: g.card })), u),
       exam ? mockResult(u, score, gate.secs(), rows) : null,
       el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次" : "🔁 再寫一次")),
-      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學"))].filter(Boolean));
     result.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => app.querySelector(".ws-q--bad")?.scrollIntoView({ behavior: "smooth", block: "center" }), 1200);
   } }, t("✅ 交卷"));

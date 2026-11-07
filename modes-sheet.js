@@ -115,6 +115,14 @@ function renderFillSheet(u, exam = false) {
     blanks.push({ node: b, get: () => val, ans, pts, show: ok => { b.classList.add(ok ? "fs-blank--ok" : "fs-blank--bad"); if (!ok) b.append(el("span", { class: "fs-blank__ans", "data-nobopo": "" }, String(ans))); } });
     return b;
   };
+  // ( 多 ， 少 )：點一個把它圈起來
+  const choice = (opts, ans, pts) => {
+    let val = null;
+    const btns = opts.map(o => { const b = el("button", { class: "fs-choice__opt" }, t(o)); b.addEventListener("click", () => { if (locked) return; val = o; btns.forEach(x => x.classList.toggle("fs-choice__opt--on", x === b)); update(); }); return b; });
+    const node = el("span", { class: "fs-choice" }, el("span", { class: "fs-blank__p" }, "("), btns[0], el("span", { class: "fs-choice__sep" }, "，"), btns[1], el("span", { class: "fs-blank__p" }, ")"));
+    blanks.push({ node, get: () => val, ans, pts, show: ok => { node.classList.add(ok ? "fs-choice--ok" : "fs-choice--bad"); if (!ok) btns[opts.indexOf(ans)].classList.add("fs-choice__opt--ans"); } });
+    return node;
+  };
   const sectionHead = sec => el("div", { class: "ws-sec__head" }, el("span", { class: "ws-sec__no" }, sec.no),
     el("div", { class: "ws-sec__instr" }, t(sec.instr)),
     el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(sec.instr.replace(/□/g, "方框")), "aria-label": "念題目" }, "🔊"));
@@ -152,6 +160,15 @@ function renderFillSheet(u, exam = false) {
       secEl.appendChild(fsCodesQ(sec, x => blanks.push(x), () => locked, update));
     } else if (sec.kind === "match3") {
       secEl.appendChild(fsMatch3(sec, x => blanks.push(x), () => locked, update));
+    } else if (sec.kind === "check") {
+      secEl.appendChild(fsCheckQ(sec, x => blanks.push(x), () => locked, update));
+    } else if (sec.kind === "spot") {
+      secEl.appendChild(fsSpotQ(sec, x => blanks.push(x), () => locked, update));
+    } else if (sec.kind === "fill") {
+      // 一張圖＋好幾題：{ a: 數字 } 點(　)選數字、{ c: ["多","少"], a } 把對的圈起來
+      const qs = sec.items.map(it => el("div", { class: "fs-fill__q" }, el("span", { class: "ws-q__no" }, `${it.n}.`),
+        el("div", {}, it.lines.map(line => el("div", { class: "fs-line" }, line.map(p => typeof p === "string" ? t(p) : p.c ? choice(p.c, p.a, sec.pts) : blank(p.a, sec.pts, "paren")))))));
+      secEl.appendChild(el("div", { class: `ws-q fs-fillpic${sec.side ? " fs-fillpic--side" : ""}` }, el("div", { class: "fs-fillpic__pic" }, sec.pic()), el("div", { class: "fs-fillpic__qs" }, qs)));
     }
     blanks.slice(first).forEach(b => { b.sec = sec.no; b.secEl = secEl; });
     body.appendChild(secEl);
@@ -176,13 +193,13 @@ function renderFillSheet(u, exam = false) {
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) { dingCorrect(); confetti(); } else buzzWrong();
     const rows = S.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return { no: sec.no, got: bs.reduce((n, b) => n + (b.ok ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
-    result.replaceChildren(
+    result.replaceChildren(...[ // replaceChildren 會把 null 變成「null」字，要先拿掉
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} ${S.unitWord || "格"}，錯的地方看綠色的正確答案 💪`)),
       sheetWrongNav(S.sections.map(sec => { const bad = blanks.filter(b => b.sec === sec.no && !b.ok); return bad.length ? { label: `第${sec.no}大題：錯${bad.length}${S.unitWord || "格"}`, node: bad.find(b => b.node)?.node || bad[0].secEl } : null; }).filter(Boolean), u),
       exam ? mockResult(u, score, gate.secs(), rows) : null,
       el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/${exam ? "exam" : "sheet"}?u=${u.id}&r=${Date.now()}`) }, t(exam ? "🔁 再考一次（圖的順序會換）" : "🔁 再寫一次")),
-      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學")));
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(`#/math/${u.id}`) }, t("回數學"))].filter(Boolean));
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   } }, t("✅ 交卷"));
   body.appendChild(el("div", { class: "ws-submit" }, submit, result));
@@ -195,6 +212,7 @@ function fsShuffled(S) {
   return { ...S, sections: S.sections.map(sec => {
     if (sec.kind === "circle") return { ...sec, qs: sec.qs.map(q => ({ ...q, items: shuffle([...q.items]) })) };
     if (sec.kind === "codes") return { ...sec, pics: shuffle([...sec.pics]) };
+    if (sec.kind === "check") return { ...sec, figs: shuffle([...sec.figs]).map((f, i) => ({ ...f, n: i + 1 })) };
     if (sec.kind === "match3") {
       const order = shuffle([0, 1, 2, 3]); // 中間第 i 格放原本第 order[i] 個形狀
       const side = list => shuffle([...list]).map(([k, a]) => [k, order.indexOf(a)]);
@@ -399,6 +417,154 @@ FILL_SHEETS.u5 = {
   ],
 };
 
+// === 一上 第11回（小A本 p.22-23，5-3 拼一拼）===
+// 圖照照片的位置、大小重畫（座標＝照片的像素；灰色、白色照原卷）
+const FS_G = "#bdbdbd", FS_LG = "#dcdcdc";
+const fsR = (x1, y1, x2, y2, fill = "#fff") => fsvg("rect", { x: x1, y: y1, width: x2 - x1, height: y2 - y1, fill, ...FS_LINE });
+const fsC = (cx, cy, r, fill = "#fff") => fsvg("circle", { cx, cy, r, fill, ...FS_LINE });
+const fsT = (pts, fill = "#fff") => fsPoly(pts.map(p => p.join(",")).join(" "), fill);
+const fsFig = (vb, ...kids) => fsvg("svg", { viewBox: vb, class: "fs-fig" }, ...kids);
+const FS11 = {
+  // 第一大題的四個圖
+  house: () => fsFig("40 100 265 295", fsT([[48, 230], [172, 108], [295, 230]]), fsR(58, 240, 124, 388), fsR(220, 240, 285, 388)),
+  robot: () => fsFig("840 100 290 295", fsC(943, 137, 31, FS_G), fsC(1026, 137, 31, FS_G), fsR(903, 175, 1067, 338), fsC(872, 257, 26, FS_G), fsC(1097, 257, 26, FS_G),
+    fsT([[900, 388], [940, 345], [980, 388]], FS_G), fsT([[990, 388], [1030, 345], [1070, 388]], FS_G)),
+  person: () => fsFig("25 528 320 336", fsC(185, 570, 35), fsR(122, 610, 250, 740), fsT([[35, 677], [115, 628], [115, 722]], FS_G), fsT([[257, 628], [257, 722], [337, 677]], FS_G),
+    fsR(133, 748, 180, 860), fsR(192, 748, 239, 860)),
+  sun: () => fsFig("870 562 255 250", fsC(998, 688, 63, FS_G), fsT([[962, 615], [998, 572], [1036, 615]]), fsT([[962, 760], [1036, 760], [998, 803]]),
+    fsT([[922, 650], [922, 725], [880, 688]]), fsT([[1072, 650], [1072, 725], [1117, 688]])),
+  // 第三大題：ㄅ ㄆ ㄇ 三個圖（SVG 裡只放注音符號）
+  build3: () => fsFig("70 -10 1400 470",
+    ...[["ㄅ", 90, 100], ["ㄆ", 600, 100], ["ㄇ", 1195, 20]].map(([s, x, y]) => fsvg("text", { x, y, "font-size": 48, "font-weight": 700, fill: FS_INK }, s)),
+    fsT([[172, 130], [220, 130], [196, 178]]), fsT([[237, 130], [285, 130], [261, 178]]), fsR(170, 185, 292, 222), fsR(130, 231, 304, 283), fsR(99, 290, 347, 352),
+    fsC(156, 386, 27), fsC(284, 386, 27), fsR(329, 157, 452, 197), fsT([[331, 283], [368, 212], [406, 283]]),
+    fsR(685, 113, 747, 175), fsR(778, 113, 840, 175), fsR(673, 183, 853, 362), fsC(887, 258, 30), fsT([[923, 218], [923, 298], [977, 258]]), fsC(712, 400, 30), fsC(809, 400, 30),
+    fsC(1321, 37, 27), fsT([[1283, 108], [1321, 68], [1360, 108]]), fsT([[1252, 166], [1321, 117], [1391, 166]]), fsT([[1206, 298], [1321, 172], [1437, 298]]), fsR(1291, 305, 1352, 450)),
+  // 第四大題：飛機和小鳥
+  count4: () => fsFig("30 95 1170 830",
+    fsR(42, 240, 235, 288), fsR(597, 240, 790, 288),
+    fsT([[258, 250], [405, 110], [405, 250]]), fsT([[428, 110], [428, 250], [572, 250]]), fsT([[258, 272], [405, 272], [405, 418]]), fsT([[428, 272], [575, 272], [428, 418]]),
+    ...[[308, 152], [523, 152], [62, 347], [308, 372], [523, 372], [770, 347]].map(([x, y]) => fsC(x, y, 17)),
+    fsR(367, 442, 468, 632), fsR(367, 658, 468, 848),
+    fsR(276, 512, 328, 562), fsR(506, 512, 558, 562), fsR(276, 728, 328, 778), fsR(506, 728, 558, 778),
+    fsC(807, 530, 95), fsC(937, 720, 125), fsT([[660, 355], [770, 420], [700, 475]]), fsT([[873, 380], [928, 397], [882, 450]]), fsT([[897, 465], [972, 470], [955, 418]]),
+    fsT([[1065, 690], [1160, 612], [1187, 698]]), fsT([[866, 907], [898, 855], [930, 907]]), fsT([[958, 907], [990, 855], [1022, 907]])),
+};
+// 第二大題：雪人找不同（左右兩張圖；座標以圖框左上角為 0,0，圖框 622×655）
+// 每個地方：c 圈的中心、r 圈的大小、hits 點到附近就算點到這裡；diff＝不一樣的地方
+const FS_SNOW_PARTS = [
+  { id: "nose", c: [270, 322], r: 66, diff: true }, { id: "btn1", c: [212, 455], r: 34 }, { id: "btn2", c: [212, 515], r: 34, diff: true },
+  { id: "top", c: [499, 244], r: 62, diff: true }, { id: "ball", c: [499, 355], r: 70 }, { id: "base", c: [500, 461], r: 56, diff: true },
+  { id: "eyeL", c: [170, 255], r: 26 }, { id: "eyeR", c: [252, 255], r: 26 }, { id: "armL", c: [60, 395], r: 48 }, { id: "armR", c: [350, 395], r: 48 },
+  { id: "moon", c: [557, 57], r: 42 },
+  { id: "head", c: [202, 307], r: 116, hits: [[202, 205], [118, 320], [150, 372]] },
+  { id: "body", c: [202, 495], r: 154, hits: [[100, 510], [305, 510], [202, 590], [130, 440]] },
+];
+function fsSnowman(right) {
+  const twig = (x1, y1, x2, y2, f) => [fsvg("line", { x1, y1, x2, y2, stroke: "#777", "stroke-width": 5, "stroke-linecap": "round" }),
+    fsvg("line", { x1: x2, y1: y2, x2: x2 + 26 * f, y2: y2 - 10, stroke: "#777", "stroke-width": 4, "stroke-linecap": "round" }),
+    fsvg("line", { x1: x2 + 10 * f, y1: y2 + 6, x2: x2 + 2 * f, y2: y2 - 22, stroke: "#777", "stroke-width": 4, "stroke-linecap": "round" })];
+  const thin = { stroke: "#777", "stroke-width": 2 };
+  return fsvg("svg", { viewBox: "-4 -4 630 663", class: "fs-snow__pic" },
+    fsvg("rect", { x: 0, y: 0, width: 622, height: 655, fill: "#ababab" }),
+    fsvg("path", { d: "M 0 512 Q 330 330 622 268 L 622 655 L 0 655 Z", fill: "#fff" }),
+    fsvg("circle", { cx: 557, cy: 57, r: 32, fill: "#fff" }), fsvg("circle", { cx: 572, cy: 45, r: 30, fill: "#ababab" }),
+    ...twig(92, 422, 40, 372, -1), ...twig(316, 422, 370, 372, 1),
+    fsvg("ellipse", { cx: 202, cy: 495, rx: 152, ry: 112, fill: "#fff", ...thin }),
+    fsvg("circle", { cx: 202, cy: 307, r: 111, fill: "#fff", ...thin }),
+    fsvg("circle", { cx: 170, cy: 255, r: 9, fill: "#222" }), fsvg("circle", { cx: 252, cy: 255, r: 9, fill: "#222" }),
+    right ? fsvg("rect", { x: 214, y: 310, width: 122, height: 34, fill: FS_LG, ...thin, transform: "rotate(-2 275 327)" }) : fsvg("polygon", { points: "219,303 314,305 222,343", fill: FS_LG, ...thin }),
+    fsvg("rect", { x: 194, y: 437, width: 36, height: 36, fill: FS_LG, ...thin }),
+    right ? fsvg("circle", { cx: 212, cy: 515, r: 18, fill: FS_LG, ...thin }) : fsvg("rect", { x: 194, y: 497, width: 36, height: 36, fill: FS_LG, ...thin }),
+    right ? fsvg("rect", { x: 452, y: 205, width: 82, height: 82, fill: "#fff", ...thin }) : fsvg("polygon", { points: "429,288 499,180 569,288", fill: "#fff", ...thin }),
+    fsvg("circle", { cx: 499, cy: 355, r: 63, fill: "#555" }),
+    right ? fsvg("rect", { x: 474, y: 417, width: 50, height: 88, fill: FS_LG, ...thin }) : fsvg("rect", { x: 457, y: 417, width: 87, height: 88, fill: FS_LG, ...thin }),
+    fsvg("rect", { x: 0, y: 0, width: 622, height: 655, fill: "none", stroke: FS_INK, "stroke-width": 4 }));
+}
+
+FILL_SHEETS.u6 = {
+  title: "一上 第11回", sub: "5-3 拼一拼", pages: "第22、23頁",
+  howto: "點(　)打✓（再點一次取消），點圖上不一樣的地方圈起來，點(　)選數字，點「多」或「少」圈起來",
+  sections: [
+    { no: "1", instr: "下面的圖形是用哪些圖卡拼出來的？請打✓：每格2分，共32分", pts: 2, kind: "check",
+      rows: ["三角形", "長方形", "正方形", "圓形"],
+      // 用到的圖卡（照原卷的圖）
+      figs: [{ n: 1, pic: FS11.house, ans: ["三角形", "長方形"] }, { n: 2, pic: FS11.robot, ans: ["三角形", "正方形", "圓形"] },
+        { n: 3, pic: FS11.person, ans: ["三角形", "長方形", "正方形", "圓形"] }, { n: 4, pic: FS11.sun, ans: ["三角形", "圓形"] }] },
+    { no: "2", instr: "下面兩張圖，有4個地方不同，找找看，把左右兩張圖不一樣的地方都圈起來：每個3分，共12分", pts: 3, kind: "spot", parts: FS_SNOW_PARTS, find: 4 },
+    { no: "3", instr: "老師用圖卡拼出下面圖形，看圖填填看、圈圈看，並回答問題，填入代號：每答5分，共40分", pts: 5, kind: "fill", pic: FS11.build3, items: [
+      { n: 1, lines: [["ㄅ圖形用了", { a: 4 }, "個長方形；"], ["ㄆ圖形用了", { a: 0 }, "個長方形；"], ["ㄇ圖形用了", { a: 1 }, "個長方形。"]] },
+      { n: 2, lines: [["ㄅ圖形用的長方形比ㄆ圖形用的長方形", { c: ["多", "少"], a: "多" }, "。"]] },
+      { n: 3, lines: [["ㄅ圖形用了", { a: 0 }, "個正方形；"], ["ㄆ圖形用了", { a: 3 }, "個正方形；"], ["ㄇ圖形用了", { a: 0 }, "個正方形；"]] },
+      { n: 4, lines: [["ㄇ圖形用的正方形比ㄆ圖形用的正方形", { c: ["多", "少"], a: "少" }, "。"]] },
+    ] },
+    { no: "4", instr: "數一數，填一填：每題4分，共16分", pts: 4, kind: "fill", pic: FS11.count4, side: true, items: [
+      { n: 1, lines: [["正方形有", { a: 4 }, "個。"]] }, { n: 2, lines: [["長方形有", { a: 4 }, "個。"]] },
+      { n: 3, lines: [["三角形有", { a: 10 }, "個。"]] }, { n: 4, lines: [["圓形有", { a: 8 }, "個。"]] },
+    ] },
+  ],
+};
+
+// 打✓：每個圖四格，每格自己算分；一個圖至少要打一個✓才算寫了
+function fsCheckQ(sec, addBlank, isLocked, update) {
+  const wrap = el("div", { class: "fs-checks" });
+  sec.figs.forEach(f => {
+    const on = new Set();
+    const rows = sec.rows.map(name => {
+      const mark = el("span", { class: "fs-check__v" }, "");
+      const b = el("button", { class: "fs-check", "aria-label": `${name}打勾` }, el("span", { class: "fs-blank__p" }, "("), mark, el("span", { class: "fs-blank__p" }, ")"), el("span", { class: "fs-check__name" }, t(name)));
+      b.addEventListener("click", () => { if (isLocked()) return; on.has(name) ? on.delete(name) : on.add(name); mark.textContent = on.has(name) ? "✓" : ""; update(); });
+      const ans = f.ans.includes(name) ? "v" : "";
+      addBlank({ node: b, get: () => on.size ? (on.has(name) ? "v" : "") : null, ans, pts: sec.pts,
+        show: ok => { b.classList.add(ok ? "fs-check--ok" : "fs-check--bad"); if (!ok && ans) mark.replaceChildren(el("span", { class: "fs-check__ans" }, "✓")); } });
+      return b;
+    });
+    wrap.appendChild(el("div", { class: "ws-q fs-checkfig" }, el("span", { class: "ws-q__no" }, `${f.n}.`), el("div", { class: "fs-checkfig__pic" }, f.pic()), el("div", { class: "fs-checkfig__rows" }, rows)));
+  });
+  return wrap;
+}
+
+// 找不同：點左邊或右邊的圖，點到的地方兩張圖都畫圈；最多圈 find 個（原卷說有4個地方不同）
+function fsSpotQ(sec, addBlank, isLocked, update) {
+  const on = new Set();
+  const tip = el("div", { class: "fs-spot__tip" }, t(`圈了 0 個，要找 ${sec.find} 個`));
+  const layers = [];
+  const pics = [false, true].map(right => {
+    const pic = fsSnowman(right);
+    const layer = fsvg("g", {});
+    pic.appendChild(layer); layers.push(layer);
+    pic.addEventListener("click", e => {
+      if (isLocked()) return;
+      const pt = pic.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const p = pt.matrixTransform(pic.getScreenCTM().inverse());
+      let best = null, bd = 90;
+      sec.parts.forEach(part => (part.hits || [part.c]).concat([part.c]).forEach(([x, y]) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = part; } }));
+      if (!best) return;
+      if (on.has(best.id)) on.delete(best.id);
+      else if (on.size >= sec.find) { tip.replaceChildren(t(`已經圈 ${sec.find} 個了，先點一個圈圈取消再圈別的`)); buzzWrong(); return; }
+      else on.add(best.id);
+      draw(); update();
+    });
+    return el("div", { class: "fs-snow" }, pic);
+  });
+  const ring = (part, cls) => fsvg("circle", { cx: part.c[0], cy: part.c[1], r: part.r, fill: "none", class: `fs-ring ${cls}` });
+  let marks = null; // 交卷後：id -> "ok" | "miss" | "bad"
+  const draw = () => {
+    layers.forEach(layer => layer.replaceChildren(...sec.parts.filter(part => on.has(part.id) || marks?.[part.id]).map(part => ring(part, marks ? `fs-ring--${marks[part.id]}` : ""))));
+    if (!marks) tip.replaceChildren(t(`圈了 ${on.size} 個，要找 ${sec.find} 個`));
+  };
+  const diffs = sec.parts.filter(p => p.diff);
+  const card = el("div", { class: "ws-q" }, tip, el("div", { class: "fs-snows" }, pics));
+  diffs.forEach((part, k) => addBlank({ node: card, get: () => on.size > k ? on.has(part.id) : null, ans: true, pts: sec.pts,
+    show: () => {
+      if (!marks) { marks = {}; sec.parts.forEach(p => { if (p.diff) marks[p.id] = on.has(p.id) ? "ok" : "miss"; else if (on.has(p.id)) marks[p.id] = "bad"; }); }
+      draw();
+      const got = diffs.filter(p => on.has(p.id)).length;
+      tip.replaceChildren(t(got === diffs.length ? "4個都找到了 ⭕" : `找到 ${got} 個；綠色虛線圈是沒找到的地方`));
+    } }));
+  return card;
+}
+
 // 圈圈看（可以圈好幾個）：每小題全部圈對才給分
 function fsCircleQ(q, pts, addBlank, isLocked, update) {
   const on = new Set();
@@ -550,3 +716,39 @@ function genShapeRoll() {
 MATH_TOPICS.shapeName = { name: "認識形狀", emoji: "🔺", gen: genShapeName };
 MATH_TOPICS.shapeTrace = { name: "描出形狀", emoji: "✏️", gen: genShapeTrace };
 MATH_TOPICS.shapeRoll = { name: "會滾動嗎", emoji: "⚽", gen: genShapeRoll };
+
+// === 第11回的練習題型（不是原題）：用圖卡拼成的圖，數一數、找出用了哪些 ===
+// 隨機排一張「拼圖」：2 排 × 5 格，每格放一張圖卡（三角形會轉方向、長方形有橫有直）
+function fsCollage(counts) {
+  const list = shuffle(Object.entries(counts).flatMap(([k, n]) => Array(n).fill(k)));
+  const cells = shuffle(Array.from({ length: 10 }, (_, i) => i)).slice(0, list.length);
+  const g = fsvg("g", {});
+  list.forEach((k, i) => {
+    const cx = 44 + (cells[i] % 5) * 78, cy = 44 + Math.floor(cells[i] / 5) * 80, s = rnd(44, 58), fill = rnd(0, 1) ? "#fff" : "#d8d8d8";
+    if (k === "圓形") g.appendChild(fsvg("circle", { cx, cy, r: s / 2, fill, ...FS_LINE }));
+    else if (k === "正方形") g.appendChild(fsvg("rect", { x: cx - s / 2, y: cy - s / 2, width: s, height: s, fill, ...FS_LINE }));
+    else if (k === "長方形") { const [w, h] = rnd(0, 1) ? [66, 28] : [28, 66]; g.appendChild(fsvg("rect", { x: cx - w / 2, y: cy - h / 2, width: w, height: h, fill, ...FS_LINE })); }
+    else { const a = rnd(0, 3) * 90; g.appendChild(fsvg("polygon", { points: `${cx - s / 2},${cy + s / 2.4} ${cx},${cy - s / 2.4} ${cx + s / 2},${cy + s / 2.4}`, fill, ...FS_LINE, transform: `rotate(${a} ${cx} ${cy})` })); }
+  });
+  g.appendChild(fsvg("rect", { x: 2, y: 2, width: 396, height: 162, rx: 12, fill: "none", stroke: "#bbb", "stroke-width": 2, "stroke-dasharray": "6 5" }));
+  return g;
+}
+const fsWordCard = (x, y, label) => { const g = fsvg("g", {}, fsvg("rect", { x, y, width: 116, height: 70, rx: 14, fill: "#fff", stroke: FS_INK, "stroke-width": 3 }), fsPlace(fsShapePic(label), x + 23, y + 2, 66)); g.bbox = { x, y, w: 116, h: 70 }; return g; };
+// 數一數：這張圖用了幾個○○形？
+function genShapeCount() {
+  const counts = {}; let left = rnd(6, 10);
+  shuffle([...FS_SHAPE_NAMES]).forEach((k, i) => { const n = i === 3 ? left : rnd(0, Math.min(4, left)); counts[k] = n; left -= n; });
+  const ask = shuffle(FS_SHAPE_NAMES.filter(k => counts[k] > 0))[0], ans = counts[ask];
+  return { topic: "shapeCount", prompt: `圖裡有幾個${ask}？`, h: 260, extra: fsCollage(counts),
+    items: fsChoices(ans, 10).map((n, i) => ({ node: FS_NUM_CARD(30 + i * 125, 180, n), correct: n === ans })) };
+}
+// 哪一種圖卡沒有用到？
+function genShapeUsed() {
+  const miss = FS_SHAPE_NAMES[rnd(0, 3)], counts = {};
+  FS_SHAPE_NAMES.forEach(k => { counts[k] = k === miss ? 0 : rnd(1, 3); });
+  const opts = shuffle([miss, ...shuffle(FS_SHAPE_NAMES.filter(k => k !== miss)).slice(0, 2)]);
+  return { topic: "shapeUsed", prompt: "這張圖沒有用到哪一種圖卡？", h: 260, extra: fsCollage(counts),
+    items: opts.map((k, i) => ({ node: fsWordCard(14 + i * 128, 180, k), correct: k === miss })) };
+}
+MATH_TOPICS.shapeCount = { name: "數一數圖卡", emoji: "🧩", gen: genShapeCount };
+MATH_TOPICS.shapeUsed = { name: "用了哪些圖卡", emoji: "🔍", gen: genShapeUsed };
