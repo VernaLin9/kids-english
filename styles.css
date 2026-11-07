@@ -2802,3 +2802,40 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .mp15-cups__big { font-size: 40px; }
 .mp15-cups__small { font-size: 22px; letter-spacing: 2px; }
 .sync-code { font-size: 32px; font-weight: 900; letter-spacing: 3px; text-align: center; padding: 10px; margin: 6px 0; background: #fff; border: 2px dashed var(--line); border-radius: 14px; color: var(--ink); }
+/* 第11回 拼一拼：打✓、找不同、看圖填空 */
+.fs-checks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 700px) { .fs-checks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fs-checkfig { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.fs-checkfig .ws-q__no { align-self: start; }
+.fs-checkfig__pic .fs-fig { width: 100%; max-width: 150px; display: block; margin: 0 auto; }
+.fs-checkfig__rows { display: grid; gap: 2px; }
+.fs-check { display: flex; align-items: center; gap: 2px; background: none; border: 0; min-height: 44px; padding: 0 4px; border-radius: 10px; font-weight: 800; font-size: calc(17px * var(--font-scale)); color: var(--ink); }
+.fs-check__v { display: inline-block; min-width: 1.5em; text-align: center; font-size: 26px; font-weight: 900; color: #3b6bff; }
+.fs-check__name { margin-left: 4px; }
+.fs-check--ok .fs-check__v { color: var(--success); }
+.fs-check--bad { background: #fde8e8; }
+.fs-check--bad .fs-check__v { color: var(--danger); text-decoration: line-through; }
+.fs-check__ans { color: var(--success); text-decoration: none; display: inline-block; }
+.fs-spot__tip { text-align: center; font-weight: 800; margin-bottom: 8px; font-size: calc(16px * var(--font-scale)); }
+.fs-snows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; justify-items: center; }
+@media (min-width: 700px) { .fs-snows { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fs-snow { width: 100%; max-width: 420px; }
+.fs-snow__pic { width: 100%; height: auto; display: block; cursor: pointer; touch-action: manipulation; }
+.fs-ring { stroke: #e0393e; stroke-width: 9; }
+.fs-ring--ok { stroke: #1b9e6a; }
+.fs-ring--miss { stroke: #1b9e6a; stroke-dasharray: 18 12; }
+.fs-ring--bad { stroke: #e0393e; stroke-dasharray: 4 10; stroke-linecap: round; }
+.fs-fillpic { display: grid; gap: 12px; }
+.fs-fillpic__pic .fs-fig { width: 100%; max-width: 640px; display: block; margin: 0 auto; }
+.fs-fillpic--side .fs-fillpic__pic .fs-fig { max-width: 420px; }
+@media (min-width: 700px) { .fs-fillpic--side { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; } }
+.fs-fillpic__qs { display: grid; gap: 6px; }
+.fs-fill__q { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; align-items: start; }
+.fs-fill__q .ws-q__no { line-height: 2.6; }
+.fs-choice { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
+.fs-choice__sep { font-weight: 900; }
+.fs-choice__opt { min-width: 48px; min-height: 48px; border: 3px solid transparent; border-radius: 50%; background: none; font-size: calc(20px * var(--font-scale)); font-weight: 900; color: var(--ink); }
+.fs-choice__opt--on { border-color: #3b6bff; }
+.fs-choice--ok .fs-choice__opt--on { border-color: var(--success); }
+.fs-choice--bad .fs-choice__opt--on { border-color: var(--danger); text-decoration: line-through; }
+.fs-choice__opt--ans { border-color: var(--success); border-style: dashed; }

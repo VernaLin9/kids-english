@@ -23,6 +23,13 @@ const MATH_DATA = {
         sheetLabel: "📄 小A本原題（第20、21頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
         topics: ["shapeName", "shapeTrace", "shapeRoll"],
       },
+      {
+        // 小A本 第11回 p.22-23（5-3 拼一拼，家長 11/7 拍照），老師會考一模一樣的題目
+        id: "u6", title: "第11回 拼一拼", titleBopo: "ㄉㄧˋ ㄕˊ ㄧ ㄏㄨㄟˊ ㄆㄧㄣ ㄧˋ ㄆㄧㄣ", emoji: "🧩",
+        exam: { date: "2026-11-09", label: "小考 小A本第22、23頁", mode: "exam" },
+        sheetLabel: "📄 小A本原題（第22、23頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
+        topics: ["shapeCount", "shapeUsed", "shapeName"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答
