@@ -397,17 +397,17 @@ function renderMidterm() {
   const sec = (title, rows) => rows.length ? app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t(title)), rows)) : null;
   sec("📖 國語", (ZH?.lessons || []).filter(l => l.kind === "chars").map(l => row(`${l.title}・模擬小考`, `#/zhplay/exam?l=${l.id}`, `zh:${l.id}`))
     .concat((ZH?.lessons || []).some(l => l.kind !== "chars") ? [row("🔤 注音大會考", "#/bopo/exam", "zh:bopo")] : []));
-  sec("➕ 數學", (MATH?.units || []).filter(u => u.kind === "calc" || (typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id]) || u.id === "u2").map(u => row(`${u.title}・模擬小考`, `#/mathplay/exam?u=${u.id}`, mockKey(u))));
   const papers = typeof MID_PAPERS !== "undefined" ? Object.values(MID_PAPERS).filter(P => P.grade === profileGrade(getProfile())) : [];
-  if (papers.length) app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t("📄 11/1複習日老師的考卷")),
-    papers.map(P => el("div", { class: "mt-row" }, el("div", { class: "mt-paper" }, t(P.title)),
+  if (papers.length) app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t("📄 老師的考卷")),
+    papers.map(P => el("div", { class: "mt-row" }, el("div", { class: "mt-paper" }, t(P.title)), P.sub ? el("div", { class: "progress-note", style: "text-align: center;" }, t(P.sub)) : null,
       el("div", { class: "mt-paper__btns" },
         el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(`#/midpaper/${P.id}?mode=exam`) }, t("📝 模擬考")),
         el("button", { class: "btn btn--xl", onclick: () => navigate(`#/midpaper/${P.id}`) }, t("📄 練習（馬上對答案）"))),
-      P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=format`) }, t("✏️ 考卷題目怎麼寫（選擇題、填入）")) : null,
+      P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=format`) }, t(P.formatSecs ? "✏️ 考卷題目怎麼寫（✓和○、看圖只選一個）" : "✏️ 考卷題目怎麼寫（選擇題、填入）")) : null,
       P.school ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=school`) }, t(`🏫 ${P.school.label}${P.school.ids.length}題・再練`)) : null,
       mpBook(P.id).length ? el("button", { class: "btn btn--full btn--xl mt-book", onclick: () => navigate(`#/midpaper/${P.id}?mode=book`) }, t(`📒 錯題本：${mpBook(P.id).length}題要再練`)) : null,
       el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(`mid:${P.id}`)))))));
+  sec("➕ 數學", (MATH?.units || []).filter(u => u.kind === "calc" || (typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id]) || u.id === "u2").map(u => row(`${u.title}・模擬小考`, `#/mathplay/exam?u=${u.id}`, mockKey(u))));
   const en = typeof nextExam === "function" ? nextExam() : null;
   sec("🔤 英文", en ? [row(`${en.title}・模擬小考`, `#/play/mock?set=${encodeURIComponent(en.setKey)}`, `en:${en.setKey}`)] : []);
   root.appendChild(app);
