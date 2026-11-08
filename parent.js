@@ -77,7 +77,8 @@ function logPageName(h) {
     const n = ({ exam: "模擬小考", sheet: "原題卷", mix: "小考", book: "課本原題" })[seg[1]] || T?.name || seg[1];
     return `數學・${n}・${unitTitle(q.u)}`;
   }
-  if (seg[0] === "midpaper") return `期中考複習卷・${MID_PAPERS[seg[1]]?.title || seg[1]}`;
+  if (seg[0] === "midpaper") return `期中考複習卷・${MID_PAPERS[seg[1]]?.title || (seg[1] === "zh10drill" ? "錯的加強訓練" : seg[1] === "zh10mix" ? "類似考題混合考" : seg[1])}`;
+  if (seg[0] === "zhsheet") return `原卷重考・${MID_PAPERS[seg[1]]?.title || seg[1]}`;
   if (seg[0] === "midterm") return "期中考複習";
   if (seg[0] === "bopo") return `注音總複習・${seg[1] === "exam" ? "大會考" : BP_KINDS[seg[1]]?.name || ""}`;
   if (seg[0] === "tonedrill") return "國語・聲調放哪裡特訓";
@@ -524,7 +525,7 @@ function renderParentKidDetail(name) {
 
 // === Router ===
 // 📜 國語直排（家長：只要是國語都照課本、考卷直的）：國語的頁面在 body 加 zh-v，CSS 把題目、課文、注音詞改成直排（遊樂場的遊戲不改）
-const ZH_VERTICAL_RE = /^#\/(zh\/|zhplay\/|bopo|tonedrill|midpaper\/(g1zh|g2zh))/;
+const ZH_VERTICAL_RE = /^#\/(zh\/|zhplay\/|bopo|tonedrill|zhsheet\/|midpaper\/(g1zh|g2zh|zh10))/;
 function route() {
   applySettings();
   document.body.classList.toggle("zh-v", ZH_VERTICAL_RE.test(location.hash));
@@ -559,6 +560,7 @@ function route() {
   else if (path[0] === "bopo") view = renderBopo(path[1]);
   else if (path[0] === "midterm") view = renderMidterm();
   else if (path[0] === "midpaper") view = renderMidPaper(path[1], query.mode);
+  else if (path[0] === "zhsheet") view = renderZhSheet(path[1], query.mode === "exam");
   else if (path[0] === "games") view = renderGames(query.s, query.c);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);
