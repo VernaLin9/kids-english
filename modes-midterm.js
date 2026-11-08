@@ -64,7 +64,7 @@ function mpToneQs(list) {
       const syl = arr[bi], tn = (syl.match(/[ˊˇˋ˙]/) || [""])[0], base = syl.replace(/[ˊˇˋ˙]/g, "");
       const line = arr.map((x, i) => i === bi ? `${base}□` : x).join(" ");
       // 念題目只念說明，不念句子（念出來就聽到聲調了）
-      qs.push({ kind: "choice", plain: true, line, say: "方框裡要寫哪一個聲調？", recKey: `${zh}${base}`, hint: "□ 裡要寫哪一個聲調？",
+      qs.push({ kind: "choice", type: "tone", syls, bi, zh, plain: true, line, say: "方框裡要寫哪一個聲調？", recKey: `${zh}${base}`, hint: "□ 裡要寫哪一個聲調？",
         options: MP_TONE_OPTS, answer: MP_TONES.indexOf(tn),
         tip: `「${zh}」，□ 這個字念「${syl}」，是${MP_TONE_NAMES[MP_TONES.indexOf(tn)]}。整句小聲念出來，聽聽看這個字的聲音是平平的、往上、先下再上、往下，還是輕輕短短的。` });
     });
@@ -72,25 +72,25 @@ function mpToneQs(list) {
   return qs.map((q, k) => ({ ...q, n: k + 1 }));
 }
 // 看圖找出正確的語詞：[圖, 國字, 對的注音, 錯的注音, 怎麼分]
-const mpPicQs = list => list.map(([emoji, zh, ok, bad, how], k) => ({ kind: "choice", n: k + 1, shuffle: true, emoji, say: `這是${zh}`, hint: "看圖，哪一個注音才對？只能選一個",
+const mpPicQs = list => list.map(([emoji, zh, ok, bad, how], k) => ({ kind: "choice", type: "pic", raw: [emoji, zh, ok, bad, how], n: k + 1, shuffle: true, emoji, say: `這是${zh}`, hint: "看圖，哪一個注音才對？只能選一個",
   options: [ok, bad], answer: 0, tip: `${zh}：${ok}。${how}只能打一個✓，兩個都打就沒有分數。` }));
 // 讀一讀：對的打✓（或畫○），錯的打✗
-const mpTFQs = (list, mark) => list.map(([line, zh, ok, why], k) => ({ kind: "choice", n: k + 1, plain: true, line, say: zh, hint: `對的${mark === "○" ? "畫○" : "打✓"}，錯的打✗`,
+const mpTFQs = (list, mark) => list.map(([line, zh, ok, why], k) => ({ kind: "choice", type: "tf", mark, raw: [line, zh, ok, why], n: k + 1, plain: true, line, say: zh, hint: `對的${mark === "○" ? "畫○" : "打✓"}，錯的打✗`,
   options: [mark, "✗"], answer: ok ? 0 : 1, tip: `${ok ? `這句話是對的，要${mark === "○" ? "畫○" : "打✓"}` : "這句話是錯的，要打✗"}。${why}` }));
 // 找出適當的語詞，把號碼填在 ( ) 裡
-const mpBankQs = (bank, list) => list.map(([line, zh, ans], k) => ({ kind: "choice", n: k + 1, nums: true, bank, line, say: zh, hint: "上面框框裡哪一個詞放進 ( ) 最對？",
+const mpBankQs = (bank, list) => list.map(([line, zh, ans], k) => ({ kind: "choice", type: "bank", raw: [line, zh, bank[ans - 1]], n: k + 1, nums: true, bank, line, say: zh, hint: "上面框框裡哪一個詞放進 ( ) 最對？",
   options: bank, answer: ans - 1, tip: `答案是${ans}「${bank[ans - 1]}」。把詞放進句子整句念一次，念起來通順的就對。( ) 裡寫號碼${ans}，不是寫注音喔。` }));
 // 連連看：上面一個字，連到下面的詞
-const mpLinkQs = (tops, bottoms, hint) => tops.map(([top, ans, zh], k) => ({ kind: "choice", n: k + 1, line: `${top} → （　）`, say: zh, hint, options: bottoms, answer: ans, tip: `「${top}」連「${bottoms[ans]}」：${zh}。` }));
+const mpLinkQs = (tops, bottoms, hint) => tops.map(([top, ans, zh], k) => ({ kind: "choice", type: "link", top, raw: [top, bottoms[ans], zh], n: k + 1, line: `${top} → （　）`, say: zh, hint, options: bottoms, answer: ans, tip: `「${top}」連「${bottoms[ans]}」：${zh}。` }));
 
 const MID_G1_ZH10A = {
   id: "g1zh10a", grade: "g1", title: "注音總結評量練習卷（一）", sub: "老師11/7發回的國卷・85分那張", percent: true, vertical: true,
   formatSecs: ["二", "三"], formatIntro: () => mpZh10Intro(),
-  school: { label: "11/7發回考卷寫錯的", ids: ["一-5", "三-7", "三-8", "四-1", "五-0", "五-2", "七-0"] },
+  school: { label: "11/7發回考卷寫錯的", ids: ["一-5", "三-7", "三-8", "四-1", "四-4", "五-0", "五-2", "七-0"] },
   sections: [
     { no: "一", name: "完成聽寫", pts: 2, qs: [
       ["螞蟻", "ㄇㄚˇ ㄧˇ"], ["寶寶", "ㄅㄠˇ ㄅㄠ˙"], ["巫婆", "ㄨ ㄆㄛˊ"], ["樹下", "ㄕㄨˋ ㄒㄧㄚˋ"], ["大家", "ㄉㄚˋ ㄐㄧㄚ"],
-      ["逃跑", "ㄊㄠˊ ㄆㄠˇ"], ["魔法", "ㄇㄛˊ ㄈㄚˇ"], ["帽子", "ㄇㄠˋ ㄗ˙"], ["魚缸", "ㄩˊ ㄍㄤ"], ["老師", "ㄌㄠˇ ㄕ"],
+      ["逃跑", "ㄊㄠˊ ㄆㄠˇ"], ["魔法", "ㄇㄛˊ ㄈㄚˇ"], ["抹布", "ㄇㄛˇ ㄅㄨˋ"], ["魚缸", "ㄩˊ ㄍㄤ"], ["老師", "ㄌㄠˇ ㄕ"],
     ].map(([zh, bopo], k) => ({ kind: "spell", n: k + 1, zh, bopo, prompt: "聽一聽，把注音拼出來" })) },
     { no: "二", name: "讀一讀，對的打✓，錯的打✗", pts: 2, qs: mpTFQs([
       ["ㄎㄢˋ ㄉㄠˋ ㄅㄧㄝˊ ㄖㄣˊ ㄉㄜ˙ ㄘㄞˇ ㄙㄜˋ ㄅㄧˇ ㄏㄣˇ ㄆㄧㄠˋ ㄌㄧㄤ˙ ， ㄎㄜˇ ㄧˇ ㄊㄡ ㄊㄡ ㄋㄚˊ ㄌㄞˊ ㄩㄥˋ 。", "看到別人的彩色筆很漂亮，可以偷偷拿來用。", false, "別人的東西要先問過，不能偷偷拿。"],
@@ -107,24 +107,23 @@ const MID_G1_ZH10A = {
       ["🍒", "櫻桃", "ㄧㄥ ㄊㄠˊ", "ㄧㄣ ㄊㄠˊ", "櫻是ㄥ。"],
       ["🍙", "飯糰", "ㄈㄢˋ ㄊㄨㄢˊ", "ㄏㄨㄢˋ ㄊㄨㄢˊ", "飯是ㄈ，上面牙齒碰下嘴唇。"],
       ["👀", "眼睛", "ㄧㄢˇ ㄐㄧㄥ", "ㄧㄢˇ ㄐㄧㄣ", "睛是ㄥ。"],
-      ["🐝", "蜜蜂", "ㄇㄧˋ ㄈㄥ", "ㄇㄧˋ ㄈㄣ", "蜂是ㄥ。"],
+      [() => mpPicSvg("pinwheel"), "風車", "ㄈㄥ ㄔㄜ", "ㄈㄣ ㄔㄜ", "風是ㄥ，車是ㄔ。"],
       ["🐠", "金魚", "ㄐㄧㄣ ㄩˊ", "ㄐㄧㄥ ㄩˊ", "金是ㄣ，嘴巴快閉起來、舌頭往前。"],
-      ["🚗", "汽車", "ㄑㄧˋ ㄔㄜ", "ㄑㄧˋ ㄘㄜ", "車是ㄔ，舌頭要翹起來。"],
+      [() => mpPicSvg("cicada"), "蟬", "ㄔㄢˊ", "ㄘㄢˊ", "會叫的蟬是ㄔ，舌頭要翹起來；蠶寶寶的蠶才是ㄘ。"],
       ["🧀", "乳酪", "ㄖㄨˇ ㄌㄨㄛˋ", "ㄌㄨˇ ㄌㄨㄛˋ", "乳是ㄖ，舌頭翹起來；酪才是ㄌ。"],
     ]) },
-    { no: "四", name: "找出適當的語詞，把號碼填在 ( ) 裡", pts: 2, qs: mpBankQs(["ㄒㄧˇ ㄕㄡˇ", "ㄔˊ ㄉㄠˋ", "ㄉㄚˇ ㄙㄠˇ", "ㄧㄝˇ ㄘㄢ", "ㄓㄨㄢ ㄒㄧㄣ", "ㄌㄧˇ ㄇㄠˋ"], [
+    { no: "四", name: "找出適當的語詞，把號碼填在 ( ) 裡", pts: 2, qs: mpBankQs(["ㄒㄧˇ ㄕㄡˇ", "ㄔˊ ㄉㄠˋ", "ㄌㄜˋ ㄙㄜˋ", "ㄧㄝˇ ㄘㄢ", "ㄓㄨㄢ ㄒㄧㄣ", "ㄌㄧˇ ㄇㄠˋ"], [
       ["ㄨㄛˇ ㄏㄨㄟˋ ㄓㄨㄣˇ ㄕˊ ㄕㄤˋ ㄒㄩㄝˊ ， ㄅㄨˊ ㄏㄨㄟˋ （　） 。", "我會準時上學，不會什麼？", 2],
-      ["ㄨㄛˇ ㄏㄨㄟˋ ㄅㄤ ㄇㄤˊ （　） ， ㄅㄠˇ ㄔˊ ㄏㄨㄢˊ ㄐㄧㄥˋ ㄓㄥˇ ㄐㄧㄝˊ 。", "我會幫忙什麼，保持環境整潔？", 3],
-      ["ㄕㄤˋ ㄨㄢˊ ㄘㄜˋ ㄙㄨㄛˇ ㄧㄠˋ ㄐㄧˋ ㄉㄜ˙ （　） 。", "上完廁所要記得什麼？", 1],
-      ["ㄕㄤˋ ㄎㄜˋ ㄧㄠˋ （　） ㄊㄧㄥ ㄌㄠˇ ㄕ ㄕㄨㄛ ㄏㄨㄚˋ 。", "上課要怎樣聽老師說話？", 5],
-      ["ㄐㄧㄢˋ ㄉㄠˋ ㄖㄣˊ ㄧㄠˋ ㄉㄚˇ ㄓㄠ ㄏㄨ˙ ， ㄗㄨㄛˋ ㄍㄜ˙ ㄧㄡˇ （　） ㄉㄜ˙ ㄏㄠˇ ㄏㄞˊ ㄗ˙ 。", "見到人要打招呼，做個有什麼的好孩子？", 6],
-      ["ㄒㄧㄥ ㄑㄧˊ ㄊㄧㄢ ㄨㄛˇ ㄇㄣ˙ ㄑㄩㄢˊ ㄐㄧㄚ ㄑㄩˋ ㄍㄨㄥ ㄩㄢˊ （　） 。", "星期天我們全家去公園做什麼？", 4],
+      ["ㄨㄛˇ ㄏㄨㄟˋ ㄙㄨㄟˊ ㄕㄡˇ ㄐㄧㄢˇ （　） ， ㄅㄠˇ ㄔˊ ㄏㄨㄢˊ ㄐㄧㄥˋ ㄓㄥˇ ㄐㄧㄝˊ 。", "我會隨手撿什麼，保持環境整潔？", 3],
+      ["ㄕㄤˋ ㄨㄢˊ ㄘㄜˋ ㄙㄨㄛˇ ㄧㄠˋ ㄐㄧˋ ㄉㄜˊ （　） 。", "上完廁所要記得什麼？", 1],
+      ["ㄦˊ ㄊㄨㄥˊ ㄐㄧㄝˊ ㄕˊ ， ㄨㄛˇ ㄇㄣ˙ ㄏㄨㄟˋ ㄗㄞˋ ㄘㄠˇ ㄉㄧˋ （　） 。", "兒童節時，我們會在草地做什麼？", 4],
+      ["ㄨㄛˇ ㄏㄨㄟˋ （　） ㄕㄤˋ ㄎㄜˋ ， ㄅㄨˋ ㄌㄧㄠˊ ㄊㄧㄢ 。", "我會怎樣上課，不聊天？", 5],
     ]) },
     { no: "五", name: "在□中寫出正確的聲調", pts: 1, qs: mpToneQs([
       { zh: "課本放在抽屜裡。", syls: "ㄎㄜˋ ㄅㄣˇ ㄈㄤˋ ㄗㄞˋ ㄔㄡ ㄊㄧ˙ ㄌㄧˇ 。", boxes: [0, 1, 5] },
-      { zh: "袋鼠喜歡在草地上跑步。", syls: "ㄉㄞˋ ㄕㄨˇ ㄒㄧˇ ㄏㄨㄢ ㄗㄞˋ ㄘㄠˇ ㄉㄧˋ ㄕㄤˋ ㄆㄠˇ ㄅㄨˋ 。", boxes: [0, 1, 4] },
+      { zh: "老鼠喜歡在馬路上跑步。", syls: "ㄌㄠˇ ㄕㄨˇ ㄒㄧˇ ㄏㄨㄢ ㄗㄞˋ ㄇㄚˇ ㄌㄨˋ ㄕㄤˋ ㄆㄠˇ ㄅㄨˋ 。", boxes: [0, 1, 4] },
       { zh: "我喜歡在公園裡搖呼啦圈。", syls: "ㄨㄛˇ ㄒㄧˇ ㄏㄨㄢ ㄗㄞˋ ㄍㄨㄥ ㄩㄢˊ ㄌㄧˇ ㄧㄠˊ ㄏㄨ ㄌㄚ ㄑㄩㄢ 。", boxes: [0, 1, 5, 7] },
-      { zh: "寫完考卷要記得檢查。", syls: "ㄒㄧㄝˇ ㄨㄢˊ ㄎㄠˇ ㄐㄩㄢˋ ㄧㄠˋ ㄐㄧˋ ㄉㄜ˙ ㄐㄧㄢˇ ㄔㄚˊ 。", boxes: [0, 2, 5, 8] },
+      { zh: "寫完考卷要記得檢查。", syls: "ㄒㄧㄝˇ ㄨㄢˊ ㄎㄠˇ ㄐㄩㄢˋ ㄧㄠˋ ㄐㄧˋ ㄉㄜˊ ㄐㄧㄢˇ ㄔㄚˊ 。", boxes: [0, 2, 5, 8] },
     ]) },
     { no: "六", name: "連連看", pts: 2, qs: mpLinkQs([["ㄒㄧㄝˇ", 0, "寫功課"], ["ㄔㄤˋ", 1, "唱國歌"], ["ㄊㄢˊ", 2, "彈鋼琴"], ["ㄉㄚˇ", 3, "打籃球"], ["ㄏㄜ", 4, "喝奶茶"], ["ㄔ", 5, "吃午餐"]],
       ["ㄍㄨㄥ ㄎㄜˋ", "ㄍㄨㄛˊ ㄍㄜ", "ㄍㄤ ㄑㄧㄣˊ", "ㄌㄢˊ ㄑㄧㄡˊ", "ㄋㄞˇ ㄔㄚˊ", "ㄨˇ ㄘㄢ"], "上面這個字，連到下面哪一個？") },
@@ -137,7 +136,7 @@ const MID_G1_ZH10A = {
           tip: "回去文章裡找：溜滑梯有、盪鞦韆有，滑板車沒有。" },
         { line: "ㄒㄧㄠˇ ㄆㄥˊ ㄧㄡˇ ㄏㄢˋ ㄕㄟˊ ㄧˋ ㄑㄧˇ ㄉㄠˋ ㄍㄨㄥ ㄩㄢˊ ㄨㄢˊ ？", say: "小朋友和誰一起到公園玩？", options: ["ㄌㄠˇ ㄕ", "ㄐㄧㄚ ㄖㄣˊ", "ㄊㄨㄥˊ ㄒㄩㄝˊ"], answer: 1,
           tip: "文章最後一句：小朋友和家人一起到公園玩。" },
-      ].map((x, k) => ({ kind: "choice", n: k + 1, nums: "circle", passage, passageTitle: "公園", hint: "先讀完文章，再選答案", ...x }));
+      ].map((x, k) => ({ kind: "choice", type: "read", n: k + 1, nums: "circle", passage, passageTitle: "公園", hint: "先讀完文章，再選答案", ...x }));
     })() },
   ],
 };
@@ -145,10 +144,10 @@ const MID_G1_ZH10A = {
 const MID_G1_ZH10B = {
   id: "g1zh10b", grade: "g1", title: "注音總結評量練習卷（二）", sub: "老師11/7發回的國卷・91分那張", percent: true, vertical: true,
   formatSecs: ["二", "三"], formatIntro: () => mpZh10Intro(),
-  school: { label: "11/7發回考卷寫錯的", ids: ["一-1", "一-2", "二-0", "二-3", "三-0", "三-1", "三-2"] },
+  school: { label: "11/7發回考卷寫錯的", ids: ["一-0", "一-1", "一-2", "二-0", "二-3", "三-0", "三-1", "三-2"] },
   sections: [
     { no: "一", name: "完成聽寫", pts: 2, qs: [
-      ["山洞", "ㄕㄢ ㄉㄨㄥˋ"], ["可愛", "ㄎㄜˇ ㄞˋ"], ["魔術", "ㄇㄛˊ ㄕㄨˋ"], ["寶貝", "ㄅㄠˇ ㄅㄟˋ"], ["慶祝", "ㄑㄧㄥˋ ㄓㄨˋ"],
+      ["山崖", "ㄕㄢ ㄧㄞˊ"], ["可愛", "ㄎㄜˇ ㄞˋ"], ["魔術", "ㄇㄛˊ ㄕㄨˋ"], ["寶貝", "ㄅㄠˇ ㄅㄟˋ"], ["慶祝", "ㄑㄧㄥˋ ㄓㄨˋ"],
       ["秋天", "ㄑㄧㄡ ㄊㄧㄢ"], ["泥巴", "ㄋㄧˊ ㄅㄚ"], ["卡車", "ㄎㄚˇ ㄔㄜ"], ["山羊", "ㄕㄢ ㄧㄤˊ"], ["月亮", "ㄩㄝˋ ㄌㄧㄤ˙"],
     ].map(([zh, bopo], k) => ({ kind: "spell", n: k + 1, zh, bopo, prompt: "聽一聽，把注音拼出來" })) },
     { no: "二", name: "讀一讀，對的畫○，錯的打✗", pts: 2, qs: mpTFQs([
@@ -180,8 +179,8 @@ const MID_G1_ZH10B = {
     ]) },
     { no: "五", name: "讀一讀，加上聲調符號", pts: 1, qs: mpToneQs([
       { zh: "狐狸和大象一起去郊遊。", syls: "ㄏㄨˊ ㄌㄧ˙ ㄏㄢˋ ㄉㄚˋ ㄒㄧㄤˋ ㄧˋ ㄑㄧˇ ㄑㄩˋ ㄐㄧㄠ ㄧㄡˊ 。", boxes: [0, 3, 4, 6] },
-      { zh: "姐姐和爸爸去海邊釣魚。", syls: "ㄐㄧㄝˇ ㄐㄧㄝ˙ ㄏㄢˋ ㄅㄚˋ ㄅㄚ˙ ㄑㄩˋ ㄏㄞˇ ㄅㄧㄢ ㄉㄧㄠˋ ㄩˊ 。", boxes: [0, 5, 6, 9] },
-      { zh: "我每天回家寫功課。", syls: "ㄨㄛˇ ㄇㄟˇ ㄊㄧㄢ ㄏㄨㄟˊ ㄐㄧㄚ ㄒㄧㄝˇ ㄍㄨㄥ ㄎㄜˋ 。", boxes: [1, 3, 5, 7] },
+      { zh: "姐姐喜歡和爸爸去海邊釣魚。", syls: "ㄐㄧㄝˇ ㄐㄧㄝ˙ ㄒㄧˇ ㄏㄨㄢ ㄏㄢˋ ㄅㄚˋ ㄅㄚ˙ ㄑㄩˋ ㄏㄞˇ ㄅㄧㄢ ㄉㄧㄠˋ ㄩˊ 。", boxes: [0, 2, 7, 8] },
+      { zh: "我每天回家寫功課。", syls: "ㄨㄛˇ ㄇㄟˇ ㄊㄧㄢ ㄏㄨㄟˊ ㄐㄧㄚ ㄒㄧㄝˇ ㄍㄨㄥ ㄎㄜˋ 。", boxes: [0, 3, 5] },
     ]) },
     { no: "六", name: "念一念，連一連", pts: 2, qs: [
       ...mpLinkQs([["ㄐㄩㄢˇ ㄑㄧˇ", 0, "捲起袖子"], ["ㄖㄤˋ ㄔㄨ", 1, "讓出座位"], ["ㄉㄚˇ ㄎㄞ", 2, "打開窗戶"]], ["ㄒㄧㄡˋ ㄗ˙", "ㄗㄨㄛˋ ㄨㄟˋ", "ㄔㄨㄤ ㄏㄨ˙"], "連成短語：接哪一個？"),
@@ -192,7 +191,7 @@ const MID_G1_ZH10B = {
       return [
         { line: "ㄒㄧㄠˇ ㄏㄨㄚ ㄇㄠ ㄒㄧㄤˇ ㄔ ㄕㄣˊ ㄇㄜ˙ ？", say: "小花貓想吃什麼？", options: ["ㄅㄧㄥˇ ㄍㄢ", "ㄒㄧㄠˇ ㄩˊ", "ㄐㄧ ㄖㄡˋ"], answer: 1, tip: "文章說：想吃香噴噴的小魚。" },
         { line: "ㄕㄟˊ ㄍㄨㄣˇ ㄒㄧㄚˋ ㄌㄞˊ ㄌㄜ˙ ？", say: "誰滾下來了？", options: ["ㄒㄧㄠˇ ㄩˊ", "ㄒㄧㄠˇ ㄍㄡˇ", "ㄒㄧㄠˇ ㄏㄨㄚ ㄇㄠ"], answer: 2, tip: "小狗來了，小花貓東跑西跑，滾下來的是小花貓。" },
-      ].map((x, k) => ({ kind: "choice", n: k + 1, nums: "circle", passage, hint: "先讀完文章，再選答案", ...x }));
+      ].map((x, k) => ({ kind: "choice", type: "read", n: k + 1, nums: "circle", passage, hint: "先讀完文章，再選答案", ...x }));
     })() },
   ],
 };
@@ -216,12 +215,318 @@ function mpZh10Intro() {
 
 const MID_PAPERS = { g1zh10a: MID_G1_ZH10A, g1zh10b: MID_G1_ZH10B, g1zh: MID_G1_ZH };
 
+// 沒有適合表情符號的圖：自己畫（不放國字）
+function mpPicSvg(kind) {
+  const S = (...k) => fsvg("svg", { viewBox: "0 0 100 100", class: "mp-picsvg" }, ...k);
+  if (kind === "pinwheel") return S(fsvg("line", { x1: 50, y1: 50, x2: 50, y2: 98, stroke: "#7a5a3a", "stroke-width": 5, "stroke-linecap": "round" }),
+    ...[["#e0393e", 0], ["#3d5fc9", 90], ["#f2b705", 180], ["#1c7d58", 270]].map(([c, a]) => fsvg("path", { d: "M 50 46 L 50 8 Q 74 18 50 46 Z", fill: c, stroke: "#333", "stroke-width": 1.5, transform: `rotate(${a} 50 46)` })),
+    fsvg("circle", { cx: 50, cy: 46, r: 4, fill: "#fff", stroke: "#333", "stroke-width": 1.5 }));
+  if (kind === "cicada") return S(fsvg("line", { x1: 4, y1: 74, x2: 96, y2: 60, stroke: "#7a5a3a", "stroke-width": 6, "stroke-linecap": "round" }),
+    fsvg("path", { d: "M 34 30 Q 18 60 40 74 L 46 40 Z", fill: "#cfe8f2", stroke: "#333", "stroke-width": 1.5, opacity: 0.9 }),
+    fsvg("path", { d: "M 66 30 Q 82 60 60 74 L 54 40 Z", fill: "#cfe8f2", stroke: "#333", "stroke-width": 1.5, opacity: 0.9 }),
+    fsvg("ellipse", { cx: 50, cy: 46, rx: 9, ry: 22, fill: "#5b4a2e", stroke: "#333", "stroke-width": 1.5 }),
+    fsvg("circle", { cx: 50, cy: 24, r: 8, fill: "#6b5a3a", stroke: "#333", "stroke-width": 1.5 }),
+    fsvg("circle", { cx: 45, cy: 22, r: 2.5, fill: "#fff" }), fsvg("circle", { cx: 55, cy: 22, r: 2.5, fill: "#fff" }),
+    fsvg("text", { x: 70, y: 18, "font-size": 14 }, "♪"), fsvg("text", { x: 80, y: 30, "font-size": 12 }, "♪"));
+  return S();
+}
+
+// === 🎯 錯的加強訓練、🔀 類似考題混合考：用兩張考卷的題目＋同樣考法的新題目，每次重新出 ===
+const MP_TF_EXTRA = [
+  ["ㄔ ㄈㄢˋ ㄑㄧㄢˊ ㄧㄠˋ ㄒㄧㄢ ㄒㄧˇ ㄕㄡˇ 。", "吃飯前要先洗手。", true, "吃飯前洗手才乾淨。"],
+  ["ㄍㄨㄛˋ ㄇㄚˇ ㄌㄨˋ ㄕˊ ， ㄎㄜˇ ㄧˇ ㄅㄧㄢ ㄗㄡˇ ㄅㄧㄢ ㄨㄢˊ 。", "過馬路時，可以邊走邊玩。", false, "過馬路要看車子，不能玩。"],
+  ["ㄐㄧㄝˋ ㄅㄧㄝˊ ㄖㄣˊ ㄉㄜ˙ ㄉㄨㄥ ㄒㄧ˙ ， ㄧㄠˋ ㄒㄧㄢ ㄨㄣˋ ㄍㄨㄛˋ 。", "借別人的東西，要先問過。", true, "借東西要先問。"],
+  ["ㄕㄤˋ ㄎㄜˋ ㄕˊ ， ㄎㄜˇ ㄧˇ ㄍㄣ ㄊㄨㄥˊ ㄒㄩㄝˊ ㄕㄨㄛ ㄏㄨㄚˋ 。", "上課時，可以跟同學說話。", false, "上課要專心聽老師說。"],
+  ["ㄩㄥˋ ㄨㄢˊ ㄉㄜ˙ ㄨㄢˊ ㄐㄩˋ ， ㄧㄠˋ ㄕㄡ ㄏㄠˇ 。", "用完的玩具，要收好。", true, "玩具玩完要收好。"],
+  ["ㄏㄜ ㄨㄢˊ ㄉㄜ˙ ㄕㄨㄟˇ ㄆㄧㄥˊ ， ㄎㄜˇ ㄧˇ ㄖㄥ ㄗㄞˋ ㄉㄧˋ ㄕㄤˋ 。", "喝完的水瓶，可以扔在地上。", false, "垃圾要丟進垃圾桶。"],
+  ["ㄗㄠˇ ㄕㄤ˙ ㄑㄧˇ ㄔㄨㄤˊ ， ㄧㄠˋ ㄕㄨㄚ ㄧㄚˊ ㄒㄧˇ ㄌㄧㄢˇ 。", "早上起床，要刷牙洗臉。", true, "起床要刷牙洗臉。"],
+  ["ㄊㄨㄥˊ ㄒㄩㄝˊ ㄕㄨㄞ ㄉㄠˇ ㄌㄜ˙ ， ㄨㄛˇ ㄧㄠˋ ㄉㄚˋ ㄒㄧㄠˋ 。", "同學摔倒了，我要大笑。", false, "同學跌倒要扶他、問他痛不痛。"],
+];
+const MP_TONE_EXTRA = [
+  { zh: "媽媽買了一本好看的書。", syls: "ㄇㄚ ㄇㄚ˙ ㄇㄞˇ ㄌㄜ˙ ㄧˋ ㄅㄣˇ ㄏㄠˇ ㄎㄢˋ ㄉㄜ˙ ㄕㄨ 。" },
+  { zh: "小狗在草地上跑來跑去。", syls: "ㄒㄧㄠˇ ㄍㄡˇ ㄗㄞˋ ㄘㄠˇ ㄉㄧˋ ㄕㄤˋ ㄆㄠˇ ㄌㄞˊ ㄆㄠˇ ㄑㄩˋ 。" },
+  { zh: "我和弟弟一起去上學。", syls: "ㄨㄛˇ ㄏㄢˋ ㄉㄧˋ ㄉㄧ˙ ㄧˋ ㄑㄧˇ ㄑㄩˋ ㄕㄤˋ ㄒㄩㄝˊ 。" },
+  { zh: "老師說故事給我們聽。", syls: "ㄌㄠˇ ㄕ ㄕㄨㄛ ㄍㄨˋ ㄕ˙ ㄍㄟˇ ㄨㄛˇ ㄇㄣ˙ ㄊㄧㄥ 。" },
+  { zh: "天空有白白的雲。", syls: "ㄊㄧㄢ ㄎㄨㄥ ㄧㄡˇ ㄅㄞˊ ㄅㄞˊ ㄉㄜ˙ ㄩㄣˊ 。" },
+];
+const MP_LINK_EXTRA = [["ㄊㄧ", "ㄗㄨˊ ㄑㄧㄡˊ", "踢足球"], ["ㄎㄢˋ", "ㄉㄧㄢˋ ㄕˋ", "看電視"], ["ㄈㄤˋ", "ㄈㄥ ㄓㄥ", "放風箏"], ["ㄏㄨㄚˋ", "ㄊㄨˊ", "畫圖"], ["ㄊㄧㄠˋ", "ㄕㄥˊ", "跳繩"]];
+// 從兩張卷子（和 11/1 複習卷的聽寫）收集同一種題目
+function mpZh10Pool() {
+  const qs = [MID_G1_ZH10A, MID_G1_ZH10B].flatMap(P => P.sections.flatMap(sec => sec.qs.map(q => ({ ...q, from: P.id, qid: `${sec.no}-${sec.qs.indexOf(q)}` }))));
+  const wrong = new Set([MID_G1_ZH10A, MID_G1_ZH10B].flatMap(P => P.school.ids.map(id => `${P.id}:${id}`)));
+  const isWrong = q => wrong.has(`${q.from}:${q.qid}`);
+  const picExtra = BP_SCHOOL_WORDS.filter(w => w.emoji).map(w => { const v = bpWeakVariants(w.bopo); const bad = v.swap[0] || v.tones[0]; return bad ? [w.emoji, w.zh, w.bopo, bad, "兩個注音念念看，聲音一樣才對。"] : null; }).filter(Boolean);
+  return {
+    isWrong,
+    spell: qs.filter(q => q.kind === "spell").map(q => [q.zh, q.bopo, isWrong(q)]).concat(MID_G1_ZH.sections[0].qs.map(q => [q.zh, q.bopo, false])),
+    tf: qs.filter(q => q.type === "tf").map(q => q.raw).concat(MP_TF_EXTRA),
+    pic: qs.filter(q => q.type === "pic").map(q => [...q.raw, isWrong(q)]).concat(picExtra.filter(x => !qs.some(q => q.type === "pic" && q.raw[1] === x[1])).map(x => [...x, false])),
+    bank: qs.filter(q => q.type === "bank").map(q => [...q.raw, isWrong(q)]),
+    tone: qs.filter(q => q.type === "tone").map(q => ({ zh: q.zh, syls: q.syls, boxes: [q.bi], wrong: isWrong(q) })),
+    link: qs.filter(q => q.type === "link").map(q => q.raw).concat(MP_LINK_EXTRA),
+    read: [MID_G1_ZH10A, MID_G1_ZH10B].map(P => P.sections.find(s => s.no === "七").qs),
+  };
+}
+const mpPick = (list, n, first = () => false) => [...shuffle(list.filter(first)), ...shuffle(list.filter(x => !first(x)))].slice(0, n);
+const mpRenum = qs => qs.map((q, k) => ({ ...q, n: k + 1 }));
+// 填號碼：抽 n 句，詞語框＝這幾句的答案＋2 個別的詞，重新編號
+function mpBankMix(pool, n, first) {
+  const picked = mpPick(pool, n, first);
+  const others = shuffle([...new Set(pool.map(x => x[2]).filter(w => !picked.some(p => p[2] === w)))]).slice(0, 2);
+  const bank = shuffle([...new Set([...picked.map(p => p[2]), ...others])]);
+  return mpBankQs(bank, picked.map(([line, zh, w]) => [line, zh, bank.indexOf(w) + 1]));
+}
+function mpLinkMix(pool, n) {
+  const tops = new Set(), picked = [];
+  shuffle(pool).forEach(x => { if (picked.length < n && !tops.has(x[0])) { tops.add(x[0]); picked.push(x); } });
+  const bottoms = shuffle(picked.map(x => x[1]));
+  return mpLinkQs(picked.map(([top, b, zh]) => [top, bottoms.indexOf(b), zh]), bottoms, "上面這個字，連到下面哪一個？");
+}
+// 隨機一個要寫聲調的字（不考一聲）
+function mpToneMix(list, n) {
+  return mpToneQs(list.slice(0, n).map(x => {
+    if (x.boxes) return x;
+    const arr = x.syls.split(/\s+/), idx = arr.map((s, i) => /[ˊˇˋ]$/.test(s) ? i : -1).filter(i => i >= 0);
+    return { ...x, boxes: [shuffle(idx)[0]] };
+  }));
+}
+// ✓ ○ ✗ 看清楚：每一題隨機要你「打✓」或「畫○」
+function mpTFMarkQs(list) {
+  return list.map(([line, zh, ok, why], k) => {
+    const mark = Math.random() < 0.5 ? "✓" : "○";
+    return { kind: "choice", type: "tf", n: k + 1, plain: true, line, say: zh, lead: `題目說：對的${mark === "○" ? "畫○" : "打✓"}，錯的打✗`,
+      hint: `⚠️ 這一題：對的${mark === "○" ? "畫○" : "打✓"}，錯的打✗`, options: ["✓", "○", "✗"], answer: ok ? (mark === "✓" ? 0 : 1) : 2,
+      tip: `${ok ? `這句話是對的，這一題要${mark === "○" ? "畫○" : "打✓"}，不能${mark === "○" ? "打✓" : "畫○"}` : "這句話是錯的，要打✗"}。${why}先看題目說要怎麼寫，再作答。` };
+  });
+}
+const MID_GEN = {
+  // 🎯 針對 11/7 兩張卷子錯的地方
+  zh10drill: () => {
+    const pool = mpZh10Pool();
+    return { id: "zh10drill", grade: "g1", gen: true, title: "錯的加強訓練", vertical: true, percent: true, sections: [
+      { no: "一", name: "✓和○看清楚（題目說什麼就寫什麼）", pts: 1, qs: mpTFMarkQs(mpPick(pool.tf, 6)) },
+      { no: "二", name: "看圖：只能選一個（小心長得像的音）", pts: 1, qs: mpRenum(mpPicQs(mpPick(pool.pic, 8, x => x[5]).map(x => x.slice(0, 5)))) },
+      { no: "三", name: "在□中寫聲調", pts: 1, qs: mpToneMix(mpPick(pool.tone, 5, x => x.wrong), 5) },
+      { no: "四", name: "聽寫：寫錯的詞", pts: 1, qs: mpPick(pool.spell, 5, x => x[2]).map(([zh, bopo], k) => ({ kind: "spell", n: k + 1, zh, bopo, prompt: "聽一聽，把注音拼出來" })) },
+      { no: "五", name: "找出適當的語詞，把號碼填在 ( ) 裡", pts: 1, qs: mpBankMix(pool.bank, 4, x => x[3]) },
+      { no: "六", name: "閱讀測驗：一個一個數", pts: 1, qs: [{ ...pool.read[0][0], n: 1 }] },
+    ] };
+  },
+  // 🔀 同樣七種題目，題目重新抽、混在一起
+  zh10mix: () => {
+    const pool = mpZh10Pool();
+    const mark = Math.random() < 0.5 ? "✓" : "○";
+    const read = shuffle(pool.read)[0];
+    return { id: "zh10mix", grade: "g1", gen: true, title: "類似考題混合考", vertical: true, percent: true, sections: [
+      { no: "一", name: "完成聽寫", pts: 2, qs: mpPick(pool.spell, 5).map(([zh, bopo], k) => ({ kind: "spell", n: k + 1, zh, bopo, prompt: "聽一聽，把注音拼出來" })) },
+      { no: "二", name: `讀一讀，對的${mark === "○" ? "畫○" : "打✓"}，錯的打✗`, pts: 2, qs: mpTFQs(mpPick(pool.tf, 5), mark) },
+      { no: "三", name: "看圖找出正確的語詞", pts: 2, qs: mpRenum(mpPicQs(mpPick(pool.pic, 6).map(x => x.slice(0, 5)))) },
+      { no: "四", name: "找出適當的語詞，把號碼填在 ( ) 裡", pts: 2, qs: mpBankMix(pool.bank, 4) },
+      { no: "五", name: "在□中寫出正確的聲調", pts: 1, qs: mpToneMix(shuffle([...pool.tone, ...MP_TONE_EXTRA]), 6) },
+      { no: "六", name: "連連看", pts: 2, qs: mpLinkMix(pool.link, 4) },
+      { no: "七", name: "閱讀測驗", pts: 3, qs: read.map(q => ({ ...q })) },
+    ] };
+  },
+};
+
+// === 📄 原卷重考：跟紙本一樣一整張寫（#/zhsheet/<id>，?mode=exam 模擬考）===
+// ( ) 點一下選✓○✗／號碼、□ 點一下選聲調、看圖的 ( ) 可以打好幾個✓（跟紙本一樣，打兩個就沒分）、連連看先點上面再點下面、聽寫格點一下拼注音
+function mpPad(labels, onPick, tip) {
+  fsPadEl?.remove();
+  const close = () => { fsPadEl?.remove(); fsPadEl = null; };
+  fsPadEl = el("div", { class: "fs-pad" }, tip ? el("div", { class: "fs-pad__tip" }, t(tip)) : null,
+    el("div", { class: "fs-pad__keys zs-pad__keys" }, labels.map((lb, i) => el("button", { class: "fs-pad__key zs-pad__key", "data-nobopo": "1", onclick: () => { onPick(i); close(); } }, lb)),
+      el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: () => { onPick(null); close(); } }, "⌫"),
+      el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: close }, "✕")));
+  document.body.appendChild(fsPadEl);
+}
+function renderZhSheet(id, exam) {
+  const P = MID_PAPERS[id];
+  if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
+  const key = `sheet:${id}`;
+  const root = el("div", {});
+  const header = renderHeader(exam ? "📝 原卷模擬考" : "📄 原卷重考", { back: "#/midterm" });
+  root.appendChild(header);
+  const progressLabel = $(".header__progress", header);
+  const app = el("main", { class: `app ws fs zs${exam ? " is-exam" : ""}` });
+  root.appendChild(app);
+  const scoreBox = el("span", { class: "ws-score__num" }, "");
+  app.appendChild(el("div", { class: "ws-title" }, el("div", { class: "ws-title__main" }, t(P.title)), el("div", { class: "ws-title__sub" }, t("跟考卷一樣，一整張寫完再交卷")), el("div", { class: "ws-score" }, t("得分"), scoreBox)));
+  const body = el("div", {});
+  const gate = exam ? mockGate(body, { id }, `#/zhsheet/${id}`, key) : null;
+  if (gate) app.appendChild(gate.el);
+  app.appendChild(body);
+  body.appendChild(el("div", { class: "ws-howto" }, t("跟紙本一樣寫：點 ( ) 寫✓、○、✗或號碼，點 □ 寫聲調，連連看先點上面再點下面，聽寫格點一下拼注音。先看清楚每一大題要你怎麼寫！")));
+  const blanks = []; let locked = false;
+  const update = () => { blanks.forEach(b => { if (b.get() != null) b.node?.classList.remove("fs-need"); }); progressLabel.textContent = `寫了 ${blanks.filter(b => b.get() != null).length}/${blanks.length} 題`; };
+  const add = (sec, q, node, get, ok, show, ansText) => blanks.push({ sec: sec.no, pts: sec.pts, q, node, get, ok, show, ansText });
+  const on = btn => { app.querySelectorAll(".zs-on").forEach(x => x.classList.remove("zs-on")); btn.classList.add("zs-on"); };
+  // ( ) 按鈕：labels 是可以選的、val 是現在寫的
+  const paren = (labels, tip, onSet) => {
+    let val = null;
+    const v = el("span", { class: "zs-paren__v", "data-nobopo": "1" }, "　");
+    const b = el("button", { class: "zs-paren", "aria-label": "作答" }, el("span", { class: "zs-paren__p" }, "︵"), v, el("span", { class: "zs-paren__p" }, "︶"));
+    b.addEventListener("click", () => { if (locked) return; on(b); mpPad(labels, i => { val = i; v.textContent = i == null ? "　" : labels[i]; b.classList.remove("zs-on"); onSet?.(i); update(); }, tip); });
+    return { node: b, get: () => val, set: x => { val = x; } };
+  };
+  const NUM = "123456", CIR = "①②③④⑤⑥";
+  P.sections.forEach(sec => {
+    const secEl = el("section", { class: "ws-sec" }, el("div", { class: "ws-sec__head" }, el("span", { class: "ws-sec__no" }, sec.no), el("div", { class: "ws-sec__instr" }, t(sec.name))));
+    const type = sec.qs[0].kind === "spell" ? "spell" : sec.qs[0].type;
+    if (type === "spell") {
+      secEl.appendChild(el("div", { class: "zs-dict" }, sec.qs.map(q => {
+        let val = null;
+        const shown = el("div", { class: "zs-dict__ans" });
+        const cell = el("button", { class: "zs-dict__cell" }, el("span", { class: "zs-dict__no", "data-nobopo": "1" }, String(q.n)), el("button", { class: "icon-btn zs-dict__say", "aria-label": "聽", onclick: e => { e.stopPropagation(); speakZh(q.zh); } }, "🔊"), shown);
+        cell.addEventListener("click", () => {
+          if (locked) return;
+          speakZh(q.zh);
+          const close = () => modal.remove();
+          const modal = el("div", { class: "zs-modal" }, el("div", { class: "zs-modal__box" },
+            el("div", { class: "zs-modal__head" }, t(`第${q.n}題：聽一聽，把注音拼出來`), el("button", { class: "icon-btn icon-btn--accent", onclick: () => speakZh(q.zh) }, "🔊"), el("button", { class: "icon-btn", onclick: close }, "✕")),
+            mpSpell(q.bopo, ans => { if (ans == null) return; val = ans; shown.replaceChildren(bopoWordEl(ans)); close(); update(); })));
+          document.body.appendChild(modal);
+        });
+        add(sec, q, cell, () => val, () => mpNorm(val) === mpNorm(q.bopo), ok => { cell.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) cell.appendChild(el("div", { class: "zs-fix" }, bopoWordEl(q.bopo, { class: "bopo-word--sm" }))); }, q.bopo);
+        return cell;
+      })));
+    } else if (type === "tf") {
+      secEl.appendChild(el("div", { class: "zs-cols" }, sec.qs.map(q => {
+        const p = paren(["✓", "○", "✗"], "對的、錯的要寫哪一個？看清楚題目");
+        add(sec, q, p.node, p.get, () => ["✓", "○", "✗"][p.get()] === q.options[q.answer], ok => { p.node.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) p.node.appendChild(el("span", { class: "zs-fixmark", "data-nobopo": "1" }, q.options[q.answer])); }, q.options[q.answer]);
+        return el("div", { class: "zs-col" }, el("span", { class: "zs-no", "data-nobopo": "1" }, `${q.n}`), p.node, mpBopoLine(q.line, true));
+      })));
+    } else if (type === "pic") {
+      secEl.appendChild(el("div", { class: "zs-pics" }, sec.qs.map((q, k) => {
+        const order = k % 2 ? [1, 0] : [0, 1]; // 對的有時在左、有時在右
+        const ticks = new Set();
+        const cols = order.map(oi => {
+          const b = el("button", { class: "zs-tick", "aria-label": "打勾" }, el("span", { class: "zs-paren__p" }, "︵"), el("span", { class: "zs-tick__v", "data-nobopo": "1" }, "　"), el("span", { class: "zs-paren__p" }, "︶"));
+          b.addEventListener("click", () => { if (locked) return; ticks.has(oi) ? ticks.delete(oi) : ticks.add(oi); b.querySelector(".zs-tick__v").textContent = ticks.has(oi) ? "✓" : "　"; update(); });
+          return el("div", { class: "zs-pic__opt", "data-oi": oi }, b, bopoWordEl(q.options[oi], { class: "bopo-word--sm" }));
+        });
+        const card = el("div", { class: "zs-pic" }, el("div", { class: "zs-pic__head" }, el("span", { class: "zs-no", "data-nobopo": "1" }, `${q.n}`), el("div", { class: "zs-pic__img" }, typeof q.emoji === "function" ? q.emoji() : q.emoji)), el("div", { class: "zs-pic__opts" }, cols));
+        add(sec, q, card, () => ticks.size ? [...ticks].sort().join(",") : null, () => ticks.size === 1 && ticks.has(q.answer),
+          ok => { card.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) { cols.forEach(c => { if (+c.dataset.oi === q.answer) c.classList.add("zs-pic__opt--ans"); }); if (ticks.size > 1) card.appendChild(el("div", { class: "zs-note" }, t("兩個都打✓就沒有分數"))); } }, q.options[q.answer]);
+        return card;
+      })));
+    } else if (type === "bank") {
+      const bank = sec.qs[0].bank;
+      secEl.appendChild(el("div", { class: "mp-bank" }, bank.map((w, k) => el("span", { class: "mp-bank__w" }, el("b", { "data-nobopo": "1" }, NUM[k]), bopoWordEl(w, { class: "bopo-word--sm" })))));
+      secEl.appendChild(el("div", { class: "zs-cols" }, sec.qs.map(q => {
+        // ( ) 在句子裡的位置，跟紙本一樣
+        const p = paren(bank.map((_, k) => NUM[k]), "寫上面框框裡的號碼");
+        const toks = q.line.split(/ +/), at = toks.indexOf("（　）"); // 不能用 \s：（　）中間是全形空白
+        const line = el("div", { class: "zs-vline" }, mpBopoLine(toks.slice(0, at).join(" "), true), p.node, mpBopoLine(toks.slice(at + 1).join(" "), true));
+        add(sec, q, p.node, p.get, () => p.get() === q.answer, ok => { p.node.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) p.node.appendChild(el("span", { class: "zs-fixmark", "data-nobopo": "1" }, NUM[q.answer])); }, NUM[q.answer]);
+        return el("div", { class: "zs-col" }, el("span", { class: "zs-no" }, "★"), line);
+      })));
+    } else if (type === "tone") {
+      const groups = [];
+      sec.qs.forEach(q => { let g = groups.find(x => x.syls === q.syls); if (!g) groups.push(g = { syls: q.syls, qs: [] }); g.qs.push(q); });
+      const TONES = ["ˉ", "ˊ", "ˇ", "ˋ", "˙"];
+      secEl.appendChild(el("div", { class: "zs-cols" }, groups.map((g, gi) => {
+        const arr = g.syls.split(/\s+/);
+        const toks = arr.map((syl, i) => {
+          const q = g.qs.find(x => x.bi === i);
+          if (!q) return /^[ㄅ-ㄩ]/.test(syl) ? bopoColEl(syl) : el("span", { class: "mp-punct" }, syl);
+          let val = null;
+          const box = el("button", { class: "zs-tbox__box", "data-nobopo": "1", "aria-label": "寫聲調" }, "");
+          const node = el("span", { class: "mp-tbox zs-tbox" }, bopoColEl(syl.replace(/[ˊˇˋ˙]/g, "")), box);
+          box.addEventListener("click", () => { if (locked) return; on(box); mpPad(["一聲 ˉ", "ˊ", "ˇ", "ˋ", "˙"], i => { val = i; box.textContent = i == null ? "" : TONES[i]; box.classList.remove("zs-on"); update(); }, "□ 裡寫哪一個聲調？"); });
+          add(sec, q, box, () => val, () => val === q.answer, ok => { box.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) node.appendChild(el("span", { class: "zs-fixmark", "data-nobopo": "1" }, TONES[q.answer])); }, TONES[q.answer]);
+          return node;
+        });
+        return el("div", { class: "zs-col" }, el("span", { class: "zs-no", "data-nobopo": "1" }, `${gi + 1}`), el("div", { class: "mp-line mp-line--v" }, toks));
+      })));
+    } else if (type === "link") {
+      const groups = [];
+      sec.qs.forEach(q => { const k = q.options.join("|"); let g = groups.find(x => x.k === k); if (!g) groups.push(g = { k, options: q.options, qs: [] }); g.qs.push(q); });
+      groups.forEach(g => secEl.appendChild(mpLinkSheet(sec, g, add, () => locked, update)));
+    } else if (type === "read") {
+      const q0 = sec.qs[0];
+      secEl.appendChild(el("div", { class: "mp-passage" }, q0.passageTitle ? el("div", { class: "mp-passage__title" }, t(q0.passageTitle)) : null, mpBopoLine(q0.passage, true)));
+      secEl.appendChild(el("div", { class: "zs-cols" }, sec.qs.map(q => {
+        const p = paren(q.options.map((_, k) => CIR[k]), "寫答案的號碼");
+        add(sec, q, p.node, p.get, () => p.get() === q.answer, ok => { p.node.classList.add(ok ? "zs-ok" : "zs-bad"); if (!ok) p.node.appendChild(el("span", { class: "zs-fixmark", "data-nobopo": "1" }, CIR[q.answer])); }, CIR[q.answer]);
+        return el("div", { class: "zs-col" }, el("span", { class: "zs-no", "data-nobopo": "1" }, `${q.n}`), p.node, mpBopoLine(`${q.line} ${q.options.map((o, k) => `${CIR[k]} ${o}`).join(" ")}`, true));
+      })));
+    }
+    body.appendChild(secEl);
+    blanks.filter(b => b.sec === sec.no).forEach(b => { b.secEl = secEl; });
+  });
+  const result = el("div", { class: "ws-result" });
+  const submit = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
+    const empty = blanks.filter(b => b.get() == null);
+    if (empty.length) {
+      app.querySelectorAll(".fs-need").forEach(x => x.classList.remove("fs-need"));
+      empty.forEach(b => b.node.classList.add("fs-need"));
+      submit.replaceChildren(t(`還有${empty.length}題沒寫，每一題都要寫完才能交卷`)); buzzWrong();
+      empty[0].node.scrollIntoView({ behavior: "smooth", block: "center" }); return;
+    }
+    locked = true; submit.style.display = "none"; fsPadEl?.remove();
+    let got = 0, max = 0;
+    blanks.forEach(b => { b.isOk = b.ok(); b.show(b.isOk); max += b.pts; if (b.isOk) got += b.pts; recordZh(`原卷:${b.q.zh || b.q.say}`, b.isOk); });
+    const score = Math.round(got / max * 100);
+    scoreBox.textContent = String(score); scoreBox.classList.add("pop");
+    if (score === 100) { dingCorrect(); confetti(); } else buzzWrong();
+    const rows = P.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return { no: sec.no, got: bs.reduce((n, b) => n + (b.isOk ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
+    const bad = blanks.filter(b => !b.isOk);
+    result.replaceChildren(...[
+      el("div", { class: "ws-result__big" }, `${score} 分`),
+      el("div", { class: "ws-result__msg" }, t(bad.length ? `錯了${bad.length}題，紅色的地方看綠色的答案 💪` : "全對！太厲害了 🌟")),
+      bad.length ? el("div", { class: "bp-missed ex-wrong" }, el("div", { class: "zh-missed__title" }, t("❌ 錯在這裡（點一下跳過去看）：")),
+        el("div", { class: "sw-chips" }, P.sections.map(sec => { const bs = bad.filter(b => b.sec === sec.no); return bs.length ? el("button", { class: "sw-chip", onclick: () => { bs[0].node.scrollIntoView({ behavior: "smooth", block: "center" }); bs[0].node.classList.add("sw-flash"); setTimeout(() => bs[0].node.classList.remove("sw-flash"), 1600); } }, t(`第${sec.no}大題：錯${bs.length}題`)) : null; }).filter(Boolean)),
+        el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/midpaper/zh10drill") }, t("🎯 錯的加強訓練"))) : null,
+      exam ? mockResult({ id }, score, gate.secs(), rows, key) : el("div", { class: "mock-result" }, el("div", { class: "mock-result__rows" }, rows.map(r => el("div", { class: `mock-result__row${r.got < r.max ? " mock-result__row--miss" : ""}` }, el("span", {}, t(`第${r.no}大題`)), el("b", { "data-nobopo": "1" }, `${r.got}/${r.max}`))))),
+      el("button", { class: "btn btn--full btn--xl", onclick: () => navigate(`#/zhsheet/${id}?${exam ? "mode=exam&" : ""}r=${Date.now()}`) }, t("🔁 再寫一次")),
+      el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate("#/midterm") }, t("回考卷列表"))].filter(Boolean));
+    result.scrollIntoView({ behavior: "smooth", block: "start" });
+  } }, t("✅ 交卷"));
+  body.appendChild(el("div", { class: "ws-submit" }, submit, result));
+  update();
+  return root;
+}
+// 原卷的連連看：上面一排、下面一排，先點上面再點下面畫一條線
+function mpLinkSheet(sec, g, add, isLocked, update) {
+  const wrap = el("div", { class: "ws-q fs-match zs-link" });
+  const topRow = el("div", { class: "zs-link__row" }), botRow = el("div", { class: "zs-link__row" });
+  const lines = svg("svg", { class: "fs-match__lines" });
+  const pairs = {}, status = {}; let pick = null;
+  const topDots = [], botDots = [];
+  const draw = () => {
+    const wr = wrap.getBoundingClientRect();
+    lines.setAttribute("viewBox", `0 0 ${wr.width} ${wr.height}`); lines.setAttribute("width", wr.width); lines.setAttribute("height", wr.height);
+    lines.replaceChildren(...Object.entries(pairs).map(([ti, bi]) => {
+      const a = topDots[ti].getBoundingClientRect(), b = botDots[bi].getBoundingClientRect();
+      return svg("line", { x1: a.left + a.width / 2 - wr.left, y1: a.top + a.height / 2 - wr.top, x2: b.left + b.width / 2 - wr.left, y2: b.top + b.height / 2 - wr.top, stroke: status[ti] === "ok" ? "#1b9e6a" : status[ti] === "bad" ? "#e0393e" : "#3b6bff", "stroke-width": 5, "stroke-linecap": "round" });
+    }));
+  };
+  g.qs.forEach((q, i) => {
+    const dot = el("span", { class: "fs-match__dot" }); topDots.push(dot);
+    const b = el("button", { class: "zs-link__item" }, bopoWordEl(q.top), dot);
+    b.addEventListener("click", () => { if (isLocked()) return; pick = i; topRow.querySelectorAll(".zs-link__item").forEach((x, j) => x.classList.toggle("zs-on", j === i)); });
+    topRow.appendChild(b);
+    add(sec, q, b, () => pairs[i] ?? null, () => pairs[i] === q.answer, ok => { status[i] = ok ? "ok" : "bad"; if (!ok) pairs[i] = q.answer; draw(); }, g.options[q.answer]);
+  });
+  g.options.forEach((o, j) => {
+    const dot = el("span", { class: "fs-match__dot" }); botDots.push(dot);
+    const b = el("button", { class: "zs-link__item" }, dot, bopoWordEl(o));
+    b.addEventListener("click", () => { if (isLocked() || pick == null) return; Object.keys(pairs).forEach(k => { if (pairs[k] === j) delete pairs[k]; }); pairs[pick] = j; pick = null; topRow.querySelectorAll(".zs-on").forEach(x => x.classList.remove("zs-on")); draw(); update(); });
+    botRow.appendChild(b);
+  });
+  wrap.append(el("div", { class: "fs-match__hint" }, t("先點上面的，再點下面的，就會連一條線")), topRow, el("div", { class: "fs-match__gap" }), botRow, lines);
+  new ResizeObserver(draw).observe(wrap);
+  return wrap;
+}
+
+
 // 注音一句話（原卷只有注音）：空白分開；（　）、□ 畫成空格
 const mpSylRe = /^[ㄅ-ㄩ]+[ˊˇˋ˙]?$/;
 // vertical：照紙本考卷直排（由上往下、一行一行從右往左）
 function mpBopoLine(line, vertical = false) {
   const VF = { "（": "︵", "）": "︶", "：": "︰" }; // 直排用直的括號、冒號
-  return el("div", { class: `mp-line${vertical ? " mp-line--v" : ""}` }, line.split(/\s+/).filter(Boolean).map(tok =>
+  return el("div", { class: `mp-line${vertical ? " mp-line--v" : ""}` }, line.split(/[ \t\n]+/).filter(Boolean).map(tok =>
     tok === "（　）" ? (vertical ? el("span", { class: "mp-blank mp-blank--v" }, el("span", {}, "︵"), el("span", { class: "mp-blank__gap" }), el("span", {}, "︶")) : el("span", { class: "mp-blank" }, "（　）")) :
     vertical && VF[tok] ? el("span", { class: "mp-punct" }, VF[tok]) : tok === "□" ? el("span", { class: "mp-box" }) :
     /^[ㄅ-ㄩ]+□$/.test(tok) ? el("span", { class: "mp-tbox" }, bopoColEl(tok.slice(0, -1)), el("span", { class: "mp-box mp-box--q" }, "？")) : // 在□中寫聲調
@@ -298,9 +603,10 @@ function mpQuestions(P, pen = false) {
       : q.nums ? el("span", { class: "mp-numopt" }, el("b", { "data-nobopo": "1" }, NUMS[k]), bopoWordEl(o, { class: "bopo-word--lg" })) : bopoWordEl(o, { class: "bopo-word--lg" });
     const bank = q.bank ? el("div", { class: "mp-bank" }, q.bank.map((w, k) => el("span", { class: "mp-bank__w" }, el("b", { "data-nobopo": "1" }, NUMS[k]), bopoWordEl(w, { class: "bopo-word--sm" })))) : null;
     const passage = q.passage ? el("div", { class: "mp-passage" }, q.passageTitle ? el("div", { class: "mp-passage__title" }, t(q.passageTitle)) : null, mpBopoLine(q.passage, V)) : null;
-    return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), passage, bank, q.emoji ? el("div", { class: "mp-emoji" }, q.emoji) : null,
+    const pic = () => typeof q.emoji === "function" ? q.emoji() : q.emoji;
+    return { prompt: el("div", { class: "mp-q" }, el("div", { class: "mp-q__no" }, t(`${sec.no}・${q.n}`)), passage, bank, q.emoji ? el("div", { class: "mp-emoji" }, pic()) : null,
         q.line ? mpBopoLine(q.line, V) : null, el("div", { class: "m-hint" }, t(q.hint))),
-      say: () => speakZh(q.say), review: el("div", {}, q.emoji ? el("span", { class: "mp-emoji" }, q.emoji) : null, q.line ? mpBopoLine(q.line) : null), tip: q.tip,
+      say: () => speakZh(q.say), review: el("div", {}, q.emoji ? el("span", { class: "mp-emoji" }, pic()) : null, q.line ? mpBopoLine(q.line) : null), tip: q.tip,
       answerText: q.nums ? `${NUMS[q.answer]} ${q.options[q.answer]}` : undefined,
       options: (q.shuffle ? shuffle : x => x)(q.options.map((o, k) => ({ label: optLabel(o, k), text: q.nums ? `${NUMS[k]} ${o}` : o, ok: k === q.answer }))), rec: ok => recordZh(`期中卷:${q.recKey || q.say}`, ok) };
   }) }));
@@ -336,9 +642,10 @@ function mpBookSave(id, qs, picks) {
   p.wrongBook = p.wrongBook || {}; p.wrongBook[mpBookKey(id)] = [...set]; saveStore();
 }
 function renderMidPaper(id, mode) {
-  const P = MID_PAPERS[id];
+  const P = MID_PAPERS[id] || MID_GEN[id]?.(); // MID_GEN：每次重新出題（加強訓練、混合考）
   if (!P) return renderEmpty("#/midterm", "找不到這份考卷");
-  const exam = mode === "exam", book = mode === "book", school = mode === "school" && !!P.school, format = mode === "format" && !P.g2;
+  window.__midPaper = P; // 自動測試用
+  const exam = mode === "exam", book = mode === "book", school = mode === "school" && !!P.school, format = mode === "format" && !P.g2 && !P.gen;
   // 模擬考：要寫的題目用手寫（像拿筆寫考卷）；練習、錯題本用點的比較快；學校考卷寫錯的（多半是聽寫）用手寫再練
   const pen = exam || school || format;
   let sections = P.math ? mpMathQuestions(P, pen) : P.g2 ? mpG2Questions(P, pen) : mpQuestions(P, pen);
@@ -349,9 +656,9 @@ function renderMidPaper(id, mode) {
     sections = sections.map(sec => ({ ...sec, qs: sec.qs.filter(q => ids.has(q.id)) })).filter(sec => sec.qs.length);
     if (!sections.length) return renderEmpty("#/midterm", "錯題本是空的，錯的題目都會了 🌟");
   }
-  return renderChoiceExam({ title: exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : school ? `🏫 ${P.school.label}・再練` : format ? "✏️ 考卷題目怎麼寫" : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
-    practice: !exam, review: book || school || format, intro: format ? (P.formatIntro || mpFormatIntro)() : null, percent: !!P.percent && !book && !school, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : school ? "?mode=school" : format ? "?mode=format" : ""}`,
-    sections, onFinish: ({ qs, picks }) => mpBookSave(id, qs, picks) });
+  return renderChoiceExam({ title: P.gen ? (exam ? `🔀 ${P.title}` : `🎯 ${P.title}`) : exam ? `📝 ${P.title}・模擬考` : book ? `📒 ${P.title}・錯題本` : school ? `🏫 ${P.school.label}・再練` : format ? "✏️ 考卷題目怎麼寫" : `📄 ${P.title}・練習`, back: "#/midterm", key: `mid:${id}`,
+    practice: !exam, review: book || school || format || !!P.gen, intro: format ? (P.formatIntro || mpFormatIntro)() : null, percent: !!P.percent && !book && !school, practiceHash: `#/midpaper/${id}`, retryHash: `#/midpaper/${id}${exam ? "?mode=exam" : book ? "?mode=book" : school ? "?mode=school" : format ? "?mode=format" : ""}`,
+    sections, onFinish: P.gen ? null : ({ qs, picks }) => mpBookSave(id, qs, picks) });
 }
 
 // === 二年級用的作答方式 ===

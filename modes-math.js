@@ -398,6 +398,17 @@ function renderMidterm() {
   sec("📖 國語", (ZH?.lessons || []).filter(l => l.kind === "chars").map(l => row(`${l.title}・模擬小考`, `#/zhplay/exam?l=${l.id}`, `zh:${l.id}`))
     .concat((ZH?.lessons || []).some(l => l.kind !== "chars") ? [row("🔤 注音大會考", "#/bopo/exam", "zh:bopo")] : []));
   const papers = typeof MID_PAPERS !== "undefined" ? Object.values(MID_PAPERS).filter(P => P.grade === profileGrade(getProfile())) : [];
+  // 11/10 注音總結評量：家長要的三步驟（原卷重考 → 錯的加強 → 類似考題混合考）
+  if (papers.some(P => P.id.startsWith("g1zh10"))) {
+    const step = (no, label, sub, btns) => el("div", { class: "mt-row zs-step" }, el("div", { class: "mt-paper" }, t(`${no} ${label}`)), el("div", { class: "progress-note", style: "text-align: center;" }, t(sub)), el("div", { class: "mt-paper__btns" }, btns));
+    const go = (label, hash, accent) => el("button", { class: `btn btn--xl${accent ? " btn--accent" : ""}`, onclick: () => navigate(hash) }, t(label));
+    app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t("🎯 11/10注音總結評量：照順序練")),
+      step("①", "原卷重考", "跟考卷一模一樣的題目，一整張寫完再交卷", [go("📄 原卷（一）", "#/zhsheet/g1zh10a?mode=exam", true), go("📄 原卷（二）", "#/zhsheet/g1zh10b?mode=exam", true)]),
+      el("div", { class: "progress-note", style: "text-align: center;" }, t(`原卷（一）${mockSummary("sheet:g1zh10a")}・原卷（二）${mockSummary("sheet:g1zh10b")}`)),
+      step("②", "錯的加強訓練", "✓和○看清楚、看圖只選一個、ㄣㄥㄔㄘ、聲調、寫錯的詞（每次題目不一樣，錯了馬上教）", [go("🎯 開始練", "#/midpaper/zh10drill", true)]),
+      step("③", "類似考題混合考", "七種題目重新抽題混在一起，像真的考試", [go("🔀 混合考", "#/midpaper/zh10mix?mode=exam", true)]),
+      el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary("mid:zh10mix")))));
+  }
   if (papers.length) app.appendChild(el("section", { class: "section" }, el("div", { class: "section__title" }, t("📄 老師的考卷")),
     papers.map(P => el("div", { class: "mt-row" }, el("div", { class: "mt-paper" }, t(P.title)), P.sub ? el("div", { class: "progress-note", style: "text-align: center;" }, t(P.sub)) : null,
       el("div", { class: "mt-paper__btns" },
