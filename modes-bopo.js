@@ -31,6 +31,7 @@ const BP_PAIR_TIPS = [
   [["ㄢ", "ㄤ"], "ㄢ念完舌頭頂在上面牙齒後面；ㄤ嘴巴張大，聲音在喉嚨後面。"],
   [["ㄣ", "ㄥ"], "ㄣ念完舌頭頂在上面牙齒後面；ㄥ聲音在鼻子後面，比較長。"],
   [["ㄛ", "ㄜ"], "ㄛ嘴巴圓圓的，像「喔」；ㄜ嘴巴扁扁的，像「鵝」。"],
+  [["ㄜ", "ㄦ"], "ㄜ嘴巴扁扁的，像「鵝」；ㄦ舌頭要往上捲，像「兒」。企鵝的鵝是ㄜ。"],
   [["ㄟ", "ㄝ"], "ㄟ像「欸」，最後會滑到ㄧ；ㄝ常常跟ㄧ、ㄩ在一起，像「葉」「月」。"],
   [["ㄠ", "ㄡ"], "ㄠ嘴巴先張大再變圓，像「凹」；ㄡ嘴巴一直圓圓的，像「歐」。"],
   [["ㄨ", "ㄩ"], "ㄨ嘴巴圓圓的往前嘟，像「烏」；ㄩ先念ㄧ再把嘴巴嘟起來，像「魚」。旅行的旅是ㄌㄩˇ。"],
@@ -79,8 +80,10 @@ const BP_SCHOOL_WORDS = [
   ["國歌", "ㄍㄨㄛˊ ㄍㄜ", "🎵"], ["上學", "ㄕㄤˋ ㄒㄩㄝˊ", "🎒"], ["球鞋", "ㄑㄧㄡˊ ㄒㄧㄝˊ", "👟"], ["帆船", "ㄈㄢˊ ㄔㄨㄢˊ", "⛵"],
   ["蘋果", "ㄆㄧㄥˊ ㄍㄨㄛˇ", "🍎"], ["旅行", "ㄌㄩˇ ㄒㄧㄥˊ", "🧳"], ["雪人", "ㄒㄩㄝˇ ㄖㄣˊ", "⛄"], ["孔雀", "ㄎㄨㄥˇ ㄑㄩㄝˋ", "🦚"],
   ["馴鹿", "ㄒㄩㄣˊ ㄌㄨˋ", "🦌"], ["露營", "ㄌㄨˋ ㄧㄥˊ", "⛺"], ["退步", "ㄊㄨㄟˋ ㄅㄨˋ", "📉"], ["夏天", "ㄒㄧㄚˋ ㄊㄧㄢ", "☀️"],
+  // 11/7 發回的兩張國卷寫錯的（看圖找語詞、聽寫）
+  ["金魚", "ㄐㄧㄣ ㄩˊ", "🐠"], ["風箏", "ㄈㄥ ㄓㄥ", "🪁"], ["企鵝", "ㄑㄧˋ ㄜˊ", "🐧"], ["時鐘", "ㄕˊ ㄓㄨㄥ", "⏰"], ["可愛", "ㄎㄜˇ ㄞˋ", "🥰"], ["魔術", "ㄇㄛˊ ㄕㄨˋ", "🎩"],
 ].map(([zh, bopo, emoji]) => ({ zh, bopo, emoji }));
-const BP_WEAK_SWAP = [["ㄣ", "ㄥ"], ["ㄥ", "ㄣ"], ["ㄩ", "ㄨ"], ["ㄨ", "ㄩ"], ["ㄌ", "ㄖ"], ["ㄖ", "ㄌ"]];
+const BP_WEAK_SWAP = [["ㄣ", "ㄥ"], ["ㄥ", "ㄣ"], ["ㄩ", "ㄨ"], ["ㄨ", "ㄩ"], ["ㄌ", "ㄖ"], ["ㄖ", "ㄌ"], ["ㄔ", "ㄘ"], ["ㄘ", "ㄔ"], ["ㄓ", "ㄗ"], ["ㄗ", "ㄓ"], ["ㄈ", "ㄏ"], ["ㄜ", "ㄦ"]];
 function bpWeakVariants(bopo) {
   const syls = bpSyls(bopo), swap = new Set(), tones = new Set();
   syls.forEach((s, i) => {
@@ -119,7 +122,7 @@ const BP_KINDS = {
   final: { name: "韻母", emoji: "🎶", hint: "聽一聽，蓋住的是哪一個注音？", make: () => shuffle(BP_WORDS.filter(w => BP_FINALS.includes(w.sym))).map(w => bpQSym(w, "final")) },
   tone: { name: "聲調", emoji: "〰️", hint: "聽一聽，蓋住的是第幾聲？", make: () => shuffle(bpToneWords()).slice(0, 12).map(bpQTone) },
   word: { name: "聽詞選注音", emoji: "👂", hint: "聽一聽，選出正確的注音", make: () => shuffle(bpToneWords()).slice(0, 12).map(bpQWord) },
-  weak: { name: "常錯的地方", emoji: "🎯", hint: "聽一聽，選出正確的注音（小心ㄣㄥ、ㄨㄩ、ㄌㄖ和聲調）",
+  weak: { name: "常錯的地方", emoji: "🎯", hint: "聽一聽，選出正確的注音（小心ㄣㄥ、ㄨㄩ、ㄌㄖ、ㄔㄘ、ㄓㄗ和聲調）",
     make: () => [...shuffle(BP_SCHOOL_WORDS), ...shuffle(bpToneWords().filter(w => /[ㄣㄥㄩㄖ]/.test(w.bopo) && !BP_SCHOOL_WORDS.some(x => x.zh === w.zh))).slice(0, 4)].map(bpQWeak) },
 };
 
@@ -209,10 +212,10 @@ function renderBopo(sub) {
     el("div", { class: "m-hint" }, t("期中考會考全部37個注音：聲母21個、韻母16個，還有聲調和拼音")),
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/bopo/exam") }, t("📝 注音大會考（模擬考）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(key))),
-    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midterm") }, t("📄 11/1複習日老師的考卷")),
+    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midterm") }, t("📄 老師的考卷（11/10總結評量練習卷、11/1複習卷）")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midpaper/g1zh?mode=format") }, t("✏️ 考卷題目怎麼寫（選擇題、填入）")),
     typeof MID_PAPERS !== "undefined" && MID_PAPERS.g1zh?.school ? el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/midpaper/g1zh?mode=school") }, t(`🏫 ${MID_PAPERS.g1zh.school.label}${MID_PAPERS.g1zh.school.ids.length}題・再練`)) : null,
-    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/weak") }, t("🎯 常錯的地方：ㄣㄥ、ㄨㄩ、ㄌㄖ、聲調")),
+    el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/weak") }, t("🎯 常錯的地方：ㄣㄥ、ㄨㄩ、ㄌㄖ、ㄔㄘ、ㄓㄗ、聲調")),
     el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/bopo/chart") }, t("📋 37個注音表（點了會念）"))));
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("🎯 一種一種練")),

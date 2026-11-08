@@ -2839,3 +2839,16 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fs-choice--ok .fs-choice__opt--on { border-color: var(--success); }
 .fs-choice--bad .fs-choice__opt--on { border-color: var(--danger); text-decoration: line-through; }
 .fs-choice__opt--ans { border-color: var(--success); border-style: dashed; }
+/* 11/10 注音總結評量練習卷：✓○✗ 選項、號碼選項、詞語框、閱讀測驗文章、□ 寫聲調 */
+.mp-mark { font-size: 40px; font-weight: 900; line-height: 1; min-width: 1.4em; text-align: center; }
+.mp-numopt { display: inline-flex; align-items: center; gap: 8px; }
+.mp-numopt > b { font-size: 22px; min-width: 1.2em; text-align: center; }
+.mp-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; border: 2px solid var(--ink); border-radius: 10px; padding: 8px 10px; margin: 6px auto 10px; max-width: 560px; background: #fff; }
+.mp-bank__w { display: inline-flex; align-items: center; gap: 4px; }
+.mp-bank__w > b { font-size: 18px; }
+.mp-passage { border: 2px dashed var(--line); border-radius: 12px; padding: 10px 8px; margin: 4px 0 12px; background: #fffdf8; max-width: 100%; overflow-x: auto; }
+.mp-passage__title { text-align: center; font-weight: 900; margin-bottom: 6px; }
+.mp-passage .mp-line { font-size: calc(22px * var(--font-scale)); }
+.mp-tbox { display: inline-flex; align-items: flex-start; gap: 1px; }
+.mp-box--q { display: inline-flex; align-items: center; justify-content: center; width: 1.1em; height: 1.1em; font-size: 0.7em; font-weight: 900; color: var(--accent); background: #fff3c4; border-color: var(--accent); }
+.mp-how__marks { display: flex; justify-content: center; gap: 28px; font-size: 44px; font-weight: 900; }
