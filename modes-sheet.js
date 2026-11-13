@@ -160,6 +160,26 @@ function renderFillSheet(u, exam = false) {
       secEl.appendChild(fsCodesQ(sec, x => blanks.push(x), () => locked, update));
     } else if (sec.kind === "match3") {
       secEl.appendChild(fsMatch3(sec, x => blanks.push(x), () => locked, update));
+    } else if (sec.kind === "eq") {
+      sec.items.forEach(it => {
+        const first = blanks.length, sum = it.parts[0] + it.parts[1];
+        const bA = blank(it.parts[0], sec.pts, "box"), bB = blank(it.parts[1], sec.pts, "box"), bC = blank(sum, sec.pts, "box"), bD = blank(sum, sec.pts, "box");
+        const [xa, xb] = blanks.slice(first, first + 2);
+        const key = arr => [...arr].sort((m, n) => m - n).join(",");
+        xa.check = xb.check = () => key([xa.get(), xb.get()]) === key(it.parts); // 2+3、3+2 都對
+        const card = el("div", { class: "ws-q fs-eq" },
+          el("div", { class: "ws-q__head" }, el("span", { class: "ws-q__no" }, `${it.n}.`), el("span", { class: "ws-q__prompt" }, t(it.prompt)),
+            el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(it.prompt), "aria-label": "念題目" }, "🔊")),
+          it.pic ? el("div", { class: "fs-pics", "data-nobopo": "" }, it.pic) : null, it.picNote ? el("div", { class: "fs-eq__note" }, t(it.picNote)) : null,
+          it.draw ? fsDrawRow() : null,
+          el("div", { class: "fs-eq__line" }, it.formula ? el("span", { class: "fs-eq__label" }, t("算式：")) : null, bA, el("span", { class: "fs-eq__op" }, "+"), bB, el("span", { class: "fs-eq__op" }, "="), bC),
+          el("div", { class: "fs-eq__ans" }, t(it.pre), bD, t(it.unit)));
+        if (sec.group) {
+          const subs = blanks.splice(first, 4), okOf = x => x.check ? x.check() : x.get() === x.ans;
+          blanks.push({ node: card, get: () => subs.every(x => x.get() != null) ? "x" : null, pts: sec.pts, check: () => subs.every(okOf), show: () => subs.forEach(x => x.show(okOf(x))) });
+        }
+        secEl.appendChild(card);
+      });
     } else if (sec.kind === "check") {
       secEl.appendChild(fsCheckQ(sec, x => blanks.push(x), () => locked, update));
     } else if (sec.kind === "spot") {
@@ -189,7 +209,7 @@ function renderFillSheet(u, exam = false) {
     }
     locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove();
     let score = 0, got = 0;
-    blanks.forEach(b => { const ok = b.ok = b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
+    blanks.forEach(b => { const ok = b.ok = b.check ? b.check() : b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) { dingCorrect(); confetti(); } else buzzWrong();
     const rows = S.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return { no: sec.no, got: bs.reduce((n, b) => n + (b.ok ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
@@ -752,3 +772,48 @@ function genShapeUsed() {
 }
 MATH_TOPICS.shapeCount = { name: "數一數圖卡", emoji: "🧩", gen: genShapeCount };
 MATH_TOPICS.shapeUsed = { name: "用了哪些圖卡", emoji: "🔍", gen: genShapeUsed };
+
+// === 一上 第13回（小A本 p.26-27，6-1 加法算式）===
+// kind:"eq"：□＋□＝□、答句□；兩個加數前後換位置也算對；group:true 一整題全對才給分（每題5分、6分的大題）
+FILL_SHEETS.u7 = {
+  title: "一上 第13回", sub: "6-1 加法算式", pages: "第26、27頁", unitWord: "題",
+  howto: "點□選數字（加起來的兩個數，前後換位置也對）；畫○的地方點一下就畫一個○（不算分）",
+  sections: [
+    { no: "1", instr: "寫出加法算式：每格3分，共48分", pts: 3, kind: "eq", items: [
+      { n: 1, prompt: "共有幾個杯子？", pic: "🥛🥛🥛　　☕☕", parts: [3, 2], pre: "有", unit: "個杯子" },
+      { n: 2, prompt: "一共有幾件衣服？", pic: "👚👚　　👕👕👕👕", parts: [2, 4], pre: "有", unit: "件衣服" },
+      { n: 3, prompt: "共有幾隻蝴蝶？", pic: "🦋🦋🦋🦋🦋　　🦋🦋🦋", parts: [5, 3], pre: "有", unit: "隻蝴蝶" },
+      { n: 4, prompt: "合起來有幾本書？", pic: "📘　　📕📕📕📕", parts: [1, 4], pre: "有", unit: "本書" },
+    ] },
+    { no: "2", instr: "畫○算算看，再用算式記下來：每題5分，共10分", pts: 5, kind: "eq", group: true, items: [
+      { n: 1, prompt: "草原上有5隻黑羊和2隻白羊，草原上合起來有幾隻羊？", draw: true, formula: true, parts: [5, 2], pre: "合起來有", unit: "隻羊" },
+      { n: 2, prompt: "麵包店早上賣出1個草莓蛋糕和5個巧克力蛋糕，早上共賣出幾個蛋糕？", draw: true, formula: true, parts: [1, 5], pre: "共賣出", unit: "個蛋糕" },
+    ] },
+    { no: "3", instr: "看圖完成加法算式：每格2分，共24分", pts: 2, kind: "eq", items: [
+      { n: 1, prompt: "教室裡有2位學生，又走進來3位，共有幾位學生？", pic: "🧒🧒　　🚶🚶🚶", parts: [2, 3], pre: "共有", unit: "位學生" },
+      { n: 2, prompt: "袋子裡的魚放進魚缸後，共有幾條魚？", pic: "🐟🐟　　🐠🐠🐠🐠🐠🐠🐠🐠", picNote: "魚缸裡　　袋子裡", parts: [2, 8], pre: "共有", unit: "條魚" },
+      { n: 3, prompt: "樹上有4隻鳥，又飛來5隻，現在共有幾隻鳥？", pic: "🐦🐦🐦🐦　　🐦🐦🐦🐦🐦", parts: [4, 5], pre: "共有", unit: "隻鳥" },
+    ] },
+    { no: "4", instr: "寫出算式做做看：每題6分，共18分", pts: 6, kind: "eq", group: true, items: [
+      { n: 1, prompt: "老師到文具店買了6枝鉛筆和2枝原子筆，老師共買了幾枝筆？", formula: true, parts: [6, 2], pre: "共買了", unit: "枝筆" },
+      { n: 2, prompt: "籠子裡本來有4隻雞，再放進去3隻，現在籠子裡一共有幾隻雞？", formula: true, parts: [4, 3], pre: "一共有", unit: "隻雞" },
+      { n: 3, prompt: "公園裡原來有3個小朋友，又來了6個小朋友，現在公園裡共有幾個小朋友？", formula: true, parts: [3, 6], pre: "共有", unit: "個小朋友" },
+    ] },
+  ],
+};
+// 畫○的格子：點一下畫一個○，再點一下擦掉（不算分，幫忙算）
+function fsDrawRow() {
+  return el("div", { class: "fs-draw" }, el("span", { class: "fs-draw__label" }, t("畫○：")),
+    el("div", { class: "fs-draw__slots" }, Array.from({ length: 10 }, () => { const b = el("button", { class: "fs-draw__slot", "aria-label": "畫圈" }); b.addEventListener("click", () => b.classList.toggle("fs-draw__slot--on")); return b; })));
+}
+// 練習題型：看圖，合起來有幾個？（不是原題）
+function genAddPic() {
+  const a = rnd(1, 6), b = rnd(1, 10 - a), ans = a + b;
+  const [e1, e2] = shuffle([["🍎", "🍊"], ["🐶", "🐱"], ["🚗", "🚌"], ["🌸", "🌻"], ["⚽", "🏀"], ["🐟", "🐠"]])[0];
+  const row = (e, n, y) => Array.from({ length: n }, (_, i) => fsvg("text", { x: 14 + (i % 5) * 36, y: y + Math.floor(i / 5) * 36, "font-size": 30 }, e));
+  const extra = fsvg("g", {}, ...row(e1, a, 40), fsvg("line", { x1: 196, y1: 10, x2: 196, y2: 110, stroke: "#bbb", "stroke-width": 2, "stroke-dasharray": "5 5" }),
+    ...row(e2, b, 40).map(n => { n.setAttribute("x", +n.getAttribute("x") + 200); return n; }));
+  return { topic: "addPic", prompt: `${a}個和${b}個，合起來有幾個？`, h: 230, extra,
+    items: fsChoices(ans, 10).map((n, i) => ({ node: FS_NUM_CARD(30 + i * 125, 150, n), correct: n === ans })) };
+}
+MATH_TOPICS.addPic = { name: "看圖加起來", emoji: "➕", gen: genAddPic };
