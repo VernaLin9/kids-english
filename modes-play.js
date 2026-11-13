@@ -209,19 +209,22 @@ function renderFlashcard(setKey) {
   nextBtn.addEventListener("click", e => { e.stopPropagation(); if (i < words.length - 1) { i++; render(); } });
   speakBtn.addEventListener("click", e => { e.stopPropagation(); speakWord(words[i]); });
   app.appendChild(controls);
+  const mascot = fcMascot();
+  app.appendChild(mascot.el);
 
   const actions = el("div", { class: "flash-actions" },
     el("button", { class: "btn btn--success" }, t("✅ 我會了")),
     el("button", { class: "btn btn--ghost" }, t("🔁 再練習"))
   );
-  actions.children[0].addEventListener("click", () => { setMastered(words[i], true); dingCorrect(); next(); });
+  actions.children[0].addEventListener("click", () => { const fresh = !getProfile()?.progress?.[words[i]]?.mastered; setMastered(words[i], true); dingCorrect(); mascot.cheer(fresh ? `得到一張貼紙！${WORDS[words[i]]?.emoji || "⭐"}` : "好棒！"); setTimeout(next, 650); });
   actions.children[1].addEventListener("click", () => { setMastered(words[i], false); next(); });
   app.appendChild(actions);
 
   function next() {
     if (i < words.length - 1) { i++; render(); }
     else {
-      app.replaceChildren(renderResultBlock("做完一輪了！", "🎉", "重新開始", () => { i = 0; render(); }));
+      app.replaceChildren(renderResultBlock("做完一輪了！", "🎉", "重新開始", () => { i = 0; render(); }),
+        el("button", { class: "btn btn--full btn--xl", style: "margin-top: 10px;", onclick: () => navigate("#/stickers") }, t("🌟 看我的貼紙本")));
     }
   }
 
@@ -230,8 +233,13 @@ function renderFlashcard(setKey) {
     card.classList.remove("flipped");
     const w = words[i];
     const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
+    // 卡通大圖：照類別換背景，出來會跳一下、一直輕輕晃，點圖會念（不會翻卡）
+    const stage = el("button", { class: `fc-stage fc-cat--${info.category || "x"}`, "aria-label": "念出來", onclick: e => { e.stopPropagation(); fx.classList.remove("fc-emoji--hop"); void fx.offsetWidth; fx.classList.add("fc-emoji--hop"); speakWord(w); } });
+    const fx = el("span", { class: "fc-emoji fc-emoji--pop", "data-nobopo": "1" }, info.emoji);
+    stage.append(fx, el("span", { class: "fc-spark fc-spark--a" }, "✨"), el("span", { class: "fc-spark fc-spark--b" }, "⭐"));
+    mascot.say(fcTip(w, i));
     front.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, info.emoji),
+      stage,
       syllableEl(w, "div", { class: "flashcard__en" }),
       el("div", { class: "flashcard__hint" }, t("點卡片看中文"))
     );
@@ -712,5 +720,60 @@ function renderSpeak(setKey) {
     setTimeout(() => speakWord(w), 200);
   }
   render();
+  return root;
+}
+
+// === 🐻 小熊老師（單字卡旁邊鼓勵、教怎麼記）＋ 🌟 貼紙本 ===
+const FC_BEAR = () => svg("svg", { viewBox: "0 0 100 100", class: "fc-bear" },
+  svg("circle", { cx: 24, cy: 24, r: 14, fill: "#b07a4f" }), svg("circle", { cx: 76, cy: 24, r: 14, fill: "#b07a4f" }),
+  svg("circle", { cx: 24, cy: 24, r: 7, fill: "#e8b98f" }), svg("circle", { cx: 76, cy: 24, r: 7, fill: "#e8b98f" }),
+  svg("circle", { cx: 50, cy: 55, r: 38, fill: "#c68b5c" }), svg("ellipse", { cx: 50, cy: 68, rx: 18, ry: 14, fill: "#f1d2b0" }),
+  svg("circle", { cx: 36, cy: 48, r: 5, fill: "#2a2622" }), svg("circle", { cx: 64, cy: 48, r: 5, fill: "#2a2622" }),
+  svg("circle", { cx: 38, cy: 46, r: 1.6, fill: "#fff" }), svg("circle", { cx: 66, cy: 46, r: 1.6, fill: "#fff" }),
+  svg("ellipse", { cx: 50, cy: 62, rx: 6, ry: 4.5, fill: "#2a2622" }),
+  svg("path", { d: "M 42 72 Q 50 80 58 72", fill: "none", stroke: "#2a2622", "stroke-width": 3, "stroke-linecap": "round" }),
+  svg("circle", { cx: 26, cy: 64, r: 6, fill: "#f4a6a6", opacity: 0.7 }), svg("circle", { cx: 74, cy: 64, r: 6, fill: "#f4a6a6", opacity: 0.7 }));
+function fcMascot() {
+  const bubble = el("div", { class: "fc-mascot__bubble" });
+  const bear = el("div", { class: "fc-mascot__bear" }, FC_BEAR());
+  const box = el("div", { class: "fc-mascot" }, bear, bubble);
+  return { el: box,
+    say: text => bubble.replaceChildren(t(text)),
+    cheer: text => { bubble.replaceChildren(t(text)); bear.classList.remove("fc-mascot__bear--jump"); void bear.offsetWidth; bear.classList.add("fc-mascot__bear--jump"); } };
+}
+// 小熊說的話：輪流教看圖念、拍手分段、用身體動作記
+function fcTip(w, i) {
+  const parts = (typeof SYLLABLES !== "undefined" && SYLLABLES[w]) || null;
+  const tips = [
+    "看圖，大聲念出來！點圖會念給你聽。",
+    parts && parts.length > 1 ? `拍手念：${parts.join("・")}，拍${parts.length}下！` : `念三次：${w}、${w}、${w}！`,
+    "先猜中文，再點卡片看答案。",
+    "邊念邊做動作，比較記得住喔！",
+  ];
+  return tips[i % tips.length];
+}
+// 🌟 貼紙本：學會的字（單字卡按「我會了」、或連續答對）變成彩色貼紙；還沒學會是灰色的
+function renderStickers() {
+  const root = el("div", {});
+  root.appendChild(renderHeader("🌟 我的貼紙本", { back: "#/" }));
+  const app = el("main", { class: "app" });
+  const prog = getProfile()?.progress || {};
+  const all = Object.keys(WORDS), got = all.filter(w => prog[w]?.mastered);
+  const mascot = fcMascot();
+  mascot.say(got.length ? `已經收集${got.length}張貼紙了！灰色的去單字卡練習，按「我會了」就會變彩色。` : "去單字卡練習，按「我會了」就能得到貼紙！");
+  app.appendChild(el("section", { class: "section" }, mascot.el,
+    el("div", { class: "fc-stk__count" }, t(`收集了 ${got.length}／${all.length} 張`)),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/play/flashcard?set=unmastered") }, t("🃏 去收集更多貼紙"))));
+  const groups = (typeof WEEKS !== "undefined" && WEEKS.length ? WEEKS.map(wk => ({ title: `第${wk.num}週`, words: wk.words.filter(w => WORDS[w]) })) : [{ title: "全部", words: all }]).filter(g => g.words.length);
+  groups.forEach(g => app.appendChild(el("section", { class: "section" },
+    el("div", { class: "section__title" }, t(`${g.title}・${g.words.filter(w => prog[w]?.mastered).length}/${g.words.length}`)),
+    el("div", { class: "fc-stk" }, g.words.map((w, k) => {
+      const on = !!prog[w]?.mastered;
+      const b = el("button", { class: `fc-stk__item${on ? " fc-stk__item--on" : ""}`, style: `--r: ${((k * 37) % 13) - 6}deg`, "aria-label": w },
+        el("span", { class: "fc-stk__emoji", "data-nobopo": "1" }, WORDS[w].emoji || "⭐"), el("span", { class: "fc-stk__en", "data-nobopo": "1" }, on ? w : "？"));
+      b.addEventListener("click", () => { if (!on) { navigate(`#/play/flashcard?set=${encodeURIComponent("words-" + w)}`); return; } speakWord(w); b.classList.remove("fc-stk__item--hop"); void b.offsetWidth; b.classList.add("fc-stk__item--hop"); });
+      return b;
+    })))));
+  root.appendChild(app);
   return root;
 }

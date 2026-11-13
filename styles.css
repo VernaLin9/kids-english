@@ -2907,3 +2907,40 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fs-draw__slots { display: grid; grid-template-columns: repeat(10, 30px); gap: 3px; }
 .fs-draw__slot { width: 30px; height: 44px; border: 0; border-bottom: 2px dotted #bbb; background: none; padding: 0; position: relative; }
 .fs-draw__slot--on::after { content: ""; position: absolute; left: 3px; top: 10px; width: 22px; height: 22px; border: 3px solid #3b6bff; border-radius: 50%; }
+/* 🃏 卡通單字卡、🐻 小熊老師、🌟 貼紙本 */
+.review-picks, .review-picks--2 { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
+.fc-stage { position: relative; width: min(78%, 300px); aspect-ratio: 1; border: 0; border-radius: 28px; margin-bottom: 14px; display: grid; place-items: center; overflow: hidden; background: #fff3d6; box-shadow: inset 0 -10px 0 rgba(0,0,0,0.05); }
+.fc-cat--nature, .fc-cat--weather { background: linear-gradient(#cdeeff 0 62%, #bfe6a6 62%); }
+.fc-cat--play, .fc-cat--sports { background: linear-gradient(#e3f6d7 0 70%, #c7e8b0 70%); }
+.fc-cat--home, .fc-cat--family, .fc-cat--people { background: #ffe6d2; }
+.fc-cat--clothes { background: #f3e2ff; }
+.fc-cat--numbers, .fc-cat--letters, .fc-cat--days { background: #fff1b8; }
+.fc-cat--classroom, .fc-cat--supplies, .fc-cat--useful { background: #dcecff; }
+.fc-cat--actions, .fc-cat--positions, .fc-cat--describe { background: #ffdfe8; }
+.fc-emoji { font-size: clamp(110px, 34vw, 170px); line-height: 1; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.18)); animation: fc-wiggle 2.6s ease-in-out 0.6s infinite; }
+.fc-emoji--pop { animation: fc-pop 0.5s cubic-bezier(.3,1.6,.5,1) both, fc-wiggle 2.6s ease-in-out 0.6s infinite; }
+.fc-emoji--hop { animation: fc-hop 0.55s ease-out; }
+.fc-spark { position: absolute; font-size: 26px; animation: fc-twinkle 1.8s ease-in-out infinite; }
+.fc-spark--a { top: 12%; right: 14%; }
+.fc-spark--b { bottom: 16%; left: 12%; animation-delay: 0.9s; font-size: 20px; }
+@keyframes fc-pop { 0% { transform: scale(0.2) rotate(-20deg); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes fc-wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg) translateY(-3px); } 75% { transform: rotate(5deg) translateY(-3px); } }
+@keyframes fc-hop { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-28px) scale(1.12); } 65% { transform: translateY(0) scale(0.94, 1.06); } 100% { transform: translateY(0) scale(1); } }
+@keyframes fc-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+.flashcard__face .fc-stage + .flashcard__en { margin-top: 0; }
+.fc-mascot { display: flex; align-items: center; gap: 10px; max-width: 480px; margin: 6px auto 10px; }
+.fc-mascot__bear { flex: none; width: 64px; height: 64px; }
+.fc-bear { width: 100%; height: 100%; display: block; }
+.fc-mascot__bear--jump { animation: fc-hop 0.6s ease-out 2; }
+.fc-mascot__bubble { position: relative; flex: 1; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 8px 12px; font-weight: 800; font-size: calc(16px * var(--font-scale)); line-height: 1.8; }
+.fc-mascot__bubble::before { content: ""; position: absolute; left: -9px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-right-color: var(--line); border-left: 0; }
+.fc-stk__count { text-align: center; font-weight: 900; font-size: calc(20px * var(--font-scale)); margin: 4px 0 10px; }
+.fc-stk { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 12px 8px; }
+.fc-stk__item { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border: 2px dashed #cfc8bb; border-radius: 18px; background: #f3efe7; transform: rotate(var(--r)); min-height: 96px; }
+.fc-stk__item--on { border: 3px solid #fff; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+.fc-stk__emoji { font-size: 42px; line-height: 1.1; filter: grayscale(1); opacity: 0.35; }
+.fc-stk__item--on .fc-stk__emoji { filter: none; opacity: 1; }
+.fc-stk__en { font-weight: 900; font-size: 15px; word-break: break-word; }
+.fc-stk__item--hop { animation: fc-hop 0.55s ease-out; }
+@media (prefers-reduced-motion: reduce) { .fc-emoji, .fc-emoji--pop, .fc-spark { animation: none; } }
+.fc-stk { padding: 6px 4px; overflow: hidden; }
