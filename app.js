@@ -816,7 +816,8 @@ function renderReviewPicks(profile, { custom = true } = {}) {
   return el("div", { class: `review-picks ${custom ? "" : "review-picks--2"}` },
     card("review-pick--wrong", "❌", "常錯字", nWrong ? `${nWrong} 個` : "還沒有", () => navigate("#/play/quiz?set=wrong"), !nWrong),
     card("review-pick--todo", "🌱", "沒學會", `${nTodo} 個`, () => navigate("#/play/flashcard?set=unmastered"), !nTodo),
-    custom ? card("review-pick--custom", "🎯", "自己選", "挑範圍", () => navigate("#/exam")) : null
+    custom ? card("review-pick--custom", "🎯", "自己選", "挑範圍", () => navigate("#/exam")) : null,
+    card("review-pick--stk", "🌟", "貼紙本", `${countMastered(profile?.progress)} 張`, () => navigate("#/stickers"))
   );
 }
 
