@@ -2896,3 +2896,14 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .zs-pad__key { font-size: 26px; }
 .mp-picsvg { width: 72px; height: 72px; }
 .zs-step .mt-paper__btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+/* 第13回 加法算式：□＋□＝□、畫○ */
+.fs-eq { display: grid; gap: 8px; }
+.fs-eq__line, .fs-eq__ans { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 800; font-size: calc(18px * var(--font-scale)); }
+.fs-eq__ans { justify-content: flex-end; }
+.fs-eq__op { font-size: 30px; font-weight: 900; }
+.fs-eq__note { font-size: calc(14px * var(--font-scale)); color: var(--ink-soft); font-weight: 700; }
+.fs-draw { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fs-draw__label { font-weight: 800; }
+.fs-draw__slots { display: grid; grid-template-columns: repeat(10, 30px); gap: 3px; }
+.fs-draw__slot { width: 30px; height: 44px; border: 0; border-bottom: 2px dotted #bbb; background: none; padding: 0; position: relative; }
+.fs-draw__slot--on::after { content: ""; position: absolute; left: 3px; top: 10px; width: 22px; height: 22px; border: 3px solid #3b6bff; border-radius: 50%; }

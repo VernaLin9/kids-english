@@ -9,8 +9,34 @@ const ZH_DATA = {
     exams: [
       { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/midterm", go: "去複習 ›" },
       { date: "2026-11-16", subject: "注音", label: "注音符號闖關活動", hash: "#/bopo", go: "去練習 ›" },
+      { date: "2026-11-19", subject: "國語", label: "第一課 圈詞", hash: "#/zh/C1", go: "去練習 ›" },
     ],
     lessons: [
+      {
+        // 第一冊 第一課（11/13 老師通知：11/16 考生字、部首、筆劃數，11/19 考圈詞）
+        // 生字、部首、總筆畫照生字簿 p.10-11（家長拍照）；詞語照課本 p.10-11 下面的詞語＋語詞修訂單（也好→也罷）
+        id: "C1", kind: "chars", exam: { date: "2026-11-16", label: "第一課 生字、部首、筆劃數", mode: "exam" },
+        title: "國語第一課", titleBopo: "ㄍㄨㄛˊ ㄩˇ ㄉㄧˋ ㄧ ㄎㄜˋ", emoji: "👏",
+        chars: [
+          { zh: "拍", bopo: "ㄆㄞ", radical: "手", extra: 5, strokes: 8, word: "拍手", wordBopo: "ㄆㄞ ㄕㄡˇ", confuse: "怕伯泊" },
+          { zh: "手", bopo: "ㄕㄡˇ", radical: "手", extra: 0, strokes: 4, word: "手心", wordBopo: "ㄕㄡˇ ㄒㄧㄣ", confuse: "毛斗牛" },
+          { zh: "左", bopo: "ㄗㄨㄛˇ", radical: "工", extra: 2, strokes: 5, word: "左手", wordBopo: "ㄗㄨㄛˇ ㄕㄡˇ", confuse: "右在有" },
+          { zh: "右", bopo: "ㄧㄡˋ", radical: "口", extra: 2, strokes: 5, word: "右手", wordBopo: "ㄧㄡˋ ㄕㄡˇ", confuse: "左石古" },
+          { zh: "你", bopo: "ㄋㄧˇ", radical: "人", extra: 5, strokes: 7, word: "你們", wordBopo: "ㄋㄧˇ ㄇㄣ˙", confuse: "他妳您" },
+          { zh: "他", bopo: "ㄊㄚ", radical: "人", extra: 3, strokes: 5, word: "他們", wordBopo: "ㄊㄚ ㄇㄣ˙", confuse: "她也地" },
+          { zh: "也", bopo: "ㄧㄝˇ", radical: "乙", extra: 2, strokes: 3, word: "也許", wordBopo: "ㄧㄝˇ ㄒㄩˇ", confuse: "他池地" },
+          { zh: "上", bopo: "ㄕㄤˋ", radical: "一", extra: 2, strokes: 3, word: "地上", wordBopo: "ㄉㄧˋ ㄕㄤˋ", confuse: "下止土" },
+          { zh: "下", bopo: "ㄒㄧㄚˋ", radical: "一", extra: 2, strokes: 3, word: "下來", wordBopo: "ㄒㄧㄚˋ ㄌㄞˊ", confuse: "上不丁" },
+        ],
+        words: [
+          { no: 1, zh: "拍手", bopo: "ㄆㄞ ㄕㄡˇ", emoji: "👏" }, { no: 2, zh: "拍照", bopo: "ㄆㄞ ㄓㄠˋ", emoji: "📷" }, { no: 3, zh: "拍賣", bopo: "ㄆㄞ ㄇㄞˋ", emoji: "🏷️" },
+          { no: 4, zh: "手心", bopo: "ㄕㄡˇ ㄒㄧㄣ", emoji: "✋" }, { no: 5, zh: "左手", bopo: "ㄗㄨㄛˇ ㄕㄡˇ", emoji: "🤚" }, { no: 6, zh: "左轉", bopo: "ㄗㄨㄛˇ ㄓㄨㄢˇ", emoji: "⬅️" },
+          { no: 7, zh: "右手", bopo: "ㄧㄡˋ ㄕㄡˇ", emoji: "✋" }, { no: 8, zh: "右邊", bopo: "ㄧㄡˋ ㄅㄧㄢ", emoji: "➡️" }, { no: 9, zh: "你們", bopo: "ㄋㄧˇ ㄇㄣ˙", emoji: "👫" },
+          { no: 10, zh: "你我", bopo: "ㄋㄧˇ ㄨㄛˇ", emoji: "🤝" }, { no: 11, zh: "他們", bopo: "ㄊㄚ ㄇㄣ˙", emoji: "👨‍👩‍👧" }, { no: 12, zh: "其他", bopo: "ㄑㄧˊ ㄊㄚ", emoji: "➕" },
+          { no: 13, zh: "也許", bopo: "ㄧㄝˇ ㄒㄩˇ", emoji: "🤔" }, { no: 14, zh: "也罷", bopo: "ㄧㄝˇ ㄅㄚˋ", emoji: "🙆" }, { no: 15, zh: "地上", bopo: "ㄉㄧˋ ㄕㄤˋ", emoji: "⬇️" },
+          { no: 16, zh: "上來", bopo: "ㄕㄤˋ ㄌㄞˊ", emoji: "⬆️" }, { no: 17, zh: "天下", bopo: "ㄊㄧㄢ ㄒㄧㄚˋ", emoji: "🌏" }, { no: 18, zh: "下來", bopo: "ㄒㄧㄚˋ ㄌㄞˊ", emoji: "⬇️" },
+        ],
+      },
       {
         id: "L6", exam: { date: "2026-10-16", label: "圈詞聽寫", mode: "spell" },
         title: "第六課 謝謝老師", titleBopo: "ㄉㄧˋ ㄌㄧㄡˋ ㄎㄜˋ ㄒㄧㄝˋ ㄒㄧㄝ˙ ㄌㄠˇ ㄕ", emoji: "🌺",

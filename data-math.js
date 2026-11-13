@@ -30,6 +30,13 @@ const MATH_DATA = {
         sheetLabel: "📄 小A本原題（第22、23頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
         topics: ["shapeCount", "shapeUsed", "shapeName"],
       },
+      {
+        // 小A本 第13回 p.26-27（6-1 加法算式，家長 11/13 拍照），11/16 考
+        id: "u7", title: "第13回 加法算式", titleBopo: "ㄉㄧˋ ㄕˊ ㄙㄢ ㄏㄨㄟˊ ㄐㄧㄚ ㄈㄚˇ ㄙㄨㄢˋ ㄕˋ", emoji: "➕",
+        exam: { date: "2026-11-16", label: "小考 小A本第26、27頁", mode: "exam" },
+        sheetLabel: "📄 小A本原題（第26、27頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
+        topics: ["addPic", "make10", "split"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答
