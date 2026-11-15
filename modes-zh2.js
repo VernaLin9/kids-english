@@ -22,6 +22,11 @@ function renderZhCharLesson(l) {
   root.appendChild(renderHeader(`${l.emoji} ${l.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
   app.appendChild(questEntryBtn("zh", l.id));
+  // 📖 學一學、✍️ 筆順練習、🧩 部首怎麼記（家長：要有教學、筆順訓練、部首記法）
+  app.appendChild(el("div", { class: "zh-learn-row" },
+    el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/teach/zh?l=${l.id}`) }, t("📖 學一學")),
+    typeof STROKES !== "undefined" && l.chars.some(c => STROKES[c.zh]) ? el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/strokes?l=${l.id}`) }, t("✍️ 筆順練習")) : null,
+    el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/radicals?l=${l.id}`) }, t("🧩 部首怎麼記"))));
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("✏️ 選一種練習")),
     el("div", { class: "mode-grid" }, ZH2_MODES.map(([m, emoji, label]) =>
@@ -107,7 +112,8 @@ function renderZh2Card(l) {
         el("span", { class: "c-info" }, t("總筆畫："), `${c.strokes}`, t("畫"))),
       el("div", { class: "c-card__word" }, charPromptEl(c, false)),
       c.note ? el("div", { class: "zh-note" }, t(c.note)) : null,
-      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(`${c.zh}，${c.word}`), "aria-label": "念" }, "🔊"));
+      el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(`${c.zh}，${c.word}`), "aria-label": "念" }, "🔊"),
+      typeof STROKES !== "undefined" && STROKES[c.zh] ? el("button", { class: "btn btn--full", style: "margin-top: 8px;", onclick: () => card.appendChild(strokeOrderEl(c.zh)) }, t("✍️ 看筆順")) : null);
     app.replaceChildren(card, el("div", { class: "flash-actions" },
       el("button", { class: "btn btn--success", onclick: () => { recordZh(c.zh, true); dingCorrect(); i++; render(); } }, t("✅ 我會寫")),
       el("button", { class: "btn btn--ghost", onclick: () => { i++; render(); } }, t("🔁 再練習"))));
