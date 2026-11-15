@@ -786,6 +786,25 @@ function renderKidList() {
   return list;
 }
 
+// === 首頁的課／單元排序：要考的（日期近的先）→ 最新的；考完超過 3 天的收進「以前學過的」（最上面至少留一個）===
+function homeSortItems(list) {
+  const today = dayISO(), old = addDays(-3);
+  const idx = new Map(list.map((x, i) => [x, i]));
+  const up = list.filter(x => x.exam?.date >= today).sort((a, b) => a.exam.date.localeCompare(b.exam.date));
+  const rest = list.filter(x => !up.includes(x)).sort((a, b) => (b.exam?.date || "").localeCompare(a.exam?.date || "") || idx.get(a) - idx.get(b));
+  const all = [...up, ...rest];
+  return all.map((item, k) => ({ item, past: k > 0 && !!item.exam?.date && item.exam.date < old }));
+}
+const homeLearnBtns = (teachHash, practiceHash) => el("div", { class: "home-learn" },
+  el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(teachHash) }, t("📖 學一學")),
+  el("button", { class: "btn btn--accent btn--xl", onclick: () => navigate(practiceHash) }, t("✏️ 練習")));
+function homeOldFinish(wrap, old) {
+  const n = old.children.length - 1;
+  if (n <= 0) return;
+  old.querySelector("summary").replaceChildren(t(`📦 以前學過的（${n}個，點開複習）`));
+  wrap.appendChild(old);
+}
+
 // === Home ===
 // 練習方式（週次頁、主題頁、自選複習共用）
 // 跟著念需要瀏覽器的語音辨識（Chrome / iPad Safari 大多支援；不支援就不顯示）
@@ -850,20 +869,26 @@ function renderHome() {
   (MATH?.units || []).forEach(u => { if (u.exam) reminders.push({ ...u.exam, subject: "數學", title: u.title, hash: `#/mathplay/${u.exam.mode}?u=${u.id}` }); });
   (ZH?.exams || []).forEach(x => reminders.push({ ...x })); // 學校的大考（注音總結性評量、期中評量）
   const today = dayISO();
-  reminders.filter(r => r.date >= today && r.date <= addDays(10)).sort((a, b) => a.date.localeCompare(b.date)).forEach(r => {
+  const soon = reminders.filter(r => r.date >= today && r.date <= addDays(10)).sort((a, b) => a.date.localeCompare(b.date));
+  const moreBox = soon.length > 2 ? el("details", { class: "exam-more" }, el("summary", { class: "exam-more__sum" }, t(`📅 還有${soon.length - 2}個考試（點開看）`))) : null;
+  soon.forEach((r, k) => {
     const d = new Date(r.date + "T00:00:00");
     const daysLeft = Math.round((d - new Date(today + "T00:00:00")) / 86400000);
     const when = daysLeft === 0 ? "今天" : daysLeft === 1 ? "明天" : `${daysLeft}天後`;
-    app.appendChild(el("button", { class: "exam-remind", onclick: () => navigate(r.hash) },
+    (k < 2 ? app : moreBox).appendChild(el("button", { class: "exam-remind", onclick: () => navigate(r.hash) },
       el("span", { class: "exam-remind__icon" }, "📅"),
       el("span", { class: "exam-remind__text" }, t(`${d.getMonth() + 1}/${d.getDate()}(${"日一二三四五六"[d.getDay()]})${when}考${r.subject}：${r.label}`)),
       el("span", { class: "exam-remind__go" }, t(r.go || (r.mode === "exam" ? "模擬小考 ›" : "去練習 ›")))));
   });
+  if (moreBox) app.appendChild(moreBox);
   if (subjects.length > 1) {
     app.appendChild(el("div", { class: `subject-tabs subject-tabs--${subjects.length}` },
       subjects.map(([id, label]) =>
         el("button", { class: `subject-tab subject-tab--${id} ${subject === id ? "subject-tab--on" : ""}`, onclick: () => { if (profile) { profile.subject = id; saveStore(); } route(); } }, t(label)))));
   }
+  // 🌟 今天這樣學：①學一學 ②練一練 ③考考看（家長：不要只有考試，也要有教學）
+  const plan = typeof renderTodayPlan === "function" ? renderTodayPlan(subject) : null;
+  if (plan) app.appendChild(plan);
   // 🎮 遊樂場（英文、國語都能玩）
   app.appendChild(el("button", { class: "g-home", onclick: () => navigate(`#/games?s=${subject}`) },
     el("span", { class: "g-home__emoji" }, "🎮"),
@@ -888,7 +913,7 @@ function renderHome() {
       cw.words.map(w => el("div", { class: `hero__word ${progress[w]?.mastered ? "hero__word--done" : ""}` },
         el("span", { class: "hero__word-emoji" }, WORDS[w]?.emoji || ""), w))));
     hero.appendChild(el("div", { class: "hero__learned" }, `學會 ${learned} / ${cw.words.length} 個 ${learned === cw.words.length ? "🎉" : ""}`));
-    hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/week/${cw.num}`) }, t("▶ 開始練習本週")));
+    hero.appendChild(homeLearnBtns(`#/teach/en?set=week-${cw.num}`, `#/week/${cw.num}`));
   } else {
     hero.appendChild(el("p", { class: "hero__empty" }, "這週是考試 / 複習週，沒有新單字。把還沒學會的字練一練吧！"));
     hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/play/flashcard?set=unmastered") }, t("▶ 開始複習")));

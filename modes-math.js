@@ -191,18 +191,21 @@ const MATH_TOPICS = {
 // === 首頁區塊 ===
 function renderMathHomeSection() {
   const wrap = el("div", {});
-  const mid = renderMidEntry("math"); if (mid) wrap.appendChild(mid);
+  const old = el("details", { class: "home-old" }, el("summary", { class: "home-old__sum" }));
+  const midSoon = (ZH?.exams || []).some(x => x.date >= dayISO() && x.hash === "#/midterm");
+  const mid = renderMidEntry("math"); if (mid) (midSoon ? wrap : old).appendChild(mid);
   const prog = mathProgressOf();
-  MATH.units.forEach(u => {
+  homeSortItems(MATH.units).forEach(({ item: u, past }) => {
     const done = u.topics.reduce((s, tp) => s + (prog[tp]?.correct || 0), 0);
-    wrap.appendChild(el("section", { class: "hero" },
+    (past ? old : wrap).appendChild(el("section", { class: "hero" },
       el("div", { class: "hero__head" },
         el("h1", { class: "hero__title" }, `${u.emoji} `, rubyEl(u.title, u.titleBopo, "span")),
         el("div", { class: "hero__sub" }, `${u.topics.length} 種題型・已答對 ${done} 題`)),
       el("div", { class: "zh-chips" }, u.topics.map(tp => { const T = (u.kind === "calc" ? MATH2_TOPICS : MATH_TOPICS)[tp]; return el("div", { class: "zh-chip" }, el("span", { class: "zh-chip__emoji" }, T.emoji), t(T.name)); })),
-      el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-top: 12px;", onclick: () => navigate(`#/math/${u.id}`) }, t("▶ 開始練習"))
+      homeLearnBtns(`#/teach/math?u=${u.id}`, `#/math/${u.id}`)
     ));
   });
+  homeOldFinish(wrap, old);
   return wrap;
 }
 

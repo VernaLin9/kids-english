@@ -2944,3 +2944,68 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fc-stk__item--hop { animation: fc-hop 0.55s ease-out; }
 @media (prefers-reduced-motion: reduce) { .fc-emoji, .fc-emoji--pop, .fc-spark { animation: none; } }
 .fc-stk { padding: 6px 4px; overflow: hidden; }
+/* 🌟 今天這樣學（首頁）、📖 學一學（modes-teach.js）、首頁整理 */
+.tp-plan { background: #fff; border: 2px solid var(--line); border-radius: var(--radius-lg); padding: 14px 12px 12px; margin: 10px 0 12px; box-shadow: var(--shadow); }
+.tp-plan__head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tp-plan__icon { font-size: 34px; }
+.tp-plan__title { font-weight: 900; font-size: calc(22px * var(--font-scale)); }
+.tp-plan__sub { font-weight: 700; color: var(--ink-soft); font-size: calc(15px * var(--font-scale)); }
+.tp-plan__steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tp-step { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 92px; padding: 10px 4px 8px; border-radius: 16px; border: 2px solid var(--line); background: #fffdf8; font-weight: 900; font-size: calc(16px * var(--font-scale)); }
+.tp-step--first { border-color: var(--primary); background: #eef2ff; }
+.tp-step--done { border-color: var(--success); background: #eaf6f0; }
+.tp-step__no { position: absolute; top: 6px; left: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 13px; display: grid; place-items: center; }
+.tp-step--done .tp-step__no { background: var(--success); }
+.tp-step__icon { font-size: 30px; line-height: 1.2; }
+.tp-plan__hint { text-align: center; font-size: calc(14px * var(--font-scale)); color: var(--ink-soft); font-weight: 700; margin-top: 8px; }
+.home-learn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.home-learn__teach { background: #eef2ff; border: 2px solid var(--primary); color: var(--primary); }
+.home-old, .exam-more { margin: 10px 0; }
+.home-old__sum, .exam-more__sum { cursor: pointer; list-style: none; font-weight: 900; padding: 12px 14px; border: 2px dashed var(--line); border-radius: 14px; background: #fff; text-align: center; min-height: 44px; }
+.home-old__sum::-webkit-details-marker, .exam-more__sum::-webkit-details-marker { display: none; }
+.home-old[open] > summary, .exam-more[open] > summary { margin-bottom: 10px; }
+.tc { padding-bottom: 40px; }
+.tc-card { background: #fff; border: 2px solid var(--line); border-radius: var(--radius-lg); padding: 16px 14px; margin-top: 12px; display: grid; gap: 12px; justify-items: center; text-align: center; }
+.tc-tag { justify-self: start; font-weight: 900; font-size: calc(16px * var(--font-scale)); background: #eef2ff; color: var(--primary); border-radius: 999px; padding: 4px 12px; }
+.tc-tag--chk { background: #eaf6f0; color: var(--success); }
+.tc-next { margin-top: 4px; }
+.tc-word, .tc-char { display: grid; gap: 10px; justify-items: center; width: 100%; }
+.tc-word .fc-stage { margin-bottom: 0; }
+.tc-word__en { font-size: calc(40px * var(--font-scale)); font-weight: 900; }
+.tc-word__zh { font-size: calc(30px * var(--font-scale)); font-weight: 900; }
+.tc-tip { width: 100%; background: #fff8e1; border-radius: 12px; padding: 8px 12px; font-weight: 800; font-size: calc(16px * var(--font-scale)); line-height: 1.9; text-align: left; }
+.tc-tip--warn { background: #fde8e8; }
+.tc-confuse { font-size: 26px; font-weight: 900; letter-spacing: 4px; }
+.tc-char__big { border: 3px solid var(--ink); border-radius: 18px; background: #fff; padding: 10px 26px; min-width: 150px; background-image: linear-gradient(transparent 49.5%, #f0c8c8 49.5% 50.5%, transparent 50.5%), linear-gradient(90deg, transparent 49.5%, #f0c8c8 49.5% 50.5%, transparent 50.5%); }
+.tc-char__ruby { font-size: 110px; font-weight: 700; line-height: 1.1; }
+.tc-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.tc-fact { display: grid; justify-items: center; gap: 2px; border: 2px solid var(--line); border-radius: 12px; padding: 6px 4px; }
+.tc-fact__k { font-size: calc(14px * var(--font-scale)); font-weight: 800; color: var(--ink-soft); }
+.tc-fact__v { font-size: 34px; font-weight: 900; line-height: 1.2; }
+.tc-fact__w { font-size: calc(20px * var(--font-scale)); font-weight: 900; }
+.tc-emoji { font-size: 96px; line-height: 1.1; }
+.tc-bopo { border: 0; background: #fffdf8; border-radius: 16px; padding: 8px 18px; }
+.tc-q { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-weight: 900; font-size: calc(20px * var(--font-scale)); }
+.tc-qemoji { font-size: 44px; margin-right: 6px; }
+.tc-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.tc-opts:has(> :nth-child(2):last-child) { grid-template-columns: 1fr 1fr; }
+.tc-opt { min-height: 88px; border: 3px solid var(--line); border-radius: 18px; background: #fff; display: grid; place-items: center; padding: 6px; }
+.tc-opt--ok { border-color: var(--success); background: #eaf6f0; }
+.tc-opt--bad { border-color: var(--danger); background: #fde8e8; opacity: 0.6; }
+.tc-bigchar { font-size: 56px; font-weight: 700; line-height: 1.1; }
+.tc-pic { display: grid; justify-items: center; gap: 2px; }
+.tc-pic__emoji { font-size: 52px; line-height: 1.1; }
+.tc-pic__en { font-weight: 900; font-size: 16px; }
+.tc-again { width: 100%; border-top: 2px dashed var(--line); padding-top: 12px; }
+.tc-demo { width: 100%; display: grid; gap: 10px; text-align: left; }
+.tc-demo__ok .m-hit { stroke: var(--success); stroke-width: 6; fill: rgba(28, 125, 88, 0.12); animation: tc-glow 1s ease-in-out infinite alternate; }
+@keyframes tc-glow { from { stroke-opacity: 0.4; } to { stroke-opacity: 1; } }
+.tc-end__icon { font-size: 64px; }
+.tc-end__msg { font-weight: 900; font-size: calc(20px * var(--font-scale)); }
+.tc-end__btns { display: grid; gap: 10px; width: 100%; }
+@media (min-width: 700px) { .tc-card { max-width: 640px; margin-left: auto; margin-right: auto; } .tc-char__ruby { font-size: 140px; } }
+.tc-opt { min-width: 0; overflow: hidden; }
+.tc-opts--bopo { grid-template-columns: 1fr !important; }
+@media (min-width: 700px) { .tc-opts--bopo { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
+.tc-bopo { max-width: 100%; overflow-x: auto; }
+.tc-demo__ok .m-hit { fill: rgba(28, 125, 88, 0.22) !important; stroke: #1c7d58 !important; stroke-width: 8 !important; }
