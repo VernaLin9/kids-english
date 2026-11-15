@@ -743,7 +743,7 @@ function fcMascot() {
 }
 // 小熊說的話：輪流教看圖念、拍手分段、用身體動作記
 function fcTip(w, i) {
-  const parts = (typeof SYLLABLES !== "undefined" && SYLLABLES[w]) || null;
+  const parts = typeof SYLLABLES !== "undefined" && SYLLABLES[w] ? SYLLABLES[w].split("·") : null; // SYLLABLES 是 "sev·en" 字串
   const tips = [
     "看圖，大聲念出來！點圖會念給你聽。",
     parts && parts.length > 1 ? `拍手念：${parts.join("・")}，拍${parts.length}下！` : `念三次：${w}、${w}、${w}！`,

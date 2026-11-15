@@ -182,21 +182,26 @@ function bopoVariants(bopo) {
 function renderZhHomeSection() {
   const wrap = el("div", {});
   const prog = zhProgressOf();
-  const mid = renderMidEntry("zh"); if (mid) wrap.appendChild(mid); // 📄 期中考複習卷（老師的考卷）
-  if (ZH.lessons.some(l => l.kind !== "chars")) wrap.append(renderBopoEntry(), renderToneDrillEntry()); // 一年級：注音總複習（期中考考全部注音）、聲調位置特訓
-  ZH.lessons.forEach(l => {
+  const today = dayISO();
+  const old = el("details", { class: "home-old" }, el("summary", { class: "home-old__sum" }));
+  // 注音總複習、老師的考卷：還有注音／期中的考試才放上面，考完收進「以前學過的」
+  const bopoSoon = (ZH.exams || []).some(x => x.date >= today && /^#\/(bopo|midterm)/.test(x.hash));
+  const mid = renderMidEntry("zh"); if (mid) (bopoSoon ? wrap : old).appendChild(mid); // 📄 期中考複習卷（老師的考卷）
+  if (ZH.lessons.some(l => l.kind !== "chars")) (bopoSoon ? wrap : old).append(renderBopoEntry(), renderToneDrillEntry()); // 一年級：注音總複習、聲調位置特訓
+  homeSortItems(ZH.lessons).forEach(({ item: l, past }) => {
     const items = l.kind === "chars" ? l.chars : l.words;
     const learned = items.filter(w => prog[w.zh]?.mastered).length;
-    wrap.appendChild(el("section", { class: "hero" },
+    (past ? old : wrap).appendChild(el("section", { class: "hero" },
       el("div", { class: "hero__head" },
         el("h1", { class: "hero__title" }, `${l.emoji} `, rubyEl(l.title, l.titleBopo, "span")),
         el("div", { class: "hero__sub" }, l.kind === "chars" ? `${items.length} 個生字・學會 ${learned} 個` : `複習 ${items.length} 個詞・學會 ${learned} 個`)),
       el("div", { class: "zh-chips" }, l.kind === "chars"
         ? l.chars.slice(0, 9).map(c => el("div", { class: `zh-chip ${prog[c.zh]?.mastered ? "zh-chip--done" : ""}` }, rubyEl(c.zh, c.bopo, "span", { class: "zh-chip__char" })))
         : l.words.slice(0, 8).map(w => el("div", { class: `zh-chip ${prog[w.zh]?.mastered ? "zh-chip--done" : ""}` }, el("span", { class: "zh-chip__emoji" }, w.emoji), bopoWordEl(w.bopo, { class: "bopo-word--sm" })))),
-      el("button", { class: "btn btn--accent btn--full btn--xl", style: "margin-top: 12px;", onclick: () => navigate(`#/zh/${l.id}`) }, t("▶ 開始複習"))
+      homeLearnBtns(`#/teach/zh?l=${l.id}`, `#/zh/${l.id}`)
     ));
   });
+  homeOldFinish(wrap, old);
   return wrap;
 }
 
