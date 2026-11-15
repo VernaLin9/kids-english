@@ -3009,3 +3009,45 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 @media (min-width: 700px) { .tc-opts--bopo { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 .tc-bopo { max-width: 100%; overflow-x: auto; }
 .tc-demo__ok .m-hit { fill: rgba(28, 125, 88, 0.22) !important; stroke: #1c7d58 !important; stroke-width: 8 !important; }
+/* ✍️ 筆順動畫／練習、🧩 部首怎麼記、🔤 發音記憶＋🖼️ 圖像記憶 */
+.so-box { display: grid; gap: 8px; justify-items: center; width: 100%; }
+.so-grid { display: block; width: min(78vw, 300px); height: auto; touch-action: none; }
+.so-grid--big { width: min(80vw, 320px); }
+@media (min-width: 700px) { .so-grid--big { width: min(60vh, 420px); } }
+.so-ghost { fill: none; stroke: #e2dcd2; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.so-ink { fill: none; stroke: var(--ink); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.so-ink--ok { stroke: #3d5fc9; }
+.so-ink--show { stroke: var(--accent); opacity: 0.85; }
+.so-live { fill: none; stroke: #3b6bff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.7; }
+.so-num-bg { fill: var(--accent); }
+.so-num { fill: #fff; font-size: 9px; font-weight: 900; text-anchor: middle; }
+.so-hint { fill: #f2b705; animation: tc-glow 0.8s ease-in-out infinite alternate; }
+.so-num--hint { fill: var(--ink); }
+.so-cap { font-weight: 900; font-size: calc(18px * var(--font-scale)); text-align: center; min-height: 1.8em; }
+.so-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.so-title { font-size: 44px; font-weight: 700; }
+.zh-learn-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 10px 0; }
+.rd-head { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.rd-emoji { font-size: 56px; }
+.rd-char { font-size: 88px; font-weight: 700; line-height: 1; border: 3px solid var(--ink); border-radius: 16px; padding: 4px 16px; background: #fff; }
+.rd-alt { font-weight: 900; font-size: calc(18px * var(--font-scale)); }
+.rd-alt b { font-size: 44px; margin-left: 4px; }
+.rd-ex { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rd-ex__ch { border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 4px 12px; font-size: 34px; min-height: 56px; }
+.rd-q { font-size: 40px; }
+.rd-opt { display: grid; justify-items: center; gap: 2px; }
+.rd-opt__emoji { font-size: 26px; }
+.rd-opt__alt { font-size: 22px; font-weight: 900; color: var(--ink-soft); }
+.ph-box { width: 100%; border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 8px; text-align: left; background: #fbfaff; }
+.ph-box--img { background: #f6fbf4; }
+.ph-title { font-weight: 900; font-size: calc(17px * var(--font-scale)); }
+.ph-chunks { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.ph-chunk { border: 0; border-radius: 12px; padding: 6px 14px; font-size: 32px; font-weight: 900; min-height: 52px; color: #fff; }
+.ph-chunk--0 { background: #3d5fc9; }
+.ph-chunk--1 { background: #c2306b; }
+.ph-chunk--2 { background: #1c7d58; }
+.ph-line { font-weight: 800; font-size: calc(16px * var(--font-scale)); line-height: 1.9; }
+.ph-pic { border: 2px dashed var(--line); border-radius: 12px; background: #fff; text-align: left; padding: 6px 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ph-pic__e { font-size: 30px; }
+.ph-fam { font-weight: 900; font-size: 20px; }
+.tc-word__en--hide { visibility: hidden; }
