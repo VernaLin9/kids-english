@@ -9,7 +9,7 @@ const ZH_DATA = {
     exams: [
       { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/midterm", go: "去複習 ›" },
       { date: "2026-11-16", subject: "注音", label: "注音符號闖關活動", hash: "#/bopo", go: "去練習 ›" },
-      { date: "2026-11-19", subject: "國語", label: "第一課 圈詞", hash: "#/zh/C1", go: "去練習 ›" },
+      { date: "2026-11-19", subject: "國語", label: "第一課 圈詞", hash: "#/quanci?l=C1", go: "圈詞聽寫 ›" },
     ],
     lessons: [
       {
@@ -27,6 +27,12 @@ const ZH_DATA = {
           { zh: "也", bopo: "ㄧㄝˇ", radical: "乙", extra: 2, strokes: 3, word: "也許", wordBopo: "ㄧㄝˇ ㄒㄩˇ", confuse: "他池地" },
           { zh: "上", bopo: "ㄕㄤˋ", radical: "一", extra: 2, strokes: 3, word: "地上", wordBopo: "ㄉㄧˋ ㄕㄤˋ", confuse: "下止土" },
           { zh: "下", bopo: "ㄒㄧㄚˋ", radical: "一", extra: 2, strokes: 3, word: "下來", wordBopo: "ㄒㄧㄚˋ ㄌㄞˊ", confuse: "上不丁" },
+        ],
+        // 圈詞（11/19 考；照 11/16 帶回的圈詞作業：學過的字寫國字，還沒學的寫注音）
+        quanci: [
+          { zh: "拍拍手", bopo: "ㄆㄞ ㄆㄞ ㄕㄡˇ" }, { zh: "拍手", bopo: "ㄆㄞ ㄕㄡˇ" }, { zh: "左拍", bopo: "ㄗㄨㄛˇ ㄆㄞ" }, { zh: "右拍", bopo: "ㄧㄡˋ ㄆㄞ" },
+          { zh: "你們", bopo: "ㄋㄧˇ ㄇㄣ˙" }, { zh: "其他", bopo: "ㄑㄧˊ ㄊㄚ" }, { zh: "上面", bopo: "ㄕㄤˋ ㄇㄧㄢˋ" }, { zh: "山下", bopo: "ㄕㄢ ㄒㄧㄚˋ" },
+          { zh: "拍打", bopo: "ㄆㄞ ㄉㄚˇ" }, { zh: "球拍", bopo: "ㄑㄧㄡˊ ㄆㄞ" }, { zh: "也有", bopo: "ㄧㄝˇ ㄧㄡˇ" },
         ],
         words: [
           { no: 1, zh: "拍手", bopo: "ㄆㄞ ㄕㄡˇ", emoji: "👏" }, { no: 2, zh: "拍照", bopo: "ㄆㄞ ㄓㄠˋ", emoji: "📷" }, { no: 3, zh: "拍賣", bopo: "ㄆㄞ ㄇㄞˋ", emoji: "🏷️" },

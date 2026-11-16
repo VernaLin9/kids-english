@@ -565,6 +565,7 @@ function route() {
   else if (path[0] === "stickers") view = renderStickers();
   else if (path[0] === "strokes") view = renderStrokes(query.l);
   else if (path[0] === "radicals") view = renderRadicals(query.l);
+  else if (path[0] === "quanci") view = renderQuanci(query.l);
   else if (path[0] === "teach") view = path[1] === "en" ? renderTeachEn(query.set || "") : path[1] === "zh" ? renderTeachZh(query.l) : renderTeachMath(query.u);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);
   else if (path[0] === "quest" && path[1] === "top") view = renderQuestTop(query.s, query.c);

@@ -414,3 +414,56 @@ function imageMemEl(w, enNode) {
     el("div", { class: "ph-line" }, t("看著圖念三次，閉上眼睛想這張圖，再說出英文。")),
     btn);
 }
+
+// === 📝 圈詞聽寫（11/19 考第一課圈詞；照圈詞作業：學過的字寫國字，還沒學的寫注音）===
+// 聽 → 在紙上寫 → 看答案自己對 → 寫錯的最後再考一次（弟弟作業常忘了寫聲調，答案旁邊提醒）
+function quanciAnswerEl(q, l) {
+  const known = new Set((l.chars || []).map(c => c.zh));
+  const bs = q.bopo.split(/\s+/);
+  return el("div", { class: "qc-ans" }, [...q.zh].map((ch, i) => known.has(ch)
+    ? el("span", { class: "qc-ch" }, rubyEl(ch, bs[i] || "", "span"))
+    : el("span", { class: "qc-bp" }, bopoColEl(bs[i] || ""))));
+}
+function renderQuanci(id) {
+  const l = zhLesson(id);
+  const list = l?.quanci || [];
+  if (!list.length) return renderEmpty("#/", "這一課還沒有圈詞");
+  const root = el("div", {});
+  const header = renderHeader(`📝 圈詞聽寫・${l.title}`, { back: `#/zh/${l.id}` });
+  root.appendChild(header);
+  const progress = $(".header__progress", header);
+  const app = el("main", { class: "app tc" });
+  root.appendChild(app);
+  let queue = shuffle(list.map(q => ({ q, again: false }))), i = 0, wrong = [];
+  const show = () => {
+    if (i >= queue.length) {
+      if (wrong.length) { queue = shuffle(wrong.map(q => ({ q, again: true }))); wrong = []; i = 0; app.replaceChildren(el("div", { class: "tc-card" }, el("div", { class: "tc-end__msg" }, t("寫錯的再考一次！")), el("button", { class: "btn btn--accent btn--full btn--xl", onclick: show }, t("開始 ▶")))); return; }
+      teachMark("quanci", l.id); teachEnd(app, `${list.length}個圈詞都寫對了！`, [teachBtn("🔁 再考一次", `#/quanci?l=${l.id}&r=${Date.now()}`, true), teachBtn("✏️ 回去練生字", `#/zh/${l.id}`)]); return;
+    }
+    const { q, again } = queue[i];
+    progress.textContent = `${i + 1}/${queue.length}`;
+    const say = () => speakZh(q.zh);
+    setTimeout(say, 300);
+    const ansBox = el("div", {});
+    const btns = el("div", {});
+    const reveal = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
+      reveal.remove();
+      ansBox.replaceChildren(el("div", { class: "tc-tag tc-tag--chk" }, t("✅ 答案")), quanciAnswerEl(q, l),
+        el("div", { class: "tc-tip" }, t("對一對：國字有沒有寫對？注音的聲調有沒有寫？（ˊˇˋ寫在右上角）")));
+      btns.replaceChildren(el("div", { class: "home-learn" },
+        el("button", { class: "btn btn--success btn--xl", onclick: () => { recordZh(`圈詞:${q.zh}`, true); dingCorrect(); i++; show(); } }, t("⭕ 我寫對了")),
+        el("button", { class: "btn btn--xl", onclick: () => { recordZh(`圈詞:${q.zh}`, false); wrong.push(q); i++; show(); } }, t("❌ 寫錯了"))));
+    } }, t("寫好了，看答案"));
+    app.replaceChildren(el("div", { class: "tc-card" },
+      el("div", { class: "tc-tag" }, t(again ? "🔁 再寫一次" : "👂 聽一聽，寫在紙上")),
+      el("button", { class: "qc-say", onclick: say }, el("span", { class: "qc-say__icon" }, "🔊"), t("再聽一次")),
+      el("div", { class: "tc-tip" }, t("拿紙和筆寫：學過的字寫國字，還沒學的字寫注音。")),
+      reveal, ansBox, btns));
+  };
+  app.appendChild(el("div", { class: "tc-card" },
+    el("div", { class: "tc-end__icon" }, "📝"), el("div", { class: "tc-end__msg" }, t(`圈詞聽寫：共${list.length}個詞`)),
+    el("div", { class: "tc-tip" }, t("跟考試一樣：聽一個詞，在紙上寫下來，再看答案自己對。寫錯的最後會再考一次。")),
+    el("div", { class: "qc-list" }, list.map(q => quanciAnswerEl(q, l))),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: show }, t("開始聽寫 ▶"))));
+  return root;
+}
