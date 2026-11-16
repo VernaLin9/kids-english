@@ -82,8 +82,10 @@ const BP_SCHOOL_WORDS = [
   ["馴鹿", "ㄒㄩㄣˊ ㄌㄨˋ", "🦌"], ["露營", "ㄌㄨˋ ㄧㄥˊ", "⛺"], ["退步", "ㄊㄨㄟˋ ㄅㄨˋ", "📉"], ["夏天", "ㄒㄧㄚˋ ㄊㄧㄢ", "☀️"],
   // 11/7 發回的兩張國卷寫錯的（看圖找語詞、聽寫）
   ["金魚", "ㄐㄧㄣ ㄩˊ", "🐠"], ["風箏", "ㄈㄥ ㄓㄥ", "🪁"], ["企鵝", "ㄑㄧˋ ㄜˊ", "🐧"], ["時鐘", "ㄕˊ ㄓㄨㄥ", "⏰"], ["可愛", "ㄎㄜˇ ㄞˋ", "🥰"], ["魔術", "ㄇㄛˊ ㄕㄨˋ", "🎩"],
+  // 11/5 注音符號總結性評量（88.5分）寫錯的：拍手 ㄅㄆ、鋼琴／眼睛 ㄣㄥ、牛奶 漏寫ㄧ、足球 ㄗㄓ、吃草
+  ["拍手", "ㄆㄞ ㄕㄡˇ", "👏"], ["鋼琴", "ㄍㄤ ㄑㄧㄣˊ", "🎹"], ["牛奶", "ㄋㄧㄡˊ ㄋㄞˇ", "🥛"], ["眼睛", "ㄧㄢˇ ㄐㄧㄥ", "👀"], ["足球", "ㄗㄨˊ ㄑㄧㄡˊ", "⚽"], ["吃草", "ㄔ ㄘㄠˇ", "🐄"],
 ].map(([zh, bopo, emoji]) => ({ zh, bopo, emoji }));
-const BP_WEAK_SWAP = [["ㄣ", "ㄥ"], ["ㄥ", "ㄣ"], ["ㄩ", "ㄨ"], ["ㄨ", "ㄩ"], ["ㄌ", "ㄖ"], ["ㄖ", "ㄌ"], ["ㄔ", "ㄘ"], ["ㄘ", "ㄔ"], ["ㄓ", "ㄗ"], ["ㄗ", "ㄓ"], ["ㄈ", "ㄏ"], ["ㄜ", "ㄦ"]];
+const BP_WEAK_SWAP = [["ㄣ", "ㄥ"], ["ㄥ", "ㄣ"], ["ㄩ", "ㄨ"], ["ㄨ", "ㄩ"], ["ㄌ", "ㄖ"], ["ㄖ", "ㄌ"], ["ㄔ", "ㄘ"], ["ㄘ", "ㄔ"], ["ㄓ", "ㄗ"], ["ㄗ", "ㄓ"], ["ㄈ", "ㄏ"], ["ㄜ", "ㄦ"], ["ㄅ", "ㄆ"], ["ㄆ", "ㄅ"]];
 function bpWeakVariants(bopo) {
   const syls = bpSyls(bopo), swap = new Set(), tones = new Set();
   syls.forEach((s, i) => {
@@ -91,6 +93,7 @@ function bpWeakVariants(bopo) {
     const put = (set, sym, tn) => { const v = [...syls]; v[i] = sym.join("") + tn; const x = v.join(" "); if (x !== bopo) set.add(x); };
     BP_WEAK_SWAP.forEach(([a, b]) => { const k = symbols.indexOf(a); if (k >= 0) { const sym = [...symbols]; sym[k] = b; put(swap, sym, tone); } });
     if (symbols.length === 2 && BP_INITIALS.includes(symbols[0]) && "ㄢㄣㄚ".includes(symbols[1])) put(swap, [symbols[0], "ㄨ", symbols[1]], tone); // 帆 ㄈㄢˊ 多寫ㄨ
+    if (symbols.length === 3 && symbols[1] === "ㄧ") put(swap, [symbols[0], symbols[2]], tone); // 牛 ㄋㄧㄡˊ 漏寫ㄧ
     ["", "ˊ", "ˇ", "ˋ"].filter(tn => tn !== tone).forEach(tn => put(tones, symbols, tn));
   });
   return { swap: [...swap], tones: [...tones] };
@@ -110,6 +113,7 @@ function bpWeakTip(q, picked) {
     if (A[i] === B[i]) continue;
     const a = splitSyl(A[i]), b = splitSyl(B[i]);
     if (a.symbols.join("") === b.symbols.join("")) return `${head}「${A[i]}」是${BP_TONE_NAME[a.tone]}。${BP_TONE_TIP}`;
+    if (b.symbols.length < a.symbols.length && a.symbols.includes("ㄧ") && !b.symbols.includes("ㄧ")) return `${head}「${A[i]}」中間有ㄧ，不要漏掉，慢慢念：${a.symbols.join("、")}。`;
     if (b.symbols.length > a.symbols.length && b.symbols.includes("ㄨ")) return `${head}「${A[i]}」中間沒有ㄨ，慢慢念：${a.symbols.join("、")}。`;
     const k = a.symbols.findIndex((c, j) => c !== b.symbols[j]);
     const pair = BP_PAIR_TIPS.find(([g]) => g.includes(a.symbols[k]) && g.includes(b.symbols[k]));
