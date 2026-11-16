@@ -353,13 +353,27 @@ const RADICAL_INFO = {
   "言": { emoji: "💬", say: "言", meaning: "說話。跟說話有關。", ex: ["該"] },
   "田": { emoji: "🌾", say: "田", meaning: "田地。", ex: ["留"] },
   "小": { emoji: "🐜", say: "小", meaning: "小。「少」上面是小。", ex: ["少"] },
+  "竹": { alt: "⺮", pos: "上面", emoji: "🎋", say: "竹", meaning: "竹子。在字的上面變成「⺮」，叫做竹字頭。「等」上面是竹字頭。", ex: ["等", "筆", "笑", "答"] },
+  "儿": { emoji: "🦵", say: "人", meaning: "像人的兩條腿，在字的下面。「兔」「先」「光」下面都是儿。", ex: ["兔", "兒", "先", "光"] },
+  "辰": { emoji: "🌅", say: "辰", meaning: "早上的時間。「農」下面是辰，農夫一大早就去田裡。", ex: ["農"] },
+  "大": { emoji: "🙆", say: "大", meaning: "一個人張開手腳，很大。「夫」「天」「太」都是大部。", ex: ["夫", "天", "太"] },
+  "夊": { emoji: "🚶", say: "雖", meaning: "慢慢走的腳。「夏」下面的那一部分就是夊。", ex: ["夏"] },
+  "刀": { alt: "刂", pos: "右邊", emoji: "🔪", say: "刀", meaning: "刀子。在字的右邊變成「刂」，叫做立刀旁。", ex: ["剛", "到", "別", "前"] },
+  "走": { emoji: "🏃", say: "走", meaning: "走路、跑步。有走的字常常跟走路有關，走在左下包住右邊。", ex: ["趕", "起", "超"] },
+  "足": { alt: "⻊", emoji: "🦶", say: "足", meaning: "腳。在字的左邊變成「⻊」，跟腳的動作有關。", ex: ["路", "跑", "跳"] },
+  "干": { emoji: "🔱", say: "干", meaning: "「幸」「平」「年」的部首都是干。", ex: ["幸", "平", "年"] },
+  "辵": { alt: "⻌", pos: "左下", emoji: "🛤️", say: "綽", meaning: "走一走、停一停。在字的左下變成「⻌」，跟走路、移動有關。", ex: ["運", "這", "過", "還"] },
+  "耒": { emoji: "🌾", say: "壘", meaning: "犁田的工具。「耕」左邊是耒，耕田要用它。", ex: ["耕"] },
+  "夕": { emoji: "🌆", say: "夕", meaning: "傍晚的月亮。跟晚上有關，「夜」「多」「外」都是夕部。", ex: ["夜", "多", "外"] },
+  "日": { emoji: "☀️", say: "日", meaning: "太陽。跟太陽、時間有關，「晚」「明」「早」都是日部。", ex: ["晚", "明", "早", "星"] },
+  "匕": { emoji: "🥄", say: "比", meaning: "像一支湯匙。「北」右邊是匕，部首是匕。", ex: ["北"] },
 };
 function radicalCard(r, lessonChars) {
   const R = RADICAL_INFO[r] || { emoji: "🧩", meaning: `部首是「${r}」。`, ex: [] };
   const exs = [...new Set([...lessonChars.filter(c => c.radical === r).map(c => c.zh), ...(R.ex || [])])];
   setTimeout(() => speakZh(R.meaning), 300);
   return el("div", { class: "tc-char" },
-    el("div", { class: "rd-head" }, el("span", { class: "rd-emoji" }, R.emoji), el("span", { class: "rd-char", "data-nobopo": "1" }, r), R.alt ? el("span", { class: "rd-alt" }, t("寫在左邊："), el("b", { "data-nobopo": "1" }, R.alt)) : null),
+    el("div", { class: "rd-head" }, el("span", { class: "rd-emoji" }, R.emoji), el("span", { class: "rd-char", "data-nobopo": "1" }, r), R.alt ? el("span", { class: "rd-alt" }, t(`寫在${R.pos || "左邊"}：`), el("b", { "data-nobopo": "1" }, R.alt)) : null),
     el("div", { class: "tc-tip" }, t(`💡 ${R.meaning}`)),
     el("div", { class: "rd-ex" }, exs.map(ch => el("button", { class: "rd-ex__ch", onclick: () => speakZh(ch) }, rubyEl(ch, CHAR_BOPO[ch] || "", "span")))),
     el("div", { class: "tc-tip" }, t("👀 找部首：先看左邊，再看上面、下面；部首通常是字裡「有意思」的那一塊。")));
@@ -419,6 +433,7 @@ function imageMemEl(w, enNode) {
 // 聽 → 在紙上寫 → 看答案自己對 → 寫錯的最後再考一次（弟弟作業常忘了寫聲調，答案旁邊提醒）
 function quanciAnswerEl(q, l) {
   const known = new Set((l.chars || []).map(c => c.zh));
+  if (l.quanciZh) [...q.zh].forEach(ch => known.add(ch)); // 二年級聽寫：全部寫國字
   const bs = q.bopo.split(/\s+/);
   return el("div", { class: "qc-ans" }, [...q.zh].map((ch, i) => known.has(ch)
     ? el("span", { class: "qc-ch" }, rubyEl(ch, bs[i] || "", "span"))
