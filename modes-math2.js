@@ -224,6 +224,7 @@ const MATH2_TOPICS = {
   capCups:     { emoji: "🥤", name: "用杯子量", gen: genCapCups },
   capOverflow: { emoji: "💦", name: "誰裝得多", gen: genCapOverflow },
   capTF:       { emoji: "🤔", name: "對不對", gen: genCapTF },
+  twoStep:     { emoji: "👣", name: "兩步驟的加減", gen: genTwoStep },
 };
 
 // === 課本原題（第4單元 p.54-63，題目、數字、順序照課本）===
@@ -326,6 +327,81 @@ function pick3El(onDone) {
   return el("div", { class: "b2-pick3" }, el("div", { class: "b2-pick3__grid" }, cards), sumEl);
 }
 
+// === 第6單元 兩步驟的加減（習作 p.46-53，題目、數字、順序照習作；p.50 沒有照片）===
+// 習作要寫「先算：＿＿　再算：＿＿　答：＿＿」→ 這裡分四步：選先算的算式→算出來→選再算的算式→算出答案
+function twoStepQ({ page, text, unit, s1, s2, w1, w2, hint, bar, topic = "twoStep", src }) {
+  const eq = ([a, op, b]) => `${a} ${op} ${b}`;
+  const opt = (right, wrong) => shuffle([{ label: eq(right), ok: true }, ...wrong.map(l => ({ label: l, ok: false }))]);
+  return {
+    page, src, topic, multi: true, text, hint,
+    visual: bar ? (src ? () => barModel(bar[0], bar[1], unit) : barModel(bar[0], bar[1], unit)) : null,
+    calc: { op: s1[1] === "+" ? "add" : "sub", a: s1[0], b: s1[2] },
+    steps: [
+      { type: "choice", label: "① 先算：要用哪一個算式？", options: opt(s1, w1) },
+      { type: "num", label: `② 先算：${eq(s1)} = ?`, answer: s1[3] },
+      { type: "choice", label: "③ 再算：要用哪一個算式？", options: opt(s2, w2) },
+      { type: "num", label: `④ 再算：${eq(s2)} = ?`, answer: s2[3], unit },
+    ],
+  };
+}
+const TS_HINT = {
+  add3: "三樣東西合起來：先把兩樣加起來，再加上第三樣",
+  sub2: "先減掉第一次用掉的，再從剩下的減掉第二次的",
+  subAdd: "先減掉離開的（拿走的），再加上又進來的（又給的）",
+  more: "先算「比較多的那一個」有多少（加），再把兩個合起來",
+  less: "先算「比較少的那一個」有多少（減），再把兩個合起來",
+  chain: "一個一個比下去：先算中間那一個，再算最後問的那一個",
+};
+const wb = o => twoStepQ({ ...o, src: "習作" });
+const BOOK_WB6 = [
+  wb({ page: 46, text: "架上原有42枝鉛筆和56枝色鉛筆，再放上去34枝彩色筆後，架上合起來有幾枝筆？", unit: "枝", s1: [42, "+", 56, 98], s2: [98, "+", 34, 132], w1: ["56 − 42"], w2: ["98 − 34", "42 + 34"], hint: TS_HINT.add3,
+    bar: [[{ label: "鉛筆", val: 42 }, { label: "色鉛筆", val: 56 }, { label: "彩色筆", val: 34 }], { label: "合起來", val: null }] }),
+  wb({ page: 46, text: "瓶子裡原有50顆黃球，先放進去36顆紅球，再放進去40顆綠球，瓶子裡合起來有幾顆球？", unit: "顆", s1: [50, "+", 36, 86], s2: [86, "+", 40, 126], w1: ["50 − 36"], w2: ["86 − 40", "50 + 40"], hint: TS_HINT.add3,
+    bar: [[{ label: "黃球", val: 50 }, { label: "紅球", val: 36 }, { label: "綠球", val: 40 }], { label: "合起來", val: null }] }),
+  wb({ page: 47, text: "桶子裡有16枝百合花、32枝海芋和24枝雛菊，桶子裡合起來有幾枝花？", unit: "枝", s1: [16, "+", 32, 48], s2: [48, "+", 24, 72], w1: ["32 − 16"], w2: ["48 − 24", "16 + 24"], hint: TS_HINT.add3,
+    bar: [[{ label: "百合花", val: 16 }, { label: "海芋", val: 32 }, { label: "雛菊", val: 24 }], { label: "合起來", val: null }] }),
+  wb({ page: 47, text: "花店進貨25枝玫瑰花、28枝鬱金香和45枝向日葵，花店共進貨幾枝花？", unit: "枝", s1: [25, "+", 28, 53], s2: [53, "+", 45, 98], w1: ["28 − 25"], w2: ["53 − 45", "25 + 45"], hint: TS_HINT.add3,
+    bar: [[{ label: "玫瑰花", val: 25 }, { label: "鬱金香", val: 28 }, { label: "向日葵", val: 45 }], { label: "共", val: null }] }),
+  wb({ page: 48, text: "運動用品店裡有64枝桌球拍，上午賣出18枝，下午賣出35枝後，店裡還有幾枝桌球拍？", unit: "枝", s1: [64, "−", 18, 46], s2: [46, "−", 35, 11], w1: ["64 + 18", "35 − 18"], w2: ["46 + 35", "64 − 35"], hint: TS_HINT.sub2,
+    bar: [[{ label: "上午", val: 18 }, { label: "下午", val: 35 }, { label: "還有", val: null }], { label: "原有", val: 64 }] }),
+  wb({ page: 48, text: "阿貴買了24個羽球，先給弟弟8個，再給妹妹6個後，阿貴還有幾個羽球？", unit: "個", s1: [24, "−", 8, 16], s2: [16, "−", 6, 10], w1: ["24 + 8", "8 − 6"], w2: ["16 + 6", "24 − 6"], hint: TS_HINT.sub2,
+    bar: [[{ label: "弟弟", val: 8 }, { label: "妹妹", val: 6 }, { label: "還有", val: null }], { label: "買了", val: 24 }] }),
+  wb({ page: 49, text: "哥哥帶90元到運動用品店，買了35元的護腕和50元的毛巾後，還剩下幾元？", unit: "元", s1: [90, "−", 35, 55], s2: [55, "−", 50, 5], w1: ["90 + 35", "50 − 35"], w2: ["55 + 50", "90 − 50"], hint: TS_HINT.sub2,
+    bar: [[{ label: "護腕", val: 35 }, { label: "毛巾", val: 50 }, { label: "剩下", val: null }], { label: "帶", val: 90 }] }),
+  wb({ page: 49, text: "紅色、黃色和藍色的運動服共32件，紅色有12件，黃色有8件，藍色有幾件？", unit: "件", s1: [32, "−", 12, 20], s2: [20, "−", 8, 12], w1: ["32 + 12", "12 − 8"], w2: ["20 + 8", "32 − 8"], hint: "全部減掉紅色，再減掉黃色，剩下的就是藍色",
+    bar: [[{ label: "紅", val: 12 }, { label: "黃", val: 8 }, { label: "藍", val: null }], { label: "共", val: 32 }] }),
+  wb({ page: 51, text: "公園裡有78個人，28個人離開後，又進來13個人，公園裡現在有幾個人？", unit: "個", s1: [78, "−", 28, 50], s2: [50, "+", 13, 63], w1: ["78 + 28", "28 + 13"], w2: ["50 − 13", "78 + 13"], hint: TS_HINT.subAdd }),
+  wb({ page: 51, text: "品安有50元，買飲料花了38元後，媽媽再給她25元，品安現在有幾元？", unit: "元", s1: [50, "−", 38, 12], s2: [12, "+", 25, 37], w1: ["50 + 38", "38 + 25"], w2: ["25 − 12", "50 + 25"], hint: TS_HINT.subAdd }),
+  wb({ page: 52, text: "阿吉採收44個橘子，阿福比阿吉多採收26個，兩人共採收幾個橘子？", unit: "個", s1: [44, "+", 26, 70], s2: [70, "+", 44, 114], w1: ["44 − 26"], w2: ["70 − 44", "70 + 26"], hint: "阿福比阿吉「多」→先算阿福：44 + 26；「兩人共」→再把阿福和阿吉加起來" }),
+  wb({ page: 52, text: "阿閎種了33個西瓜，小君比阿閎少種12個，兩人共種了幾個西瓜？", unit: "個", s1: [33, "−", 12, 21], s2: [21, "+", 33, 54], w1: ["33 + 12"], w2: ["33 − 21", "21 + 12"], hint: "小君比阿閎「少」→先算小君：33 − 12；「兩人共」→再把小君和阿閎加起來" }),
+  wb({ page: 53, text: "農場裡有23隻羊，牛比羊多6隻，兔子比牛多3隻，兔子有幾隻？", unit: "隻", s1: [23, "+", 6, 29], s2: [29, "+", 3, 32], w1: ["23 − 6", "6 − 3"], w2: ["29 − 3", "23 + 3"], hint: "兔子是跟「牛」比，所以先算牛：23 + 6，再算兔子：牛 + 3" }),
+  wb({ page: 53, text: "1瓶鮮奶是94元，1瓶草莓牛奶比鮮奶少39元，1瓶蘋果牛奶比草莓牛奶少18元，1瓶蘋果牛奶是幾元？", unit: "元", s1: [94, "−", 39, 55], s2: [55, "−", 18, 37], w1: ["94 + 39", "39 − 18"], w2: ["55 + 18", "94 − 18"], hint: "蘋果牛奶是跟「草莓牛奶」比，所以先算草莓牛奶：94 − 39，再減 18" }),
+];
+
+// 練習題：照習作的六種題型換數字
+const TS_TEMPLATES = [
+  () => { const A = r2(12, 48), B = r2(12, 48), C = r2(10, 40); return { kind: "add3", text: `書架上原有${A}本故事書和${B}本圖畫書，再放上去${C}本漫畫書後，書架上合起來有幾本書？`, unit: "本", s1: [A, "+", B], s2: ["S", "+", C], w1: [`${Math.max(A, B)} − ${Math.min(A, B)}`], w2: ["S − " + C, `${A} + ${C}`], bar: [[{ label: "故事書", val: A }, { label: "圖畫書", val: B }, { label: "漫畫書", val: C }], { label: "合起來", val: null }] }; },
+  () => { const A = r2(10, 30), B = r2(10, 30), T = A + B + r2(5, 35); return { kind: "sub2", text: `文具店有${T}枝鉛筆，上午賣出${A}枝，下午賣出${B}枝後，還有幾枝鉛筆？`, unit: "枝", s1: [T, "−", A], s2: ["S", "−", B], w1: [`${T} + ${A}`, `${Math.max(A, B)} − ${Math.min(A, B)}`], w2: ["S + " + B, `${T} − ${B}`], bar: [[{ label: "上午", val: A }, { label: "下午", val: B }, { label: "還有", val: null }], { label: "原有", val: T }] }; },
+  () => { const n = pick2(MATH2_NAMES), A = r2(15, 35), B = r2(10, 30), T = A + B + r2(5, 30); return { kind: "sub2", text: `${n}帶${T}元去書店，買了${A}元的筆和${B}元的尺後，還剩下幾元？`, unit: "元", s1: [T, "−", A], s2: ["S", "−", B], w1: [`${T} + ${A}`, `${Math.max(A, B)} − ${Math.min(A, B)}`], w2: ["S + " + B, `${T} − ${B}`], bar: [[{ label: "筆", val: A }, { label: "尺", val: B }, { label: "剩下", val: null }], { label: "帶", val: T }] }; },
+  () => { const T = r2(40, 90), A = r2(10, T - 10), B = r2(8, 35); return { kind: "subAdd", text: `公車上有${T}個人，到站有${A}個人下車後，又上來${B}個人，公車上現在有幾個人？`, unit: "個", s1: [T, "−", A], s2: ["S", "+", B], w1: [`${T} + ${A}`, `${A} + ${B}`], w2: ["S − " + B, `${T} + ${B}`] }; },
+  () => { const n = pick2(MATH2_NAMES), T = r2(30, 80), A = r2(12, T - 5), B = r2(10, 40); return { kind: "subAdd", text: `${n}有${T}元，買點心花了${A}元後，爸爸再給${n}${B}元，${n}現在有幾元？`, unit: "元", s1: [T, "−", A], s2: ["S", "+", B], w1: [`${T} + ${A}`, `${A} + ${B}`], w2: ["S − " + B, `${T} + ${B}`] }; },
+  () => { const [n1, n2] = shuffle(MATH2_NAMES.slice()).slice(0, 2), A = r2(15, 50), B = r2(6, 30); return { kind: "more", text: `${n1}有${A}張貼紙，${n2}比${n1}多${B}張，兩人共有幾張貼紙？`, unit: "張", s1: [A, "+", B], s2: ["S", "+", A], w1: [`${A} − ${B}`], w2: ["S − " + A, `S + ${B}`] }; },
+  () => { const [n1, n2] = shuffle(MATH2_NAMES.slice()).slice(0, 2), A = r2(25, 60), B = r2(5, 20); return { kind: "less", text: `${n1}摺了${A}隻紙鶴，${n2}比${n1}少摺${B}隻，兩人共摺了幾隻紙鶴？`, unit: "隻", s1: [A, "−", B], s2: ["S", "+", A], w1: [`${A} + ${B}`], w2: ["S − " + A, `S + ${B}`] }; },
+  () => { const A = r2(15, 45), B = r2(4, 15), C = r2(3, 12); return { kind: "chain", text: `池塘裡有${A}隻青蛙，烏龜比青蛙多${B}隻，鴨子比烏龜多${C}隻，鴨子有幾隻？`, unit: "隻", s1: [A, "+", B], s2: ["S", "+", C], w1: [`${A} − ${B}`, `${Math.max(B, C)} − ${Math.min(B, C)}`], w2: ["S − " + C, `${A} + ${C}`] }; },
+  () => { const A = r2(60, 95), B = r2(12, 30), C = r2(8, 20); return { kind: "chain", text: `一本故事書是${A}元，一本圖畫書比故事書便宜${B}元，一本筆記本比圖畫書便宜${C}元，一本筆記本是幾元？`, unit: "元", s1: [A, "−", B], s2: ["S", "−", C], w1: [`${A} + ${B}`, `${B} − ${C}`], w2: ["S + " + C, `${A} − ${C}`] }; },
+];
+function genTwoStep() {
+  const w = pick2(TS_TEMPLATES)();
+  const calc = ([a, op, b]) => op === "+" ? a + b : a - b;
+  const s1 = [...w.s1, calc(w.s1)], mid = s1[3];
+  const s2raw = w.s2.map(x => x === "S" ? mid : x), s2 = [...s2raw, calc(s2raw)];
+  const fix = l => l.replace(/^S /, `${mid} `).replace(/ S$/, ` ${mid}`).replace(/^S$/, String(mid));
+  // 干擾選項不能剛好等於正確算式
+  const right1 = `${s1[0]} ${s1[1]} ${s1[2]}`, right2 = `${s2[0]} ${s2[1]} ${s2[2]}`;
+  const w1 = [...new Set(w.w1.map(fix))].filter(l => l !== right1), w2 = [...new Set(w.w2.map(fix))].filter(l => l !== right2);
+  return twoStepQ({ text: w.text, unit: w.unit, s1, s2, w1, w2, hint: TS_HINT[w.kind], bar: w.bar });
+}
+
 // 這一題用到的加減算式（給 🧱 積木圖解用）：題目自己帶 calc，沒有就從步驟的算式找
 function calcOf(q) {
   if (q.calc) return q.calc;
@@ -344,9 +420,15 @@ function mountMath2Q(q, container, onDone, onWrong, exam = false) {
   const feedback = el("div", { class: "quiz-feedback" });
   const stepWrap = el("div", { class: "b2-step" });
   const calc = calcOf(q);
-  const helpBtn = calc && !exam ? el("button", { class: "btn btn--ghost btn--full b2-help", onclick: () => openBlocksTeach(calc) }, t("🧱 不會算？用積木一步一步看")) : null;
+  // 兩步驟的題目：積木看「現在這一步」的算式
+  const stepCalc = () => {
+    const s = q.steps[step]; if (!s || !q.multi) return null;
+    const m = (s.type === "choice" ? (s.options.find(o => o.ok)?.label || "") : (s.label || "")).match(/(\d+)\s*([+−])\s*(\d+)/);
+    return m ? { op: m[2] === "+" ? "add" : "sub", a: +m[1], b: +m[3] } : null;
+  };
+  const helpBtn = calc && !exam ? el("button", { class: "btn btn--ghost btn--full b2-help", onclick: () => openBlocksTeach(stepCalc() || calc) }, t("🧱 不會算？用積木一步一步看")) : null;
   const card = el("div", { class: "m-card b2-card-q" },
-    q.page ? el("div", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
+    q.page ? el("div", { class: "m-no" }, t(`${q.src || "課本"}第${q.page}頁`)) : null,
     el("div", { class: "b2-text" }, t(q.text)),
     el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.text), "aria-label": "念題目" }, "🔊"),
     q.visual || null);
@@ -405,7 +487,7 @@ function renderMath2Run(u, title, backHash, againHash, questions) {
     if (i >= questions.length) {
       const extra = wrongTopics.size ? el("div", { class: "zh-missed" }, el("div", { class: "zh-missed__title" }, t("要再練的：")),
         [...wrongTopics].map(tp => el("button", { class: "zh-chip", onclick: () => navigate(`#/mathplay/${tp}?u=${u.id}`) }, MATH2_TOPICS[tp].emoji, t(MATH2_TOPICS[tp].name))))
-        : wrongPages.length ? el("div", { class: "zh-missed" }, el("div", { class: "zh-missed__title" }, t("第一次沒答對的：")), wrongPages.map(p => el("span", { class: "zh-chip" }, t(`課本第${p}頁`)))) : null;
+        : wrongPages.length ? el("div", { class: "zh-missed" }, el("div", { class: "zh-missed__title" }, t("第一次沒答對的：")), wrongPages.map(p => el("span", { class: "zh-chip" }, t(`${u.bookName || "課本"}第${p}頁`)))) : null;
       app.replaceChildren(renderResultBlock(`答對 ${score} / ${questions.length}`, score === questions.length ? "🌟" : score >= questions.length * 0.7 ? "🎉" : "💪", "再來一次", () => navigate(againHash), extra));
       return;
     }
@@ -429,8 +511,8 @@ function renderMath2Unit(u) {
   app.appendChild(questEntryBtn("math", u.id));
   const top = el("section", { class: "section" });
   if (u.book) top.append(
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 課本原題（第${u.pages}頁）`)),
-    el("div", { class: "progress-note", style: "text-align: center;" }, t("課本上的題目、數字和順序")));
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 ${u.bookName || "課本"}原題（第${u.pages}頁）`)),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(`${u.bookName || "課本"}上的題目、數字和順序`)));
   top.append(
     el("button", { class: "btn btn--full btn--xl", style: u.book ? "margin-top: 10px;" : "", onclick: () => navigate(`#/mathplay/exam?u=${u.id}`) }, t("📝 模擬小考（20題・寫完才看分數）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(mockKey(u)))),
@@ -473,7 +555,7 @@ function renderMath2Exam(u) {
     progressLabel.textContent = `第${i + 1}/${makers.length}題`;
     const box = el("div", {});
     const backBtn = idx > 0 ? el("button", { class: "btn btn--ghost btn--full ex-back", onclick: () => { i = idx - 1; ask(); window.scrollTo(0, 0); } }, t("◀ 回上一題重新作答")) : null;
-    body.replaceChildren(el("div", { class: "bp-sec" }, t(q.sec === "一" && book.length ? "第一大題・課本原題" : `第${q.sec}大題・練習題`)), box,
+    body.replaceChildren(el("div", { class: "bp-sec" }, t(q.sec === "一" && book.length ? `第一大題・${u.bookName || "課本"}原題` : `第${q.sec}大題・練習題`)), box,
       el("div", { class: "bp-next__hint" }, t("想好再作答，答完自動換下一題")), backBtn || "");
     mountMath2Q(q, box, missed => { results[idx] = { q, ok: !missed }; far = Math.max(far, idx + 1); i = far; setTimeout(() => { ask(); window.scrollTo(0, 0); }, 250); }, null, true);
   };
@@ -488,7 +570,7 @@ function renderMath2Exam(u) {
       el("div", { class: "ws-result__big" }, `${score} 分`),
       mockResult(u, score, gate.secs(), rows),
       wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`錯了${wrong.length}題，看看怎麼想：`)),
-        wrong.map(({ q }) => el("div", { class: "bp-missed__row" }, q.page ? el("span", { class: "m-no" }, t(`課本第${q.page}頁`)) : null,
+        wrong.map(({ q }) => el("div", { class: "bp-missed__row" }, q.page ? el("span", { class: "m-no" }, t(`${q.src || "課本"}第${q.page}頁`)) : null,
           el("div", { class: "bp-missed__q" }, t(q.text)),
           el("div", { class: "bp-missed__tip" }, t(`💡 ${q.hint || "把題目再念一次，想想是合起來還是拿走，再算一次"}`)),
           calcOf(q) ? el("button", { class: "btn btn--ghost", onclick: () => openBlocksTeach(calcOf(q)) }, t("🧱 用積木看怎麼算")) : null))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
@@ -503,7 +585,7 @@ function renderMath2Exam(u) {
 
 function renderMath2Play(topic, u) {
   if (topic === "exam") return renderMath2Exam(u);
-  if (topic === "book" && u.book) return renderMath2Run(u, "📗 課本原題", `#/math/${u.id}`, `#/mathplay/book?u=${u.id}`, u.book.map(b => () => ({ ...b, visual: b.visual ? b.visual() : null })));
+  if (topic === "book" && u.book) return renderMath2Run(u, `📗 ${u.bookName || "課本"}原題`, `#/math/${u.id}`, `#/mathplay/book?u=${u.id}`, u.book.map(b => () => ({ ...b, visual: b.visual ? b.visual() : null })));
   if (topic === "mix") return renderMath2Run(u, "📝 小考", `#/math/${u.id}`, `#/mathplay/mix?u=${u.id}`, Array.from({ length: 12 }, (_, k) => () => MATH2_TOPICS[u.topics[k % u.topics.length]].gen()));
   const tp = MATH2_TOPICS[topic];
   if (!tp) return renderEmpty(`#/math/${u.id}`, "找不到這種題型");
@@ -511,4 +593,4 @@ function renderMath2Play(topic, u) {
 }
 
 // 課本原題接到單元上（data-math.js 比這個檔先載入）
-(MATH_DATA.g2?.units || []).forEach(u => { if (u.bookId === "u4") u.book = BOOK_U4; if (u.bookId === "u5") u.book = BOOK_U5; });
+(MATH_DATA.g2?.units || []).forEach(u => { if (u.bookId === "u4") u.book = BOOK_U4; if (u.bookId === "u5") u.book = BOOK_U5; if (u.bookId === "wb6") u.book = BOOK_WB6; });

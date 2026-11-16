@@ -467,3 +467,65 @@ function renderQuanci(id) {
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: show }, t("開始聽寫 ▶"))));
   return root;
 }
+
+// === 🎩 英文名言背誦（二年級 11/16 作業：review Dr. Seuss rhyming quote）===
+// 先看整段＋聽→押韻和句型怎麼記→填空小檢查→下一句是哪一句；學完記 teachDone["en:quote-<id>"]
+const EN_QUOTES = {
+  seuss: {
+    title: "Dr. Seuss 名言", from: "I Can Read with My Eyes Shut! by Dr. Seuss", grade: "g2", until: "2026-12-31",
+    lines: [
+      { en: "The more that you READ,", zh: "你讀得越多，", key: "READ", keyZh: "讀" },
+      { en: "the more things you will KNOW.", zh: "你知道的事情就越多。", key: "KNOW", keyZh: "知道" },
+      { en: "The more that you LEARN,", zh: "你學得越多，", key: "LEARN", keyZh: "學" },
+      { en: "the more places you'll GO.", zh: "你能去的地方就越多。", key: "GO", keyZh: "去" },
+    ],
+  },
+};
+function quoteLineEl(l, hideKey) {
+  const parts = l.en.split(l.key);
+  return el("div", { class: "qt-line" },
+    el("div", { class: "qt-line__en" }, parts[0], hideKey ? el("span", { class: "qt-blank" }, "____") : el("b", { class: "qt-key" }, l.key), parts[1]),
+    el("div", { class: "qt-line__zh" }, t(l.zh)),
+    hideKey ? null : el("button", { class: "icon-btn icon-btn--accent", onclick: () => speak(l.en), "aria-label": "念這一句" }, "🔊"));
+}
+function renderQuote(id) {
+  const Q = EN_QUOTES[id];
+  if (!Q) return renderEmpty("#/", "找不到這段名言");
+  const all = Q.lines.map(l => l.en).join(" ");
+  const steps = [
+    { kind: "learn", tag: "🎩 先聽、跟著念", body: () => el("div", { class: "qt" },
+      el("div", { class: "qt-title" }, "🎩 ", t(Q.title)),
+      Q.lines.map(l => quoteLineEl(l)),
+      el("button", { class: "btn btn--full", onclick: () => speak(all) }, t("🔊 整段念一次")),
+      el("div", { class: "qt-from" }, Q.from),
+      el("div", { class: "tc-tip" }, t("跟著念三次：第一次看著念，第二次念大聲，第三次蓋住英文試試看。"))) },
+    { kind: "learn", tag: "🧠 怎麼記", body: () => el("div", { class: "qt" },
+      el("div", { class: "qt-memo" }, el("div", { class: "qt-memo__title" }, t("① 一樣的句型念兩次")),
+        el("div", { class: "qt-memo__en" }, "The more that you ___, the more ___."), el("div", { class: "qt-line__zh" }, t("越…，就越…"))),
+      el("div", { class: "qt-memo" }, el("div", { class: "qt-memo__title" }, t("② 四個大寫的字照順序：讀→知道→學→去")),
+        el("div", { class: "qt-keys" }, Q.lines.map(l => el("span", { class: "qt-keychip" }, l.key, el("small", {}, t(l.keyZh)))))),
+      el("div", { class: "qt-memo" }, el("div", { class: "qt-memo__title" }, t("③ 押韻：KNOW 和 GO 最後的聲音一樣（-o）")),
+        el("button", { class: "btn btn--ghost", onclick: () => speak("know, go. know, go.") }, t("🔊 KNOW・GO"))),
+      el("div", { class: "tc-tip" }, t("邊念邊做動作：READ 打開書、KNOW 指頭、LEARN 舉手、GO 原地踏步。"))) },
+    ...shuffle(Q.lines.slice()).map(l => ({ kind: "chk", prompt: el("div", { class: "qt-chk" }, quoteLineEl(l, true)),
+      options: shuffle(Q.lines.map(x => ({ label: x.key, ok: x.key === l.key }))), optClass: "tc-opts--four",
+      teach: () => el("div", { class: "qt" }, Q.lines.map(x => quoteLineEl(x))) })),
+    ...Q.lines.slice(0, -1).map((l, k) => ({ kind: "chk", prompt: el("div", { class: "qt-chk" }, el("div", { class: "tc-tip" }, t("下一句是哪一句？")), el("div", { class: "qt-line__en" }, l.en)),
+      options: shuffle(Q.lines.slice(1).map(x => ({ label: x.en, ok: x === Q.lines[k + 1] }))), optClass: "tc-opts--wide",
+      teach: () => el("div", { class: "qt" }, Q.lines.map(x => quoteLineEl(x))) })),
+  ];
+  return teachRunner(`🎩 ${Q.title}`, "#/", steps, app => {
+    teachMark("en", `quote-${id}`);
+    teachEnd(app, "背好了！明天再念一次會記更久 🌟", [teachBtn("🔁 再念一次", `#/quote/${id}`, true), teachBtn("🏠 回首頁", "#/")]);
+  });
+}
+// 首頁英文：還在作業期間的名言卡
+function quoteHomeCards() {
+  const today = dayISO();
+  return Object.entries(EN_QUOTES).filter(([, Q]) => Q.grade === CURRENT_GRADE && today <= Q.until).map(([id, Q]) =>
+    el("button", { class: "hero__sentence hero__sentence--go qt-home", onclick: () => navigate(`#/quote/${id}`) },
+      el("span", { class: "hero__sentence-icon" }, "🎩"),
+      el("div", { class: "hero__sentence-body" }, el("div", { class: "hero__sentence-tag" }, t(`${Q.title}・老師要背${teachDoneDay("en", `quote-${id}`) === today ? "（今天背過了✓）" : "・點這裡練習"}`)),
+        el("div", { class: "hero__sentence-en" }, `${Q.lines[0].en} ${Q.lines[1].en}`)),
+      el("span", { class: "hero__sentence-go" }, "›")));
+}

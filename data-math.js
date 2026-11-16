@@ -53,6 +53,12 @@ const MATH_DATA = {
         note: "題目照課本 p.70-78 容量的題型出（倒水比高低、用杯子量、裝得下裝不下、對不對）",
         topics: ["capPour", "capCups", "capOverflow", "capTF"],
       },
+      {
+        id: "u6", kind: "calc", bookId: "wb6", bookName: "習作", pages: "46-53",
+        title: "第6單元 兩步驟的加減", titleBopo: "ㄉㄧˋ ㄌㄧㄡˋ ㄉㄢ ㄩㄢˊ ㄌㄧㄤˇ ㄅㄨˋ ㄗㄡˋ ㄉㄜ˙ ㄐㄧㄚ ㄐㄧㄢˇ", emoji: "👣",
+        note: "習作 p.46-53 原題（p.50 沒有照片）：先算、再算，再寫答",
+        topics: ["twoStep", "word", "vert"],
+      },
     ],
   },
 };
