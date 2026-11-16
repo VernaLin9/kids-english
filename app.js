@@ -926,6 +926,7 @@ function renderHome() {
         el("div", { class: "hero__sentence-en" }, cs.en), rubyEl(cs.zh, cs.bopo, "div", { class: "hero__sentence-zh" })),
       el("span", { class: "hero__sentence-go" }, "›")));
   }
+  if (typeof quoteHomeCards === "function") hero.append(...quoteHomeCards()); // 🎩 老師要背的英文名言
   app.appendChild(hero);
 
   // 下次考試：一鍵練整個考試範圍
