@@ -9,13 +9,12 @@ const ZH_DATA = {
     exams: [
       { date: "2026-11-10", subject: "注音", label: "注音符號總結性評量", hash: "#/midterm", go: "去複習 ›" },
       { date: "2026-11-16", subject: "注音", label: "注音符號闖關活動", hash: "#/bopo", go: "去練習 ›" },
-      { date: "2026-11-19", subject: "國語", label: "第一課 圈詞", hash: "#/quanci?l=C1", go: "圈詞聽寫 ›" },
     ],
     lessons: [
       {
         // 第一冊 第一課（11/13 老師通知：11/16 考生字、部首、筆劃數，11/19 考圈詞）
         // 生字、部首、總筆畫照生字簿 p.10-11（家長拍照）；詞語照課本 p.10-11 下面的詞語＋語詞修訂單（也好→也罷）
-        id: "C1", kind: "chars", exam: { date: "2026-11-16", label: "第一課 生字、部首、筆劃數", mode: "exam" },
+        id: "C1", kind: "chars", exam: { date: "2026-11-19", label: "第一課聽寫（國字、部首、筆畫、語詞）", mode: "lesson", hash: "#/dictation?l=C1" }, // 11/16 考過生字、部首、筆劃數；11/18 聯絡簿：考國L1聽寫
         title: "國語第一課", titleBopo: "ㄍㄨㄛˊ ㄩˇ ㄉㄧˋ ㄧ ㄎㄜˋ", emoji: "👏",
         chars: [
           { zh: "拍", bopo: "ㄆㄞ", radical: "手", extra: 5, strokes: 8, word: "拍手", wordBopo: "ㄆㄞ ㄕㄡˇ", confuse: "怕伯泊" },
