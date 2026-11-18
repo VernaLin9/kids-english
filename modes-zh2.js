@@ -27,7 +27,8 @@ function renderZhCharLesson(l) {
     el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/teach/zh?l=${l.id}`) }, t("📖 學一學")),
     typeof STROKES !== "undefined" && l.chars.some(c => STROKES[c.zh]) ? el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/strokes?l=${l.id}`) }, t("✍️ 筆順練習")) : null,
     el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/radicals?l=${l.id}`) }, t("🧩 部首怎麼記")),
-    l.quanci?.length ? el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/quanci?l=${l.id}`) }, t("📝 圈詞聽寫")) : null));
+    l.quanci?.length ? el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/quanci?l=${l.id}`) }, t("📝 圈詞聽寫")) : null,
+    el("button", { class: "btn btn--xl home-learn__teach", onclick: () => navigate(`#/dictation?l=${l.id}`) }, t("📝 紙上聽寫（國字・部首・筆畫・語詞）"))));
   app.appendChild(el("section", { class: "section" },
     el("div", { class: "section__title" }, t("✏️ 選一種練習")),
     el("div", { class: "mode-grid" }, ZH2_MODES.map(([m, emoji, label]) =>

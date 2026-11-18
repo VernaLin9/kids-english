@@ -336,7 +336,7 @@ function renderStrokes(id) {
 // === 🧩 部首怎麼記（家長：一年級會考部首，要有記部首的方法）===
 // 記法：①部首是字的「家」，有意思（扌＝手、亻＝人、口＝嘴巴）②常在左邊或上面、下面 ③同一個部首的字放一起記（部首分家）
 const RADICAL_INFO = {
-  "手": { alt: "扌", emoji: "✋", say: "手", meaning: "手。在字的左邊會變成「扌」，叫做提手旁。有扌的字常常是用手做的動作。", ex: ["拍", "打", "拉"] },
+  "手": { alt: "扌", emoji: "✋", say: "手", meaning: "手。在字的左邊會變成「扌」，叫做提手旁。有扌的字常常是用手做的動作，像習作上的提、捉、找、拔、抱、挖。「拿」的手在下面，部首也是手。", ex: ["拍", "打", "拉", "提", "捉", "找", "拔", "抱", "挖", "拿"] },
   "人": { alt: "亻", emoji: "🧍", say: "人", meaning: "人。在字的左邊會變成「亻」，叫做單人旁。有亻的字常常跟人有關。", ex: ["你", "他", "們", "休"] },
   "口": { emoji: "👄", say: "口", meaning: "嘴巴。口可以在字的左邊、下面或裡面。", ex: ["右", "吃", "叫", "和"] },
   "工": { emoji: "🔨", say: "工", meaning: "做工的工具。「左」下面是工，所以部首是工。", ex: ["左", "巧"] },
@@ -543,4 +543,84 @@ function quoteHomeCards() {
       el("div", { class: "hero__sentence-body" }, el("div", { class: "hero__sentence-tag" }, t(`${Q.title}・老師要背${teachDoneDay("en", `quote-${id}`) === today ? "（今天背過了✓）" : "・點這裡練習"}`)),
         el("div", { class: "hero__sentence-en" }, `${Q.lines[0].en} ${Q.lines[1].en}`)),
       el("span", { class: "hero__sentence-go" }, "›")));
+}
+
+// === 📝 生字聽寫（一年級國語 L1：11/19 考聽寫＝國字、部首、筆畫、語詞）===
+// 跟學校一樣用紙筆：聽「拍，拍手的拍」→ 紙上寫國字、部首、總筆畫 → 看答案，三樣各自點對錯；再聽語詞（圈詞）寫下來。
+// 一樣算一分、換成 100 分記在 mockExams["dict:<課>"]；寫錯的列出來，最後可以再練一次
+function renderDictation(id) {
+  const l = zhLesson(id);
+  if (!l?.chars?.length) return renderEmpty("#/", "這一課還沒有生字");
+  const root = el("div", {});
+  const header = renderHeader(`📝 聽寫・${l.title}`, { back: `#/zh/${l.id}` });
+  root.appendChild(header);
+  const progress = $(".header__progress", header);
+  const app = el("main", { class: "app tc" });
+  root.appendChild(app);
+  const key = `dict:${l.id}`, t0 = Date.now();
+  const items = [
+    ...shuffle(l.chars.slice()).map(c => ({ kind: "char", c, say: `${c.zh}，${c.word}的${c.zh}`, parts: ["國字", "部首", "筆畫"] })),
+    ...shuffle((l.quanci || []).slice()).map(q => ({ kind: "word", q, say: q.zh, parts: ["語詞"] })),
+  ];
+  const total = items.reduce((s, x) => s + x.parts.length, 0);
+  let i = 0, got = 0; const wrong = [];
+  const answerEl = it => it.kind === "char"
+    ? el("div", { class: "dc-ans" },
+        el("div", { class: "dc-ans__cell" }, el("div", { class: "dc-ans__k" }, t("國字")), el("div", { class: "dc-ans__v tc-bigchar" }, rubyEl(it.c.zh, it.c.bopo, "span"))),
+        el("div", { class: "dc-ans__cell" }, el("div", { class: "dc-ans__k" }, t("部首")), el("div", { class: "dc-ans__v", "data-nobopo": "1" }, it.c.radical + (RADICAL_INFO[it.c.radical]?.alt ? `（${RADICAL_INFO[it.c.radical].alt}）` : ""))),
+        el("div", { class: "dc-ans__cell" }, el("div", { class: "dc-ans__k" }, t("筆畫")), el("div", { class: "dc-ans__v" }, `${it.c.strokes}`, t("畫"))))
+    : el("div", { class: "dc-ans" }, quanciAnswerEl(it.q, l));
+  const show = () => {
+    if (i >= items.length) return finish();
+    const it = items[i];
+    progress.textContent = `${i + 1}/${items.length}`;
+    const say = () => speakZh(it.say);
+    setTimeout(say, 300);
+    const marks = it.parts.map(() => true);
+    const box = el("div", {});
+    const reveal = el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
+      reveal.remove();
+      const chips = it.parts.map((p, k) => {
+        const b = el("button", { class: "dc-chip dc-chip--ok" }, t(`⭕ ${p}`));
+        b.addEventListener("click", () => { marks[k] = !marks[k]; b.className = `dc-chip ${marks[k] ? "dc-chip--ok" : "dc-chip--bad"}`; b.replaceChildren(t(`${marks[k] ? "⭕" : "❌"} ${p}`)); });
+        return b;
+      });
+      box.replaceChildren(el("div", { class: "tc-tag tc-tag--chk" }, t("✅ 答案")), answerEl(it),
+        el("div", { class: "tc-tip" }, t(it.kind === "char" ? "對一對：國字、部首、筆畫數，寫錯的那一樣點一下變成❌" : "對一對：國字有沒有寫對？注音的聲調有沒有寫？寫錯就點一下變成❌")),
+        el("div", { class: "dc-chips" }, chips),
+        el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => {
+          const n = marks.filter(Boolean).length; got += n;
+          if (n < marks.length) wrong.push({ it, bad: it.parts.filter((p, k) => !marks[k]) });
+          recordZh(it.kind === "char" ? it.c.zh : `圈詞:${it.q.zh}`, n === marks.length);
+          if (n === marks.length) dingCorrect();
+          i++; show(); window.scrollTo(0, 0);
+        } }, t(i === items.length - 1 ? "✅ 算分數" : "下一題 ▶")));
+    } }, t("寫好了，看答案"));
+    app.replaceChildren(el("div", { class: "tc-card" },
+      el("div", { class: "bp-sec" }, t(it.kind === "char" ? "第一大題・寫國字、部首、筆畫" : "第二大題・寫語詞")),
+      el("div", { class: "tc-tag" }, t("👂 聽一聽，寫在紙上")),
+      el("button", { class: "qc-say", onclick: say }, el("span", { class: "qc-say__icon" }, "🔊"), t("再聽一次")),
+      el("div", { class: "tc-tip" }, t(it.kind === "char" ? "紙上寫三樣：①國字 ②部首 ③總共幾畫" : "學過的字寫國字，還沒學的字寫注音")),
+      reveal, box));
+  };
+  const finish = () => {
+    const score = Math.round(got * 100 / total), secs = Math.round((Date.now() - t0) / 1000);
+    mockSave(key, { at: Date.now(), score, secs, parts: [got, total] });
+    if (score === 100) { dingCorrect(); confetti?.(); }
+    app.replaceChildren(el("div", { class: "tc-card" },
+      el("div", { class: "ws-result__big" }, `${score} 分`),
+      el("div", { class: "tc-tip" }, t(`寫對${got}樣，共${total}樣・${mockSummary(key)}`)),
+      wrong.length ? el("div", { class: "bp-missed" }, el("div", { class: "zh-missed__title" }, t(`❌ 錯在這裡（${wrong.length}題）`)),
+        wrong.map(({ it, bad }) => el("div", { class: "bp-missed__row" }, answerEl(it), el("div", { class: "bp-missed__tip" }, t(`寫錯：${bad.join("、")}${it.kind === "char" ? `。${(typeof ZH2_MNEMONIC !== "undefined" && ZH2_MNEMONIC[it.c.zh]) || ""}` : ""}`))))) : el("div", { class: "ws-result__msg" }, t("全對！太厲害了 🌟")),
+      el("div", { class: "tc-end__btns" },
+        wrong.some(w => w.it.kind === "char") ? teachBtn("✍️ 錯的字看筆順、再寫", `#/strokes?l=${l.id}`, true) : null,
+        teachBtn("🔁 再考一次", `#/dictation?l=${l.id}&r=${Date.now()}`, !wrong.length),
+        teachBtn("🧩 部首怎麼記", `#/radicals?l=${l.id}`), teachBtn("🏠 回首頁", "#/"))));
+  };
+  app.appendChild(el("div", { class: "tc-card" },
+    el("div", { class: "tc-end__icon" }, "📝"), el("div", { class: "tc-end__msg" }, t(`聽寫：${l.chars.length}個生字＋${(l.quanci || []).length}個語詞`)),
+    el("div", { class: "tc-tip" }, t("跟考試一樣：準備紙和筆。先聽生字，寫國字、部首、總共幾畫；再聽語詞寫下來。寫完看答案自己對，最後算分數。")),
+    el("div", { class: "tc-tip" }, t(mockSummary(key))),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: show }, t("開始聽寫 ▶"))));
+  return root;
 }

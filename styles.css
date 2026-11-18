@@ -3086,3 +3086,13 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .tc-opts--wide .tc-opt { font-size: calc(18px * var(--font-scale)); text-align: left; padding: 12px 14px; }
 .qt-home { margin-top: 10px; }
 .tc-opts--four { grid-template-columns: 1fr 1fr; } .tc-opts--four .tc-opt { min-height: 64px; font-size: 22px; font-weight: 900; }
+
+/* 📝 生字聽寫 #/dictation */
+.dc-ans { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; }
+.dc-ans__cell { flex: 1 1 90px; max-width: 160px; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 8px; text-align: center; }
+.dc-ans__k { font-size: 14px; color: var(--muted, #6b6258); font-weight: 700; }
+.dc-ans__v { font-size: 34px; font-weight: 900; line-height: 1.3; }
+.dc-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.dc-chip { min-height: 52px; min-width: 96px; padding: 8px 14px; border-radius: 14px; border: 3px solid var(--line); background: #fff; font-weight: 900; font-size: 18px; }
+.dc-chip--ok { border-color: var(--success); background: #eaf6f0; }
+.dc-chip--bad { border-color: var(--danger); background: #fde8e8; }
