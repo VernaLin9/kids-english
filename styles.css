@@ -3111,3 +3111,42 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fs-calc__q { gap: 4px; padding: 6px 8px; }
 .fs-calc__e { font-size: 21px; }
 .fs-calc .fs-blank { min-width: 48px; }
+
+/* ✖️ 九九乘法表 #/times */
+.tt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 10px 0; }
+.tt-card { background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.tt-card--pass { border-color: var(--success); background: #f1faf5; }
+.tt-card__n { font-size: 20px; font-weight: 900; }
+.tt-card__sub { font-size: 14px; color: var(--muted, #6b6258); }
+.tt-card__btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tt-card__btns .btn { min-height: 44px; padding: 4px; font-size: 15px; }
+.tt-table { display: flex; flex-direction: column; gap: 6px; width: 100%; margin: 8px 0; }
+.tt-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; min-height: 52px; padding: 6px 12px; background: #fff; border: 2px solid var(--line); border-radius: 14px; text-align: left; font-size: 20px; font-weight: 800; }
+.tt-row--now { border-color: var(--accent); background: #fdeaf1; }
+.tt-row__eq { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tt-row__say { display: inline-flex; gap: 2px; }
+.tt-row__tail--hide:not(.tt-peek), .tt-row__ans--hide:not(.tt-peek) { visibility: hidden; }
+.tt-row__tail--hide:not(.tt-peek) { position: relative; }
+.tt-pic { margin: 10px 0; }
+.tt-dots { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.tt-dots__box { display: grid; grid-template-columns: repeat(3, 12px); gap: 3px; padding: 5px; border: 2px dashed #b9b0a3; border-radius: 10px; background: #fff; }
+.tt-dots__dot { width: 12px; height: 12px; border-radius: 50%; background: var(--primary); }
+.tt-dots__cap { width: 100%; text-align: center; font-weight: 800; margin-top: 4px; }
+.tt-tip { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; margin: 6px 0; background: #fffbe8; border-radius: 12px; }
+.tt-next { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.tt-rrow { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 12px; background: #fff; border: 1px solid var(--line); border-radius: 12px; font-size: 20px; font-weight: 800; flex-wrap: wrap; }
+.tt-rrow__no { color: var(--muted, #6b6258); min-width: 1.6em; }
+.tt-rrow__blank { color: #b9b0a3; letter-spacing: 2px; }
+.tt-rrow--ans .dc-chip { margin-left: auto; min-width: 60px; }
+.tt-timer { text-align: center; font-size: 22px; font-weight: 900; min-height: 30px; }
+.tt-chart__say { min-height: 56px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; font-size: 20px; font-weight: 800; padding: 6px; background: #fff; border-radius: 12px; border: 1px solid var(--line); margin-bottom: 8px; }
+.tt-chart { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
+.tt-chart__h { display: grid; place-items: center; font-weight: 900; color: var(--muted, #6b6258); min-height: 34px; }
+.tt-chart__c { min-height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-weight: 800; font-size: clamp(13px, 3.6vw, 20px); font-variant-numeric: tabular-nums; }
+.tt-chart__c--line { background: #eef2ff; }
+.tt-chart__c--on { background: var(--primary); color: #fff; border-color: var(--primary); }
+@media (min-width: 700px) { .tt-chart__c, .tt-chart__h { min-height: 52px; } .tt-dots__box { grid-template-columns: repeat(3, 16px); } .tt-dots__dot { width: 16px; height: 16px; } }
+.tt-rrow--ans { display: grid; grid-template-columns: 2em 1fr auto; }
+.tt-rrow__mid { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; }
+.tt-rrow__eq { color: var(--muted, #6b6258); font-size: 17px; }
+.tt-rrow--ans .dc-chip { margin-left: 0; min-height: 44px; min-width: 52px; }

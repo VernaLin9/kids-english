@@ -166,7 +166,8 @@ function renderTeachMath(id) {
       if (calc) {
         mountMath2Q(q, box, () => {}, () => {});
         const c = calcOf(q);
-        box.prepend(el("div", { class: "tc-tip" }, t("先看題目，按「💡 提示」看怎麼想。")), c ? el("button", { class: "btn btn--full btn--xl", onclick: () => openBlocksTeach(c) }, t("🧱 用積木一步一步看")) : null);
+        box.prepend(...[el("div", { class: "tc-tip" }, t("先看題目，按「💡 提示」看怎麼想。")), c ? el("button", { class: "btn btn--full btn--xl", onclick: () => openBlocksTeach(c) }, t("🧱 用積木一步一步看")) : null].filter(Boolean)); // null 會變成「null」字
+        if (q.tt && typeof ttLine === "function") { const [a, b] = q.tt; box.append(el("div", { class: "tc-tip" }, t(`老師這樣想：${a}個一數，數${b}次，${a} × ${b} = ${a * b}，念「${ttLine(a, b)}」`))); }
       } else {
         mountMathQ(q, box, () => {}, tp);
         setTimeout(() => { box.querySelectorAll(".m-item").forEach((n, k) => { if (q.items[k]?.correct) n.classList.add("tc-demo__ok"); }); }, 900);
