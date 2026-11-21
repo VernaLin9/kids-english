@@ -3096,3 +3096,18 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .dc-chip { min-height: 52px; min-width: 96px; padding: 8px 14px; border-radius: 14px; border: 3px solid var(--line); background: #fff; font-weight: 900; font-size: 18px; }
 .dc-chip--ok { border-color: var(--success); background: #eaf6f0; }
 .dc-chip--bad { border-color: var(--danger); background: #fde8e8; }
+
+/* 一上第14回：加加看 7+2=□、連連看算式、印好的加數 */
+.fs-calc { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.fs-calc__q { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.fs-calc__e { font-size: 24px; font-weight: 800; white-space: nowrap; }
+.fs-m3__expr { font-size: 24px; font-weight: 800; padding: 6px 10px; border: 2px solid var(--line); border-radius: 10px; background: #fff; white-space: nowrap; }
+.fs-blank--given { pointer-events: none; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+.fs-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0; }
+.fs-pair__box { min-height: 64px; border: 2px solid var(--line); border-radius: 14px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 6px; text-align: center; }
+.fs-pair__box--empty { border-style: dashed; color: var(--muted, #6b6258); font-weight: 700; }
+.fs-pair__pics { font-size: 24px; line-height: 1.25; letter-spacing: 1px; overflow-wrap: anywhere; word-break: break-all; }
+.fs-calc { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.fs-calc__q { gap: 4px; padding: 6px 8px; }
+.fs-calc__e { font-size: 21px; }
+.fs-calc .fs-blank { min-width: 48px; }
