@@ -567,6 +567,7 @@ function route() {
   else if (path[0] === "radicals") view = renderRadicals(query.l);
   else if (path[0] === "quanci") view = renderQuanci(query.l);
   else if (path[0] === "dictation") view = renderDictation(query.l);
+  else if (path[0] === "times") view = path[1] === "learn" ? renderTimesLearn(query.t) : path[1] === "recite" ? renderTimesRecite(query.t) : path[1] === "drill" ? renderTimesDrill(query.t) : path[1] === "chart" ? renderTimesChart() : renderTimesHome();
   else if (path[0] === "quote") view = renderQuote(path[1]);
   else if (path[0] === "teach") view = path[1] === "en" ? renderTeachEn(query.set || "") : path[1] === "zh" ? renderTeachZh(query.l) : renderTeachMath(query.u);
   else if (path[0] === "game" && path[1]) view = renderGame(path[1], query.s, query.c);

@@ -433,8 +433,8 @@ function mountMath2Q(q, container, onDone, onWrong, exam = false) {
     el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(q.text), "aria-label": "念題目" }, "🔊"),
     q.visual || null);
   const fail = () => {
-    if (exam) { if (q.topic) recordMath(q.topic, false); stepWrap.classList.add("guard-lock--hard"); setTimeout(() => onDone(true), 300); return; }
-    missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false);
+    if (exam) { if (q.topic) recordMath(q.topic, false); if (q.tt && typeof ttRecord === "function") ttRecord(...q.tt, false); stepWrap.classList.add("guard-lock--hard"); setTimeout(() => onDone(true), 300); return; }
+    missed = true; buzzWrong(); if (q.topic) recordMath(q.topic, false); if (q.tt && typeof ttRecord === "function") ttRecord(...q.tt, false);
     // 數字鍵、三張牌不是選項，modes-guard 抓不到 → 這裡自己鎖一下、出小技巧
     if (q.steps[step]?.type !== "choice" && typeof guardOnWrong === "function") setTimeout(() => guardOnWrong(stepWrap, true), 650);
     feedback.textContent = q.hint ? `再想想：${q.hint}` : "再算一次看看"; feedback.className = "quiz-feedback quiz-feedback--wrong shake";
@@ -442,10 +442,10 @@ function mountMath2Q(q, container, onDone, onWrong, exam = false) {
     onWrong?.();
   };
   const pass = () => {
-    if (exam) { step++; if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); onDone(false); } else showStep(); return; }
+    if (exam) { step++; if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); if (q.tt && typeof ttRecord === "function") ttRecord(...q.tt, true); onDone(false); } else showStep(); return; }
     dingCorrect(); feedback.textContent = "答對了！🎉"; feedback.className = "quiz-feedback quiz-feedback--correct pop";
     step++;
-    if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); onDone(missed); }
+    if (step >= q.steps.length) { if (q.topic) recordMath(q.topic, true); if (q.tt && typeof ttRecord === "function") ttRecord(...q.tt, true); onDone(missed); }
     else setTimeout(showStep, 600);
   };
   const showStep = () => {
@@ -509,6 +509,7 @@ function renderMath2Unit(u) {
   root.appendChild(renderHeader(`${u.emoji} ${u.title}`, { back: "#/" }));
   const app = el("main", { class: "app" });
   app.appendChild(questEntryBtn("math", u.id));
+  if (u.timesTable && typeof timesUnitTop === "function") app.appendChild(timesUnitTop(u)); // ✖️ 九九乘法表
   const top = el("section", { class: "section" });
   if (u.book) top.append(
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 ${u.bookName || "課本"}原題（第${u.pages}頁）`)),

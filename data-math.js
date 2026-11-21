@@ -65,6 +65,12 @@ const MATH_DATA = {
         note: "習作 p.46-53 原題（p.50 沒有照片）：先算、再算，再寫答",
         topics: ["twoStep", "word", "vert"],
       },
+      {
+        id: "t99", kind: "calc", timesTable: true,
+        title: "九九乘法表", titleBopo: "ㄐㄧㄡˇ ㄐㄧㄡˇ ㄔㄥˊ ㄈㄚˇ ㄅㄧㄠˇ", emoji: "✖️",
+        note: "要考念九九乘法表：先在「學一學」一張一張聽、跟著念，再到「背誦過關」蓋起來念",
+        topics: ["times", "timesBlank", "timesSay"],
+      },
     ],
   },
 };
