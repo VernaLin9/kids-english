@@ -163,23 +163,34 @@ function renderFillSheet(u, exam = false) {
     } else if (sec.kind === "eq") {
       sec.items.forEach(it => {
         const first = blanks.length, sum = it.parts[0] + it.parts[1];
-        const bA = blank(it.parts[0], sec.pts, "box"), bB = blank(it.parts[1], sec.pts, "box"), bC = blank(sum, sec.pts, "box"), bD = blank(sum, sec.pts, "box");
-        const [xa, xb] = blanks.slice(first, first + 2);
-        const key = arr => [...arr].sort((m, n) => m - n).join(",");
-        xa.check = xb.check = () => key([xa.get(), xb.get()]) === key(it.parts); // 2+3、3+2 都對
+        // given：卷子上已經印好兩個加數（第14回第1題 6＋0），只要寫等於和答句
+        const fixed = v => el("span", { class: "fs-blank fs-blank--box fs-blank--given", "data-nobopo": "" }, String(v));
+        const bA = it.given ? fixed(it.parts[0]) : blank(it.parts[0], sec.pts, "box"), bB = it.given ? fixed(it.parts[1]) : blank(it.parts[1], sec.pts, "box");
+        const bC = blank(sum, sec.pts, "box"), bD = blank(sum, sec.pts, "box");
+        if (!it.given) {
+          const [xa, xb] = blanks.slice(first, first + 2);
+          const key = arr => [...arr].sort((m, n) => m - n).join(",");
+          xa.check = xb.check = () => key([xa.get(), xb.get()]) === key(it.parts); // 2+3、3+2 都對
+        }
         const card = el("div", { class: "ws-q fs-eq" },
           el("div", { class: "ws-q__head" }, el("span", { class: "ws-q__no" }, `${it.n}.`), el("span", { class: "ws-q__prompt" }, t(it.prompt)),
             el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(it.prompt), "aria-label": "念題目" }, "🔊")),
+          it.pair ? el("div", { class: "fs-pair" }, it.pair.map(([e, n, empty]) => el("div", { class: `fs-pair__box${n ? "" : " fs-pair__box--empty"}` },
+            n ? el("span", { class: "fs-pair__pics", "data-nobopo": "" }, e.repeat(n)) : t(empty || "空的")))) : null,
           it.pic ? el("div", { class: "fs-pics", "data-nobopo": "" }, it.pic) : null, it.picNote ? el("div", { class: "fs-eq__note" }, t(it.picNote)) : null,
           it.draw ? fsDrawRow() : null,
           el("div", { class: "fs-eq__line" }, it.formula ? el("span", { class: "fs-eq__label" }, t("算式：")) : null, bA, el("span", { class: "fs-eq__op" }, "+"), bB, el("span", { class: "fs-eq__op" }, "="), bC),
           el("div", { class: "fs-eq__ans" }, t(it.pre), bD, t(it.unit)));
         if (sec.group) {
-          const subs = blanks.splice(first, 4), okOf = x => x.check ? x.check() : x.get() === x.ans;
+          const subs = blanks.splice(first, it.given ? 2 : 4), okOf = x => x.check ? x.check() : x.get() === x.ans;
           blanks.push({ node: card, get: () => subs.every(x => x.get() != null) ? "x" : null, pts: sec.pts, check: () => subs.every(okOf), show: () => subs.forEach(x => x.show(okOf(x))) });
         }
         secEl.appendChild(card);
       });
+    } else if (sec.kind === "calc") {
+      // 算式□：7+2=□（第14回 加加看）
+      secEl.appendChild(el("div", { class: "fs-calc" }, sec.items.map(it => el("div", { class: "fs-calc__q" },
+        el("span", { class: "ws-q__no" }, `${it.n}.`), el("span", { class: "fs-calc__e", "data-nobopo": "" }, `${it.e}=`), blank(it.a, sec.pts, "box")))));
     } else if (sec.kind === "check") {
       secEl.appendChild(fsCheckQ(sec, x => blanks.push(x), () => locked, update));
     } else if (sec.kind === "spot") {
@@ -234,7 +245,7 @@ function fsShuffled(S) {
     if (sec.kind === "codes") return { ...sec, pics: shuffle([...sec.pics]) };
     if (sec.kind === "check") return { ...sec, figs: shuffle([...sec.figs]).map((f, i) => ({ ...f, n: i + 1 })) };
     if (sec.kind === "match3") {
-      const order = shuffle([0, 1, 2, 3]); // 中間第 i 格放原本第 order[i] 個形狀
+      const order = shuffle(sec.labels.map((_, i) => i)); // 中間第 i 格放原本第 order[i] 個形狀（第14回有 5 格）
       const side = list => shuffle([...list]).map(([k, a]) => [k, order.indexOf(a)]);
       return { ...sec, labels: order.map(i => sec.labels[i]), left: side(sec.left), right: side(sec.right) };
     }
@@ -664,10 +675,10 @@ function fsMatch3(sec, addBlank, isLocked, update) {
   };
   const link = (key, li) => { links[key] = li; pick = null; clearOn(); draw(); update(); };
   const picBtn = (side, [k, ans], i) => {
-    const no = "①②③④⑤⑥⑦⑧"[side === "L" ? i : i + 4];
+    const no = "①②③④⑤⑥⑦⑧"[side === "L" ? i : i + sec.left.length];
     const key = side + i, dot = el("span", { class: "fs-match__dot" });
     picDots[key] = dot;
-    const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, el("span", { class: "fs-m3__no" }, no), FS10[k](), dot);
+    const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, el("span", { class: "fs-m3__no" }, no), sec.text ? el("span", { class: "fs-m3__expr", "data-nobopo": "" }, k) : FS10[k](), dot);
     b.addEventListener("click", () => { if (isLocked()) return; if (pick?.label != null) return link(key, pick.label); pick = { pic: key }; clearOn(); b.classList.add("fs-m3--on"); });
     addBlank({ node: b, get: () => links[key] ?? null, ans, pts: sec.pts, show: ok => { status[key] = ok ? "ok" : "bad"; if (!ok) links[key] = ans; draw(); } });
     return b;
@@ -678,9 +689,9 @@ function fsMatch3(sec, addBlank, isLocked, update) {
     labelDots.push([dl, dr]);
     const lb = el("button", { class: "fs-m3__label" }, dl, t(label), dr);
     lb.addEventListener("click", () => { if (isLocked()) return; if (pick?.pic) return link(pick.pic, li); pick = { label: li }; clearOn(); lb.classList.add("fs-m3--on"); });
-    grid.append(picBtn("L", sec.left[li], li), lb, picBtn("R", sec.right[li], li));
+    grid.append(sec.left[li] ? picBtn("L", sec.left[li], li) : el("span", {}), lb, sec.right[li] ? picBtn("R", sec.right[li], li) : el("span", {}));
   });
-  wrap.append(el("div", { class: "fs-match__hint" }, t("先點一個東西，再點中間的形狀，就會連一條線")), grid, lines);
+  wrap.append(el("div", { class: "fs-match__hint" }, t(sec.hint || "先點一個東西，再點中間的形狀，就會連一條線")), grid, lines);
   new ResizeObserver(draw).observe(wrap);
   return wrap;
 }
@@ -817,3 +828,41 @@ function genAddPic() {
     items: fsChoices(ans, 10).map((n, i) => ({ node: FS_NUM_CARD(30 + i * 125, 150, n), correct: n === ans })) };
 }
 MATH_TOPICS.addPic = { name: "看圖加起來", emoji: "➕", gen: genAddPic };
+
+// === 一上 第14回（小A本 p.28-29，6-2 0的加法、6-3 加法練習；11/21 家長傳的整頁全解圖，11/23 考）===
+FILL_SHEETS.u8 = {
+  title: "一上 第14回", sub: "6-2 0的加法・6-3 加法練習", pages: "第28、29頁", unitWord: "題",
+  howto: "點□選數字（加起來的兩個數，前後換位置也對）；連連看先點算式，再點中間的答案",
+  sections: [
+    { no: "1", instr: "看圖完成加法算式：每格2分，共44分", pts: 2, kind: "eq", items: [
+      { n: 1, prompt: "一共有幾個麵包？", pair: [["🍞", 6], ["", 0, "空盤子"]], given: true, parts: [6, 0], pre: "有", unit: "個麵包" },
+      { n: 2, prompt: "合起來有幾顆蛋？", pair: [["", 0, "空蛋盒"], ["🥚", 10]], parts: [0, 10], pre: "有", unit: "顆蛋" },
+      { n: 3, prompt: "全部有幾隻蜜蜂？", pair: [["", 0, "🌷🌷 沒有蜜蜂"], ["🐝", 3]], parts: [0, 3], pre: "有", unit: "隻蜜蜂" },
+      { n: 4, prompt: "共有幾根棒棒糖？", pair: [["🍭", 5], ["", 0, "空罐子"]], parts: [5, 0], pre: "有", unit: "根棒棒糖" },
+      { n: 5, prompt: "一共有幾顆草莓？", pair: [["🍓", 4], ["", 0, "空盤子"]], parts: [4, 0], pre: "有", unit: "顆草莓" },
+      { n: 6, prompt: "共有幾顆包子？", pair: [["🥟", 7], ["", 0, "空蒸籠"]], parts: [7, 0], pre: "有", unit: "顆包子" },
+    ] },
+    { no: "2", instr: "加加看：每題3分，共27分", pts: 3, kind: "calc", items: [
+      ["7+2", 9], ["8+0", 8], ["3+7", 10], ["5+1", 6], ["4+5", 9], ["10+0", 10], ["0+6", 6], ["1+7", 8], ["6+3", 9],
+    ].map(([e, a], i) => ({ n: i + 1, e, a })) },
+    { no: "3", instr: "算算看，連連看：每題3分，共24分", pts: 3, kind: "match3", text: true, hint: "先點一個算式，再點中間的答案，就會連一條線",
+      labels: ["10", "9", "8", "7", "6"],
+      // [算式, 連到中間第幾個（10、9、8、7、6）]；上面 1～4、下面 5～8
+      left: [["8+1", 1], ["1+9", 0], ["0+7", 3], ["3+5", 2]],
+      right: [["6+2", 2], ["2+5", 3], ["9+0", 1], ["3+3", 4]] },
+    { no: "4", instr: "寫出算式做做看：5分", pts: 5, kind: "eq", group: true, items: [
+      { n: 1, prompt: "文文和琪琪排隊拿氣球，文文拿到2顆，琪琪拿到0顆，兩人共拿到幾顆氣球？", pair: [["🎈", 2], ["", 0, "琪琪沒有拿到"]], formula: true, parts: [2, 0], pre: "共拿到", unit: "顆氣球" },
+    ] },
+  ],
+};
+// 練習題型：加 0（不是原題）——什麼都沒有＝0，加 0 還是原來的數
+function genAddZero() {
+  const a = rnd(0, 10), zeroFirst = Math.random() < 0.4, e = zeroFirst ? `0+${a}` : `${a}+0`;
+  const [em] = shuffle(["🍎", "🍞", "🍓", "🐝", "🍭", "🥚"]);
+  const row = (n, x0) => Array.from({ length: n }, (_, i) => fsvg("text", { x: x0 + (i % 5) * 34, y: 40 + Math.floor(i / 5) * 34, "font-size": 28 }, em));
+  const plate = x => fsvg("ellipse", { cx: x + 82, cy: 52, rx: 92, ry: 46, fill: "none", stroke: "#bbb", "stroke-width": 2 });
+  const extra = fsvg("g", {}, plate(0), plate(204), ...(zeroFirst ? row(a, 214) : row(a, 10)));
+  return { topic: "addZero", prompt: `${e}＝？（空的盤子是0）`, h: 230, extra,
+    items: fsChoices(a, 10).map((n, i) => ({ node: FS_NUM_CARD(30 + i * 125, 150, n), correct: n === a })) };
+}
+MATH_TOPICS.addZero = { name: "0的加法", emoji: "0️⃣", gen: genAddZero };

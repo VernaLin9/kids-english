@@ -37,6 +37,12 @@ const MATH_DATA = {
         sheetLabel: "📄 小A本原題（第26、27頁）", sheetNote: "跟小A本一樣的題目、圖和配分",
         topics: ["addPic", "make10", "split"],
       },
+      {
+        id: "u8", title: "第14回 0的加法・加法練習", titleBopo: "ㄉㄧˋ ㄕˊ ㄙˋ ㄏㄨㄟˊ ㄌㄧㄥˊ ㄉㄜ˙ ㄐㄧㄚ ㄈㄚˇ ㄐㄧㄚ ㄈㄚˇ ㄌㄧㄢˋ ㄒㄧˊ", emoji: "0️⃣",
+        exam: { date: "2026-11-23", label: "小考 小A本第28、29頁", mode: "exam" },
+        sheetLabel: "📄 小A本原題（第28、29頁）", sheetNote: "跟小A本一樣的題目、數字和配分（圖用表情符號畫）",
+        topics: ["addZero", "addPic", "make10"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答
