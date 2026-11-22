@@ -104,7 +104,7 @@ function renderFillSheet(u, exam = false) {
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
-  const update = () => { blanks.forEach(b => { if (b.get() != null) b.node?.classList.remove("fs-need"); }); const done = blanks.filter(b => b.get() != null).length; progressLabel.textContent = `寫了 ${done}/${blanks.length} ${S.unitWord || "格"}`; };
+  const update = () => { blanks.forEach(b => { if (b.get() != null) b.node?.classList.remove("fs-need"); }); const done = blanks.filter(b => b.get() != null).length; if (done && !locked && !EXAM.on) examStart(); /* 寫了第一格就算開始（滑出去會先問） */ progressLabel.textContent = `寫了 ${done}/${blanks.length} ${S.unitWord || "格"}`; };
   // 一個要填數字的空格；style: "paren" (　)、"box" □
   const blank = (ans, pts, style = "paren") => {
     let val = null;
@@ -218,7 +218,7 @@ function renderFillSheet(u, exam = false) {
       buzzWrong(); empty.find(b => b.node)?.node.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove();
+    locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove(); examEnd();
     let score = 0, got = 0;
     blanks.forEach(b => { const ok = b.ok = b.check ? b.check() : b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");

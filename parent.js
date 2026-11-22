@@ -527,6 +527,7 @@ function renderParentKidDetail(name) {
 // 📜 國語直排（家長：只要是國語都照課本、考卷直的）：國語的頁面在 body 加 zh-v，CSS 把題目、課文、注音詞改成直排（遊樂場的遊戲不改）
 const ZH_VERTICAL_RE = /^#\/(zh\/|zhplay\/|bopo|tonedrill|zhsheet\/|midpaper\/(g1zh|g2zh|zh10))/;
 function route() {
+  if (typeof examRouteGuard === "function" && examRouteGuard()) return; // 📝 考到一半：先問要不要離開／接回寫到一半的考卷
   applySettings();
   document.body.classList.toggle("zh-v", ZH_VERTICAL_RE.test(location.hash));
   // Profile gate first — except for parent mode (PIN gate) which works without active child

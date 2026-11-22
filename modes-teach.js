@@ -622,6 +622,6 @@ function renderDictation(id) {
     el("div", { class: "tc-end__icon" }, "📝"), el("div", { class: "tc-end__msg" }, t(`聽寫：${l.chars.length}個生字＋${(l.quanci || []).length}個語詞`)),
     el("div", { class: "tc-tip" }, t("跟考試一樣：準備紙和筆。先聽生字，寫國字、部首、總共幾畫；再聽語詞寫下來。寫完看答案自己對，最後算分數。")),
     el("div", { class: "tc-tip" }, t(mockSummary(key))),
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: show }, t("開始聽寫 ▶"))));
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { examStart(`${l.title}聽寫`); show(); } }, t("開始聽寫 ▶"))));
   return root;
 }

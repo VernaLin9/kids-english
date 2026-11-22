@@ -500,6 +500,55 @@ const parseHash = () => {
 // 跳到同一頁時網址不變、不會觸發 hashchange，所以直接重畫
 const navigate = h => { if (location.hash === h) route(); else location.hash = h; };
 
+// === 📝 考到一半保護（家長：哥哥考到一半不小心滑出去，又要從頭考）===
+// 模擬考按「開始考試」、原題卷練習寫了第一格、紙上聽寫按開始 → examStart()；交卷（mockSave）→ examEnd()
+// 考試中換頁（滑回上一頁、按左上角返回、點別的按鈕）：route() 先把網址改回考卷、跳出「真的要離開嗎？」
+// 真的離開：考卷畫面整個留著（寫的答案都在），首頁出現「繼續寫」，回到同一頁就接著寫；考試中、剛交卷 5 分鐘內不自動更新重新載入
+const EXAM = { on: false, hash: "", label: "", kept: null, paused: false, leaving: false, scroll: 0, endAt: 0 };
+function examStart(label) {
+  const raw = (label || ($("#app .header__title")?.textContent || "").replace(/[ㄅ-ㄩˊˇˋ˙]/g, "")).replace(/^[^\u4e00-\u9fffA-Za-z0-9]+/, "").trim() || "考試";
+  Object.assign(EXAM, { on: true, hash: location.hash, label: raw, kept: null, paused: false, leaving: false });
+}
+function examEnd() { Object.assign(EXAM, { on: false, kept: null, paused: false, leaving: false, endAt: Date.now() }); }
+// route() 一開始呼叫：回傳 true 表示這次不要重畫（留在考卷或接回考卷）
+function examRouteGuard() {
+  if (!EXAM.on) return false;
+  const here = location.hash;
+  if (!EXAM.paused && here !== EXAM.hash) {
+    if (!EXAM.leaving) { history.replaceState(null, "", EXAM.hash || "#/"); examAskLeave(here); return true; }
+    EXAM.kept = $("#app").firstElementChild; EXAM.scroll = window.scrollY; EXAM.paused = true; EXAM.leaving = false;
+    return false;
+  }
+  if (EXAM.paused && here === EXAM.hash && EXAM.kept) {
+    $("#app").replaceChildren(EXAM.kept); EXAM.kept = null; EXAM.paused = false;
+    document.body.classList.toggle("zh-v", typeof ZH_VERTICAL_RE !== "undefined" && ZH_VERTICAL_RE.test(here));
+    setTimeout(() => window.scrollTo({ top: EXAM.scroll, behavior: "instant" }), 0);
+    return true;
+  }
+  return false;
+}
+function examAskLeave(to) {
+  if (document.querySelector(".exam-leave")) return;
+  const close = () => box.remove();
+  const box = el("div", { class: "exam-leave", role: "dialog" }, el("div", { class: "exam-leave__card" },
+    el("div", { class: "exam-leave__icon" }, "✋"),
+    el("div", { class: "exam-leave__title" }, t("考試還沒交卷，真的要離開嗎？")),
+    el("div", { class: "exam-leave__sub" }, t("離開的話，寫好的答案會先幫你留著，回來可以接著寫。")),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: close }, t("✏️ 不要離開，繼續考試")),
+    el("button", { class: "btn btn--ghost btn--full", style: "margin-top: 10px;", onclick: () => { close(); EXAM.leaving = true; location.hash = to; } }, t("先離開（答案留著）"))));
+  document.body.appendChild(box);
+  buzzWrong?.();
+}
+// 首頁：寫到一半的考卷
+function examResumeCard() {
+  if (!EXAM.on || !EXAM.paused || !EXAM.kept) return null;
+  return el("button", { class: "exam-resume", onclick: () => navigate(EXAM.hash) },
+    el("span", { class: "exam-resume__icon" }, "📝"),
+    el("div", { class: "exam-resume__body" }, el("div", { class: "exam-resume__title" }, t(`${EXAM.label}寫到一半`)), el("div", { class: "exam-resume__sub" }, t("點這裡回去接著寫（寫好的答案都還在）"))),
+    el("span", { class: "exam-resume__go" }, "›"));
+}
+window.addEventListener("beforeunload", e => { if (EXAM.on) { e.preventDefault(); e.returnValue = ""; } });
+
 // === Helpers ===
 const weekDateRange = (n) => WEEKS.find(w => w.num === n)?.dateRange || "";
 const weekProgress = (n) => WEEKS.find(w => w.num === n)?.progress || "";
@@ -853,6 +902,7 @@ function renderHome() {
   root.appendChild(renderHeader(`Hi ${profile?.name || STORE.active || "👤"}`, { back: null }));
   const app = el("main", { class: "app" });
 
+  const resume = examResumeCard(); if (resume) app.appendChild(resume);
   // 狀態列：誰在練習 / 年級 / 星星（都可以點）
   app.appendChild(el("div", { class: "status-bar" },
     el("button", { class: "status-chip", onclick: () => navigate("#/profile") }, `👤 ${STORE.active || ""}`, el("span", { class: "status-chip__more" }, "›")),
@@ -1141,6 +1191,7 @@ function renderListPage(setKey) {
     .then(html => {
       const latest = (html.match(/app\.js\?v=([0-9a-z]+)/) || [])[1];
       if (!latest || latest === mine) return;
+      if (EXAM.on || Date.now() - EXAM.endAt < 5 * 60 * 1000) return; // 考到一半、剛交卷看分數時先不要重新載入
       let tried = null; try { tried = sessionStorage.getItem("reloadedFor"); } catch (e) {}
       if (tried === latest) return;
       try { sessionStorage.setItem("reloadedFor", latest); } catch (e) {}

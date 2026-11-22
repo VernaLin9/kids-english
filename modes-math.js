@@ -212,7 +212,7 @@ function renderMathHomeSection() {
 // === 📝 模擬小考：跟真的考試一樣，按「開始考試」才出題、交卷才看分數；分數記在 profile.mockExams["math:單元"]（留最近 20 次）===
 const mockKey = u => `math:${u.id}`;
 const mockList = (key, p = getProfile()) => p?.mockExams?.[key] || [];
-function mockSave(key, rec) { const p = getProfile(); if (!p) return; p.mockExams = p.mockExams || {}; p.mockExams[key] = [...mockList(key, p), rec].slice(-20); saveStore(); }
+function mockSave(key, rec) { examEnd(); const p = getProfile(); if (!p) return; p.mockExams = p.mockExams || {}; p.mockExams[key] = [...mockList(key, p), rec].slice(-20); saveStore(); }
 const mockDay = at => { const d = new Date(at); return `${d.getMonth() + 1}/${d.getDate()}`; };
 const mockTime = secs => `${Math.floor(secs / 60)}分${secs % 60}秒`;
 function mockSummary(key, p) {
@@ -230,7 +230,7 @@ function mockGate(body, u, practiceHash, key = mockKey(u)) {
     el("div", { class: "mock-gate__title" }, t("模擬小考")),
     el("ol", { class: "mock-gate__rules" }, ["跟真的考試一樣，自己看注音讀題目", "還沒交卷都可以回去改答案", "全部寫完按「交卷」才知道分數", "分數會記下來，看看有沒有進步"].map(r => el("li", {}, t(r)))),
     el("div", { class: "mock-gate__hist" }, t(mockSummary(key))),
-    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); } }, t("✏️ 開始考試")),
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => { gate.remove(); body.style.display = ""; t0 = Date.now(); window.scrollTo(0, 0); examStart(u.title ? `${u.title}・模擬小考` : ""); } }, t("✏️ 開始考試")),
     el("button", { class: "btn btn--ghost btn--full", onclick: () => navigate(practiceHash) }, t("先練習一次")));
   return { el: gate, secs: () => Math.round((Date.now() - t0) / 1000) };
 }
