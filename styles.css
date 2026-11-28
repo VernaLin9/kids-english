@@ -3169,3 +3169,13 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fs-strike__i { position: relative; display: inline-block; line-height: 1.1; }
 .fs-strike__i--x::after { content: ""; position: absolute; left: -2px; right: -2px; top: 50%; border-top: 4px solid var(--accent); transform: rotate(-45deg); }
 .fs-draw__slot--x::before { content: ""; position: absolute; left: 0; top: 21px; width: 30px; border-top: 3px solid var(--accent); transform: rotate(-45deg); z-index: 1; }
+
+/* 二年級第7、8單元：時鐘、乘法的圖 */
+.ck { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.ck-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+.ck-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ck-label { font-weight: 800; font-size: 16px; }
+.ck-arrow { font-size: 26px; font-weight: 900; color: var(--muted, #6b6258); }
+.mul-groups { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.mul-groups__g { padding: 4px 8px; border: 2px dashed #b9b0a3; border-radius: 12px; background: #fff; font-size: 26px; }
+@media (min-width: 700px) { .ck-row .ck { width: 150px; height: 150px; } }
