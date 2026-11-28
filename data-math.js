@@ -43,6 +43,12 @@ const MATH_DATA = {
         sheetLabel: "📄 小A本原題（第28、29頁）", sheetNote: "跟小A本一樣的題目、數字和配分（圖用表情符號畫）",
         topics: ["addZero", "addPic", "make10"],
       },
+      {
+        id: "u9", title: "第16回 減法算式・0的減法", titleBopo: "ㄉㄧˋ ㄕˊ ㄌㄧㄡˋ ㄏㄨㄟˊ ㄐㄧㄢˇ ㄈㄚˇ ㄙㄨㄢˋ ㄕˋ ㄌㄧㄥˊ ㄉㄜ˙ ㄐㄧㄢˇ ㄈㄚˇ", emoji: "➖",
+        exam: { date: "2026-11-30", label: "小考 小A本第32、33頁", mode: "exam" },
+        sheetLabel: "📄 小A本原題（第32、33頁）", sheetNote: "跟小A本一樣的題目、數字和配分（圖用表情符號畫）",
+        topics: ["subPic", "subZero", "split"],
+      },
     ],
   },
   // 二年級上學期（南一版）：題目由 modes-math2.js 產生；kind:"calc" 用數字鍵盤／選項作答

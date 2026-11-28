@@ -162,12 +162,14 @@ function renderFillSheet(u, exam = false) {
       secEl.appendChild(fsMatch3(sec, x => blanks.push(x), () => locked, update));
     } else if (sec.kind === "eq") {
       sec.items.forEach(it => {
-        const first = blanks.length, sum = it.parts[0] + it.parts[1];
+        // 減法（第16回）：op "-"，前後不能換；style "paren" 用 (　)
+        const minus = (it.op || sec.op) === "-", st = sec.style || "box";
+        const first = blanks.length, sum = minus ? it.parts[0] - it.parts[1] : it.parts[0] + it.parts[1];
         // given：卷子上已經印好兩個加數（第14回第1題 6＋0），只要寫等於和答句
         const fixed = v => el("span", { class: "fs-blank fs-blank--box fs-blank--given", "data-nobopo": "" }, String(v));
-        const bA = it.given ? fixed(it.parts[0]) : blank(it.parts[0], sec.pts, "box"), bB = it.given ? fixed(it.parts[1]) : blank(it.parts[1], sec.pts, "box");
-        const bC = blank(sum, sec.pts, "box"), bD = blank(sum, sec.pts, "box");
-        if (!it.given) {
+        const bA = it.given ? fixed(it.parts[0]) : blank(it.parts[0], sec.pts, st), bB = it.given ? fixed(it.parts[1]) : blank(it.parts[1], sec.pts, st);
+        const bC = blank(sum, sec.pts, st), bD = blank(sum, sec.pts, st);
+        if (!it.given && !minus) {
           const [xa, xb] = blanks.slice(first, first + 2);
           const key = arr => [...arr].sort((m, n) => m - n).join(",");
           xa.check = xb.check = () => key([xa.get(), xb.get()]) === key(it.parts); // 2+3、3+2 都對
@@ -178,8 +180,9 @@ function renderFillSheet(u, exam = false) {
           it.pair ? el("div", { class: "fs-pair" }, it.pair.map(([e, n, empty]) => el("div", { class: `fs-pair__box${n ? "" : " fs-pair__box--empty"}` },
             n ? el("span", { class: "fs-pair__pics", "data-nobopo": "" }, e.repeat(n)) : t(empty || "空的")))) : null,
           it.pic ? el("div", { class: "fs-pics", "data-nobopo": "" }, it.pic) : null, it.picNote ? el("div", { class: "fs-eq__note" }, t(it.picNote)) : null,
-          it.draw ? fsDrawRow() : null,
-          el("div", { class: "fs-eq__line" }, it.formula ? el("span", { class: "fs-eq__label" }, t("算式：")) : null, bA, el("span", { class: "fs-eq__op" }, "+"), bB, el("span", { class: "fs-eq__op" }, "="), bC),
+          it.strike ? fsStrikePics(...it.strike) : null,
+          it.draw ? fsDrawRow(sec.cross) : null,
+          el("div", { class: "fs-eq__line" }, it.formula ? el("span", { class: "fs-eq__label" }, t("算式：")) : null, bA, el("span", { class: "fs-eq__op" }, minus ? "−" : "+"), bB, el("span", { class: "fs-eq__op" }, "="), bC),
           el("div", { class: "fs-eq__ans" }, t(it.pre), bD, t(it.unit)));
         if (sec.group) {
           const subs = blanks.splice(first, it.given ? 2 : 4), okOf = x => x.check ? x.check() : x.get() === x.ans;
@@ -813,9 +816,18 @@ FILL_SHEETS.u7 = {
   ],
 };
 // 畫○的格子：點一下畫一個○，再點一下擦掉（不算分，幫忙算）
-function fsDrawRow() {
-  return el("div", { class: "fs-draw" }, el("span", { class: "fs-draw__label" }, t("畫○：")),
-    el("div", { class: "fs-draw__slots" }, Array.from({ length: 10 }, () => { const b = el("button", { class: "fs-draw__slot", "aria-label": "畫圈" }); b.addEventListener("click", () => b.classList.toggle("fs-draw__slot--on")); return b; })));
+// cross：第16回「先畫○再畫掉」→ 點一下畫○、再點一下畫掉（○上一條斜線）、再點一下擦掉
+function fsStrikePics(e, n, k) {
+  return el("div", { class: "fs-strike", "data-nobopo": "" }, Array.from({ length: n }, (_, i) => el("span", { class: `fs-strike__i${i >= n - k ? " fs-strike__i--x" : ""}` }, e)));
+}
+function fsDrawRow(cross) {
+  return el("div", { class: "fs-draw" }, el("span", { class: "fs-draw__label" }, t(cross ? "畫○再畫掉：" : "畫○：")),
+    el("div", { class: "fs-draw__slots" }, Array.from({ length: 10 }, () => { const b = el("button", { class: "fs-draw__slot", "aria-label": "畫圈" }); b.addEventListener("click", () => {
+      if (!cross) return b.classList.toggle("fs-draw__slot--on");
+      if (b.classList.contains("fs-draw__slot--x")) b.classList.remove("fs-draw__slot--on", "fs-draw__slot--x");
+      else if (b.classList.contains("fs-draw__slot--on")) b.classList.add("fs-draw__slot--x");
+      else b.classList.add("fs-draw__slot--on");
+    }); return b; })));
 }
 // 練習題型：看圖，合起來有幾個？（不是原題）
 function genAddPic() {
@@ -866,3 +878,48 @@ function genAddZero() {
     items: fsChoices(a, 10).map((n, i) => ({ node: FS_NUM_CARD(30 + i * 125, 150, n), correct: n === a })) };
 }
 MATH_TOPICS.addZero = { name: "0的加法", emoji: "0️⃣", gen: genAddZero };
+
+// === 一上 第16回（小A本 p.32-33，7-1 減法算式、7-2 0的減法；11/28 家長傳的整頁全解圖，11/30 考）===
+FILL_SHEETS.u9 = {
+  title: "一上 第16回", sub: "7-1 減法算式・7-2 0的減法", pages: "第32、33頁", unitWord: "題",
+  howto: "點□或(　)選數字（減法前後不能換位置）；畫○的地方點一下畫○、再點一下畫掉（不算分）",
+  sections: [
+    { no: "1", instr: "看圖完成減法算式：每格3分，共24分", pts: 3, kind: "eq", op: "-", items: [
+      { n: 1, prompt: "有7枝冰棒，吃了4枝，剩下幾枝？", strike: ["🍦", 7, 4], parts: [7, 4], pre: "剩下", unit: "枝" },
+      { n: 2, prompt: "有10個布丁，吃掉4個，剩下幾個？", strike: ["🍮", 10, 4], parts: [10, 4], pre: "剩下", unit: "個" },
+    ] },
+    { no: "2", instr: "填填看：每題4分，共24分", pts: 4, kind: "calc", items: [
+      ["3−3", 0], ["6−0", 6], ["2−2", 0], ["7−0", 7], ["8−8", 0], ["5−0", 5],
+    ].map(([e, a], i) => ({ n: i + 1, e, a })) },
+    { no: "3", instr: "剩下多少？完成減法算式：每格2分，共16分", pts: 2, kind: "eq", op: "-", style: "paren", items: [
+      { n: 1, prompt: "小美有6顆糖果，分給妹妹2顆，還剩下幾顆？", strike: ["○", 6, 2], parts: [6, 2], pre: "剩下", unit: "顆" },
+      { n: 2, prompt: "一包色紙有10張，姐姐用掉5張，還剩下幾張？", strike: ["○", 10, 5], parts: [10, 5], pre: "剩下", unit: "張" },
+    ] },
+    { no: "4", instr: "先畫○再畫掉，並寫出算式做做看：每題8分，共24分", pts: 8, kind: "eq", op: "-", group: true, cross: true, items: [
+      { n: 1, prompt: "一袋麵包有5個，弟弟吃掉2個，剩下幾個麵包？", draw: true, formula: true, parts: [5, 2], pre: "剩下", unit: "個" },
+      { n: 2, prompt: "桌上原來有8杯果汁，發給3個小朋友每人1杯，還剩下幾杯果汁？", draw: true, formula: true, parts: [8, 3], pre: "剩下", unit: "杯" },
+      { n: 3, prompt: "公車上原來有9個人，到南科站時有2個人下車，公車上還有幾個人？", draw: true, formula: true, parts: [9, 2], pre: "還有", unit: "個人" },
+    ] },
+    { no: "5", instr: "寫出算式做做看：每題6分，共12分", pts: 6, kind: "eq", op: "-", group: true, items: [
+      { n: 1, prompt: "一條巧克力有3顆，都沒有人吃，還剩下幾顆？", formula: true, parts: [3, 0], pre: "剩下", unit: "顆巧克力" },
+      { n: 2, prompt: "一盒布丁有8個，今天家裡來了8個客人，每個人吃1個，剩下幾個布丁？", formula: true, parts: [8, 8], pre: "剩下", unit: "個布丁" },
+    ] },
+  ],
+};
+// 練習題型：看圖，剩下幾個？（畫掉的不算；不是原題）
+function genSubPic() {
+  const n = rnd(2, 10), k = rnd(0, n), ans = n - k;
+  const [em] = shuffle(["🍎", "🍦", "🍮", "🍞", "🧃", "🍬"]);
+  const items = Array.from({ length: n }, (_, i) => { const x = 18 + (i % 5) * 72, y = 50 + Math.floor(i / 5) * 62;
+    return fsvg("g", {}, fsvg("text", { x, y, "font-size": 40 }, em), i >= n - k ? fsvg("line", { x1: x - 4, y1: y + 6, x2: x + 46, y2: y - 40, stroke: "#c2306b", "stroke-width": 5, "stroke-linecap": "round" }) : null); });
+  return { topic: "subPic", prompt: `有${n}個，畫掉${k}個，剩下幾個？（${n}−${k}＝？）`, h: 260, extra: fsvg("g", {}, ...items),
+    items: fsChoices(ans, 10).map((v, i) => ({ node: FS_NUM_CARD(30 + i * 125, 180, v), correct: v === ans })) };
+}
+// 0的減法：減 0 不變、自己減自己＝0
+function genSubZero() {
+  const a = rnd(1, 10), self = Math.random() < 0.5, ans = self ? 0 : a;
+  return { topic: "subZero", prompt: `${a}−${self ? a : 0}＝？${self ? "（全部拿走）" : "（一個都沒拿走）"}`, h: 180,
+    items: fsChoices(ans, 10).map((v, i) => ({ node: FS_NUM_CARD(30 + i * 125, 90, v), correct: v === ans })) };
+}
+MATH_TOPICS.subPic = { name: "看圖剩下幾個", emoji: "➖", gen: genSubPic };
+MATH_TOPICS.subZero = { name: "0的減法", emoji: "0️⃣", gen: genSubZero };
