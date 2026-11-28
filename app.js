@@ -891,6 +891,7 @@ function renderReviewPicks(profile, { custom = true } = {}) {
   );
 }
 
+let HOME_EN_WEEK = null; // 首頁英文卡現在看哪一週（null＝本週；換頁回來還記得，重新打開網頁回到本週）
 function renderHome() {
   const profile = getProfile();
   const progress = profile?.progress || {};
@@ -952,13 +953,23 @@ function renderHome() {
     return root;
   }
 
-  // 本週：單字 + 一顆大按鈕
+  // 本週：單字 + 一顆大按鈕；‹ › 可以換別週（家長：背單字要能挑哪一週）
+  const realWeek = cw;
+  const pickWeek = HOME_EN_WEEK != null ? WEEKS.find(w => w.num === HOME_EN_WEEK) : null;
+  const wk = pickWeek || realWeek;
+  const wi = WEEKS.indexOf(wk);
+  const goWeek = n => { HOME_EN_WEEK = n === realWeek.num ? null : n; route(); };
+  const arrow = (dir, label) => { const w = WEEKS[wi + dir]; return el("button", { class: "wk-nav__btn", disabled: !w, "aria-label": label, onclick: () => w && goWeek(w.num) }, dir < 0 ? "‹" : "›"); };
   const hero = el("section", { class: "hero" },
-    el("div", { class: "hero__head" },
-      el("h1", { class: "hero__title" }, `本週 第 ${cw.num} 週`),
-      el("div", { class: "hero__sub" }, `${cw.dateRange}・${cw.progress}`)
-    )
-  );
+    el("div", { class: "wk-nav" }, arrow(-1, "上一週"),
+      el("div", { class: "hero__head wk-nav__head" },
+        el("h1", { class: "hero__title" }, t(wk === realWeek ? `本週 第 ${wk.num} 週` : `第 ${wk.num} 週`)),
+        el("div", { class: "hero__sub" }, `${wk.dateRange}・${wk.progress}`)),
+      arrow(1, "下一週")),
+    el("div", { class: "wk-chips" },
+      wk !== realWeek ? el("button", { class: "wk-chip wk-chip--now", onclick: () => goWeek(realWeek.num) }, t(`⏪ 回本週（第${realWeek.num}週）`)) : null,
+      el("button", { class: "wk-chip", onclick: () => navigate("#/words") }, t("📅 選別週"))));
+  { const cw = wk; // 下面這段用選的那一週
   if (cw.words.length) {
     const learned = cw.words.filter(w => progress[w]?.mastered).length;
     hero.appendChild(el("div", { class: "hero__words" },
@@ -970,6 +981,7 @@ function renderHome() {
     hero.appendChild(el("p", { class: "hero__empty" }, "這週是考試 / 複習週，沒有新單字。把還沒學會的字練一練吧！"));
     hero.appendChild(el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate("#/play/flashcard?set=unmastered") }, t("▶ 開始複習")));
   }
+  } // 換週只影響上面這張卡；下面的本週一句、考試卡還是照真正的本週
   if (cs) {
     // 本週一句：整張卡可以點，進每週一句練習（家長找不到句子練習 → 標清楚「點這裡練習」）
     hero.appendChild(el("button", { class: "hero__sentence hero__sentence--go", onclick: () => navigate("#/sentences") },
