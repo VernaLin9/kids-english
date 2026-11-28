@@ -72,13 +72,13 @@ const MATH_DATA = {
         topics: ["twoStep", "word", "vert"],
       },
       {
-        id: "u7", kind: "calc", bookId: "dr7", bookName: "隨堂演練", pages: "42-47",
+        id: "m7", kind: "calc", sheetLabel: "📄 隨堂演練原題（第42、43、46、47頁）", sheetNote: "跟隨堂演練一樣的版面、題目和寫法",
         title: "第7單元 2、5、4、8的乘法", titleBopo: "ㄉㄧˋ ㄉㄢ ㄩㄢˊ ㄉㄜ˙ ㄔㄥˊ ㄈㄚˇ", emoji: "✖️",
         note: "隨堂演練 p.42、43、46、47 原題（p.44、45 沒有照片）。算式要寫「每一份的數量 × 份數」：1個盤子2個，4個盤子 → 2×4",
         topics: ["mul2548", "mulMeaning", "mulWord"],
       },
       {
-        id: "u8", kind: "calc", bookId: "dr8", bookName: "隨堂演練", pages: "48-53",
+        id: "m8", kind: "calc", sheetLabel: "📄 隨堂演練原題（第48～53頁）", sheetNote: "跟隨堂演練一樣的版面、題目和寫法",
         title: "第8單元 幾時幾分", titleBopo: "ㄉㄧˋ ㄉㄢ ㄩㄢˊ ㄐㄧˇ ㄕˊ ㄐㄧˇ ㄈㄣ", emoji: "🕐",
         note: "隨堂演練 p.48～53 原題：看鐘面、分針再走幾格、經過幾小時、快要／超過幾時",
         topics: ["clockRead", "clockAfter", "clockHours", "clockAbout"],
