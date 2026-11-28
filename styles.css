@@ -3163,3 +3163,9 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .exam-resume__title { font-weight: 900; font-size: calc(19px * var(--font-scale)); }
 .exam-resume__sub { font-size: 15px; color: var(--ink); }
 .exam-resume__go { font-size: 30px; font-weight: 900; color: var(--accent); }
+
+/* 一上第16回：畫掉的圖、先畫○再畫掉 */
+.fs-strike { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; font-size: 30px; }
+.fs-strike__i { position: relative; display: inline-block; line-height: 1.1; }
+.fs-strike__i--x::after { content: ""; position: absolute; left: -2px; right: -2px; top: 50%; border-top: 4px solid var(--accent); transform: rotate(-45deg); }
+.fs-draw__slot--x::before { content: ""; position: absolute; left: 0; top: 21px; width: 30px; border-top: 3px solid var(--accent); transform: rotate(-45deg); z-index: 1; }
