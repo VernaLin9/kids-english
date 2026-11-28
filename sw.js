@@ -54,6 +54,18 @@ self.addEventListener("fetch", e => {
     })());
     return;
   }
+  // 單字照片（img/words/）：看過的存在另一個 cache，換版本不會被刪；沒網路也看得到
+  if (url.pathname.includes("/img/words/")) {
+    e.respondWith((async () => {
+      const ic = await caches.open("kids-english-img");
+      const hit = await ic.match(req);
+      if (hit) return hit;
+      const r = await fetch(req);
+      if (r.ok) ic.put(req, r.clone());
+      return r;
+    })());
+    return;
+  }
   e.respondWith((async () => {
     const hit = await caches.match(req);
     if (hit) return hit;

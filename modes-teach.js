@@ -68,7 +68,7 @@ function renderTeachEn(setKey) {
   if (!words.length) return renderEmpty("#/", "沒有單字");
   const card = w => {
     const info = WORDS[w];
-    const fx = el("span", { class: "fc-emoji fc-emoji--pop", "data-nobopo": "1" }, info.emoji);
+    const fx = typeof WORD_IMG !== "undefined" && WORD_IMG[w] ? el("span", { class: "fc-emoji fc-emoji--pop fc-photo", "data-nobopo": "1" }, wordPic(w, "fc-photo__img", "fc-photo__emoji")) : el("span", { class: "fc-emoji fc-emoji--pop", "data-nobopo": "1" }, info.emoji);
     const stage = el("button", { class: `fc-stage fc-cat--${info.category || "x"}`, onclick: () => { fx.classList.remove("fc-emoji--hop"); void fx.offsetWidth; fx.classList.add("fc-emoji--hop"); speakWord(w); } }, fx);
     setTimeout(() => speakWord(w), 300);
     const parts = typeof SYLLABLES !== "undefined" && SYLLABLES[w] ? SYLLABLES[w].split("·") : null; // SYLLABLES 是 "sev·en" 字串
@@ -85,7 +85,7 @@ function renderTeachEn(setKey) {
     shuffle(group).forEach(w => {
       const others = shuffle(words.filter(x => x !== w)).slice(0, 2);
       steps.push({ kind: "check", prompt: t("聽一聽，是哪一個？"), say: () => speakWord(w), teach: () => card(w), optClass: "tc-opts--pic",
-        options: shuffle([w, ...others]).map(x => ({ ok: x === w, label: el("span", { class: "tc-pic", "data-nobopo": "1" }, el("span", { class: "tc-pic__emoji" }, WORDS[x].emoji), el("span", { class: "tc-pic__en" }, x)) })),
+        options: shuffle([w, ...others]).map(x => ({ ok: x === w, label: el("span", { class: "tc-pic", "data-nobopo": "1" }, el("span", { class: "tc-pic__emoji" }, wordPic(x, "wpic wpic--sm", "wpic__emoji")), el("span", { class: "tc-pic__en" }, x)) })),
         rec: ok => recordWord(w, ok) });
     });
   });

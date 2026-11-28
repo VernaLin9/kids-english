@@ -235,7 +235,7 @@ function renderFlashcard(setKey) {
     const info = WORDS[w] || { emoji: "❓", zh: "", bopo: "" };
     // 卡通大圖：照類別換背景，出來會跳一下、一直輕輕晃，點圖會念（不會翻卡）
     const stage = el("button", { class: `fc-stage fc-cat--${info.category || "x"}`, "aria-label": "念出來", onclick: e => { e.stopPropagation(); fx.classList.remove("fc-emoji--hop"); void fx.offsetWidth; fx.classList.add("fc-emoji--hop"); speakWord(w); } });
-    const fx = el("span", { class: "fc-emoji fc-emoji--pop", "data-nobopo": "1" }, info.emoji);
+    const fx = typeof WORD_IMG !== "undefined" && WORD_IMG[w] ? el("span", { class: "fc-emoji fc-emoji--pop fc-photo", "data-nobopo": "1" }, wordPic(w, "fc-photo__img", "fc-photo__emoji")) : el("span", { class: "fc-emoji fc-emoji--pop", "data-nobopo": "1" }, info.emoji);
     stage.append(fx, el("span", { class: "fc-spark fc-spark--a" }, "✨"), el("span", { class: "fc-spark fc-spark--b" }, "⭐"));
     mascot.say(fcTip(w, i));
     front.replaceChildren(
@@ -244,7 +244,7 @@ function renderFlashcard(setKey) {
       el("div", { class: "flashcard__hint" }, t("點卡片看中文"))
     );
     back.replaceChildren(
-      el("div", { class: "flashcard__emoji" }, info.emoji),
+      el("div", { class: "flashcard__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")),
       rubyEl(info.zh || "", info.bopo || "", "div", { class: "flashcard__zh" }),
       el("div", { class: "flashcard__hint" }, w)
     );
@@ -359,7 +359,7 @@ function renderQuiz(setKey) {
     });
 
     const promptBox = el("div", { class: "quiz-prompt" });
-    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, info.emoji));
+    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")));
     promptBox.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" }));
     promptBox.appendChild(el("div", { class: "quiz-prompt__hint" }, "選出正確的英文"));
     app.replaceChildren(promptBox, optionsWrap, feedback);
@@ -379,7 +379,7 @@ function renderEnMock(setKey) {
   const opts = w => shuffle([w, ...distractors(w)]).map(o => ({ label: el("span", { class: "ex-en" }, o), text: o, ok: o === w }));
   const sections = [
     { no: "一", name: "看中文選英文", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const w = at(k), info = WORDS[w] || {};
-      return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, info.emoji || ""), rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" })),
+      return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")), rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" })),
         say: () => speakZh(info.zh || ""), options: opts(w), review: el("span", {}, `${info.emoji || ""} `, zhOf(w)), tip: tip(w), rec: ok => recordWord(w, ok) }; }) },
     { no: "二", name: "聽音選英文", pts: 5, qs: Array.from({ length: 10 }, (_, k) => { const w = at(k + 10), info = WORDS[w] || {};
       return { prompt: el("div", { class: "quiz-prompt" }, el("div", { class: "quiz-prompt__emoji" }, "🎧"), el("div", { class: "quiz-prompt__hint" }, t("按🔊聽，選出聽到的英文"))),
@@ -569,7 +569,7 @@ function renderSpelling(setKey) {
     const clearAll = () => { if (done) return; tiles.forEach(t => (t.used = false)); filled.fill(null); draw(); };
 
     const promptBox = el("div", { class: "quiz-prompt" });
-    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, info.emoji));
+    promptBox.appendChild(el("div", { class: "quiz-prompt__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")));
     promptBox.appendChild(rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__zh" }));
     promptBox.appendChild(el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 8px;", onclick: () => speakWord(w), "aria-label": "重聽" }, "🔊"));
 
@@ -709,7 +709,7 @@ function renderSpeak(setKey) {
     });
     app.replaceChildren(
       el("div", { class: "quiz-prompt" },
-        el("div", { class: "quiz-prompt__emoji" }, info.emoji || ""),
+        el("div", { class: "quiz-prompt__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")),
         syllableEl(w, "div", { class: "speak-word" }),
         rubyEl(info.zh || "", info.bopo || "", "div", { class: "quiz-prompt__hint" }),
         el("button", { class: "icon-btn icon-btn--big icon-btn--accent", style: "margin-top: 10px;", onclick: () => speakWord(w), "aria-label": "聽發音" }, "🔊")),
@@ -770,7 +770,7 @@ function renderStickers() {
     el("div", { class: "fc-stk" }, g.words.map((w, k) => {
       const on = !!prog[w]?.mastered;
       const b = el("button", { class: `fc-stk__item${on ? " fc-stk__item--on" : ""}`, style: `--r: ${((k * 37) % 13) - 6}deg`, "aria-label": w },
-        el("span", { class: "fc-stk__emoji", "data-nobopo": "1" }, WORDS[w].emoji || "⭐"), el("span", { class: "fc-stk__en", "data-nobopo": "1" }, on ? w : "？"));
+        el("span", { class: "fc-stk__emoji", "data-nobopo": "1" }, wordPic(w, "wpic wpic--stk", "wpic__emoji")), el("span", { class: "fc-stk__en", "data-nobopo": "1" }, on ? w : "？"));
       b.addEventListener("click", () => { if (!on) { navigate(`#/play/flashcard?set=${encodeURIComponent("words-" + w)}`); return; } speakWord(w); b.classList.remove("fc-stk__item--hop"); void b.offsetWidth; b.classList.add("fc-stk__item--hop"); });
       return b;
     })))));

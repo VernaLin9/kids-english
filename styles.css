@@ -3214,3 +3214,15 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .wk-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 6px 0 10px; }
 .wk-chip { min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: #fff; font-weight: 800; font-size: 15px; }
 .wk-chip--now { border-color: var(--primary); color: var(--primary); }
+
+/* 🖼️ 英文單字照片 */
+.wpic { display: block; object-fit: cover; border-radius: 14px; background: #f1ece3; }
+.wpic--md { width: min(220px, 56vw); height: min(165px, 42vw); margin: 0 auto; }
+.wpic--sm { width: 96px; height: 72px; border-radius: 10px; }
+.wpic--stk { width: 64px; height: 48px; border-radius: 8px; }
+.wpic__emoji { font-size: inherit; }
+.fc-photo { display: flex; align-items: center; justify-content: center; }
+.fc-photo__img { display: block; width: min(300px, 74vw); height: min(225px, 56vw); object-fit: cover; border-radius: 18px; border: 4px solid #fff; box-shadow: 0 6px 18px rgba(0,0,0,.15); background: #f1ece3; }
+.fc-photo__emoji { font-size: inherit; }
+@media (min-width: 700px) { .fc-photo__img { width: 380px; height: 285px; } .wpic--md { width: 260px; height: 195px; } }
+.fc-stk__item:not(.fc-stk__item--on) .wpic { filter: grayscale(1); opacity: .5; }

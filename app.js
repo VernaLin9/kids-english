@@ -331,6 +331,15 @@ function autoReadings(text) {
   return out.filter((_, i) => isCJK(chars[i]));
 }
 
+// 🖼️ 英文單字的圖：有真實照片（data-img.js 的 WORD_IMG，維基共享資源免費授權）就用照片，沒有或載不到就用表情符號
+function wordPic(w, cls = "wpic", emojiCls = "") {
+  const info = WORDS[w] || {}, im = typeof WORD_IMG !== "undefined" ? WORD_IMG[w] : null;
+  const emo = () => el("span", { class: emojiCls || `${cls}__emoji`, "data-nobopo": "1" }, info.emoji || "🔤");
+  if (!im) return emo();
+  const img = el("img", { class: cls, src: `img/words/${im.f}`, alt: w, loading: "lazy", draggable: "false" });
+  img.addEventListener("error", () => img.replaceWith(emo()));
+  return img;
+}
 function rubyEl(text, bopo, tag = "span", attrs = {}) {
   const node = el(tag, attrs);
   if (!STORE.settings.bopomofo) {

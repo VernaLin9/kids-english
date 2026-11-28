@@ -113,7 +113,7 @@ function learnSay(item) {
 function learnCard(item) {
   if (item.kind === "en") {
     const w = item.key, info = WORDS[w];
-    return el("div", { class: "l-card__main" }, el("div", { class: "l-card__emoji" }, info.emoji || "🔤"),
+    return el("div", { class: "l-card__main" }, el("div", { class: "l-card__emoji" }, wordPic(w, "wpic wpic--md", "wpic__emoji")),
       el("div", { class: "l-card__word", "data-nobopo": "1" }, SYLLABLES[w] ? syllableEl(w) : w), rubyEl(info.zh, info.bopo, "div", { class: "l-card__zh" }));
   }
   if (item.kind === "zh1") {
