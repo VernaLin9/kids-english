@@ -72,9 +72,22 @@ const FILL_SHEETS = {
 // 選數字的小鍵盤（0～10），點空格時跳出來；不擋題目，放在畫面最下面
 let fsPadEl = null;
 let fsPen = false; // 模擬小考：空格用手寫（penPopup，像拿筆寫考卷）
+let fsBigPad = false; // 二年級隨堂演練：數字會到 59，用可以打兩位數的鍵盤
 function fsOpenPad(onPick) {
   fsPadEl?.remove();
   const close = () => { fsPadEl?.remove(); fsPadEl = null; };
+  if (fsBigPad) {
+    let v = "";
+    const disp = el("span", { class: "fs-pad__disp", "data-nobopo": "" }, "　");
+    const show = () => { disp.textContent = v || "　"; };
+    fsPadEl = el("div", { class: "fs-pad fs-pad--big" }, el("div", { class: "fs-pad__top" }, disp),
+      el("div", { class: "fs-pad__keys" }, [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => el("button", { class: "fs-pad__key", onclick: () => { if (v.length < 2 && !(v === "0")) v += n; else if (v === "0") v = String(n); show(); } }, String(n))),
+        el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: () => { v = v.slice(0, -1); show(); } }, "⌫"),
+        el("button", { class: "fs-pad__key fs-pad__key--ok", onclick: () => { onPick(v === "" ? null : Number(v)); close(); } }, "✓"),
+        el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: close }, "✕")));
+    document.body.appendChild(fsPadEl);
+    return;
+  }
   fsPadEl = el("div", { class: "fs-pad" },
     el("div", { class: "fs-pad__keys" }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => el("button", { class: "fs-pad__key", onclick: () => { onPick(n); close(); } }, String(n))),
       el("button", { class: "fs-pad__key fs-pad__key--soft", onclick: () => { onPick(null); close(); } }, "⌫"),
@@ -85,8 +98,10 @@ function fsOpenPad(onPick) {
 // exam＝模擬小考：先按「開始考試」才出題、圖的順序打亂（考觀念不是背位置）、交卷後記分數
 function renderFillSheet(u, exam = false) {
   const S = exam ? fsShuffled(FILL_SHEETS[u.id]) : FILL_SHEETS[u.id];
+  fsBigPad = !!S.bigPad;
+  const book = S.book || "小A本";
   const root = el("div", {});
-  const header = renderHeader(exam ? "📝 模擬小考" : "📄 小A本原題", { back: `#/math/${u.id}` });
+  const header = renderHeader(exam ? "📝 模擬小考" : `📄 ${book}原題`, { back: `#/math/${u.id}` });
   root.appendChild(header);
   const progressLabel = $(".header__progress", header);
   const app = el("main", { class: `app ws fs${exam ? " is-exam" : ""}` });
@@ -100,7 +115,7 @@ function renderFillSheet(u, exam = false) {
   const gate = exam ? mockGate(body, u, `#/mathplay/sheet?u=${u.id}`) : null;
   if (gate) app.appendChild(gate.el);
   app.appendChild(body);
-  body.appendChild(el("div", { class: "ws-howto" }, t(`跟小A本${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
+  body.appendChild(el("div", { class: "ws-howto" }, t(`跟${book}${S.pages}一樣寫：${S.howto || "點(　)或□選數字，連連看先點上面再點下面"}。寫完按「交卷」`)));
 
   const blanks = []; // { get, ans, pts, show(ok) }
   let locked = false;
@@ -119,9 +134,17 @@ function renderFillSheet(u, exam = false) {
   const choice = (opts, ans, pts) => {
     let val = null;
     const btns = opts.map(o => { const b = el("button", { class: "fs-choice__opt" }, t(o)); b.addEventListener("click", () => { if (locked) return; val = o; btns.forEach(x => x.classList.toggle("fs-choice__opt--on", x === b)); update(); }); return b; });
-    const node = el("span", { class: "fs-choice" }, el("span", { class: "fs-blank__p" }, "("), btns[0], el("span", { class: "fs-choice__sep" }, "，"), btns[1], el("span", { class: "fs-blank__p" }, ")"));
+    const node = el("span", { class: "fs-choice" }, el("span", { class: "fs-blank__p" }, "("), btns.flatMap((b, i) => i ? [el("span", { class: "fs-choice__sep" }, "，"), b] : [b]), el("span", { class: "fs-blank__p" }, ")"));
     blanks.push({ node, get: () => val, ans, pts, show: ok => { node.classList.add(ok ? "fs-choice--ok" : "fs-choice--bad"); if (!ok) btns[opts.indexOf(ans)].classList.add("fs-choice__opt--ans"); } });
     return node;
+  };
+  // □ 裡寫符號（+ − ×），點一下換一個
+  const opBox = (ans, pts) => {
+    const ops = ["+", "−", "×"]; let k = -1;
+    const b = el("button", { class: "fs-blank fs-blank--box fs-op", "aria-label": "寫符號" }, el("span", { class: "fs-blank__v", "data-nobopo": "" }, "　"));
+    b.addEventListener("click", () => { if (locked) return; k = (k + 1) % ops.length; b.firstChild.textContent = ops[k]; update(); });
+    blanks.push({ node: b, get: () => k < 0 ? null : ops[k], ans, pts, show: ok => { b.classList.add(ok ? "fs-blank--ok" : "fs-blank--bad"); if (!ok) b.append(el("span", { class: "fs-blank__ans", "data-nobopo": "" }, ans)); } });
+    return b;
   };
   const sectionHead = sec => el("div", { class: "ws-sec__head" }, el("span", { class: "ws-sec__no" }, sec.no),
     el("div", { class: "ws-sec__instr" }, t(sec.instr)),
@@ -190,6 +213,40 @@ function renderFillSheet(u, exam = false) {
         }
         secEl.appendChild(card);
       });
+    } else if (sec.kind === "g2") {
+      // 二年級隨堂演練：題目文字照原書（( ) 直接寫在句子裡）＋時鐘圖／鐘面數字框／三個鐘選一個
+      sec.items.forEach(it => {
+        const q = el("div", { class: "ws-q fs-g2" },
+          el("div", { class: "ws-q__head" }, el("span", { class: "ws-q__no" }, `(${it.n})`), it.text ? el("span", { class: "ws-q__prompt" }, t(it.text)) : null,
+            it.text ? el("button", { class: "icon-btn icon-btn--accent m-speak", onclick: () => speakZh(it.text), "aria-label": "念題目" }, "🔊") : null));
+        const body2 = el("div", { class: `fs-g2__body${it.pic && it.lines ? " fs-g2__body--side" : ""}` });
+        if (it.pic) body2.appendChild(el("div", { class: "fs-g2__pic" }, typeof it.pic === "function" ? it.pic() : el("span", { "data-nobopo": "" }, it.pic)));
+        if (it.dial) {
+          // 鐘面：數字旁邊的框框填分鐘（照原書位置）
+          const wrapD = el("div", { class: "fs-dial" }, clockSvg(12, 0, { size: 220, hands: false }));
+          it.dial.forEach(d => { const ang = d.num * 30 * Math.PI / 180, x = 50 + Math.sin(ang) * 47, y = 50 - Math.cos(ang) * 47;
+            const node = d.given != null ? el("span", { class: "fs-blank fs-blank--box fs-blank--given", "data-nobopo": "" }, String(d.given)) : blank(d.a, sec.pts, "box");
+            node.classList.add("fs-dial__box"); node.style.left = `${x}%`; node.style.top = `${y}%`; wrapD.appendChild(node); });
+          body2.appendChild(wrapD);
+        }
+        if (it.pick) {
+          // 三個時鐘選一個（在□或( )裡打✓）
+          let val = null;
+          const marks = it.pick.clocks.map((_, i) => "①②③"[i]);
+          const boxes = it.pick.clocks.map((c, i) => { const b = el("button", { class: `fs-pick__box fs-pick__box--${it.pick.mark || "sq"}` }, "");
+            b.addEventListener("click", () => { if (locked) return; val = i; boxes.forEach((x, k) => { x.textContent = k === i ? "✓" : ""; x.classList.toggle("fs-pick__box--on", k === i); }); update(); }); return b; });
+          const row = el("div", { class: "fs-pick" }, it.pick.clocks.map((c, i) => el("div", { class: "fs-pick__item" },
+            it.pick.mark === "paren" ? null : el("div", { class: "fs-pick__top" }, el("span", { class: "fs-pick__no" }, marks[i]), boxes[i]),
+            clockSvg(c[0], c[1], { size: 130 }),
+            it.pick.mark === "paren" ? el("div", { class: "fs-pick__paren" }, "(", boxes[i], ")") : null)));
+          blanks.push({ node: row, get: () => val, ans: it.pick.a, pts: sec.pts, show: ok => { boxes[it.pick.a].classList.add("fs-pick__box--ans"); if (!ok && val != null) boxes[val].classList.add("fs-pick__box--bad"); row.classList.add(ok ? "fs-choice--ok" : "fs-choice--bad"); } });
+          body2.appendChild(row);
+        }
+        if (it.lines) body2.appendChild(el("div", { class: "fs-g2__lines" }, it.lines.map(line => el("div", { class: "fs-line" },
+          line.map(p => typeof p === "string" ? t(p) : p.o ? opBox(p.o, sec.pts) : p.c ? choice(p.c, p.a, sec.pts) : blank(p.a ?? p.b, sec.pts, p.b != null ? "box" : "paren"))))));
+        q.appendChild(body2);
+        secEl.appendChild(q);
+      });
     } else if (sec.kind === "calc") {
       // 算式□：7+2=□（第14回 加加看）
       secEl.appendChild(el("div", { class: "fs-calc" }, sec.items.map(it => el("div", { class: "fs-calc__q" },
@@ -224,9 +281,10 @@ function renderFillSheet(u, exam = false) {
     locked = true; submit.hidden = true; submit.style.display = "none"; fsPadEl?.remove(); examEnd();
     let score = 0, got = 0;
     blanks.forEach(b => { const ok = b.ok = b.check ? b.check() : b.get() === b.ans; b.show(ok); if (ok) { score += b.pts; got++; } recordMath("sheet", ok); });
+    if (S.percent) { score = Math.round(got * 100 / total); blanks.forEach(b => { b.pts = 100 / total; }); } // 原書沒寫配分：照答對格數換成 100 分
     scoreBox.textContent = String(score); scoreBox.classList.add("pop");
     if (got === total) { dingCorrect(); confetti(); } else buzzWrong();
-    const rows = S.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return { no: sec.no, got: bs.reduce((n, b) => n + (b.ok ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
+    const rows = S.sections.map(sec => { const bs = blanks.filter(b => b.sec === sec.no); return S.percent ? { no: sec.no, got: bs.filter(b => b.ok).length, max: bs.length } : { no: sec.no, got: bs.reduce((n, b) => n + (b.ok ? b.pts : 0), 0), max: bs.reduce((n, b) => n + b.pts, 0) }; });
     result.replaceChildren(...[ // replaceChildren 會把 null 變成「null」字，要先拿掉
       el("div", { class: "ws-result__big" }, `${score} 分`),
       el("div", { class: "ws-result__msg" }, got === total ? t("全對！太厲害了 🌟") : t(`答對 ${got} ${S.unitWord || "格"}，錯的地方看綠色的正確答案 💪`)),
@@ -681,7 +739,7 @@ function fsMatch3(sec, addBlank, isLocked, update) {
     const no = "①②③④⑤⑥⑦⑧"[side === "L" ? i : i + sec.left.length];
     const key = side + i, dot = el("span", { class: "fs-match__dot" });
     picDots[key] = dot;
-    const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, el("span", { class: "fs-m3__no" }, no), sec.text ? el("span", { class: "fs-m3__expr", "data-nobopo": "" }, k) : FS10[k](), dot);
+    const b = el("button", { class: `fs-m3__pic fs-m3__pic--${side}` }, sec.noNum ? null : el("span", { class: "fs-m3__no" }, no), sec.text ? el("span", { class: "fs-m3__expr", "data-nobopo": "" }, k) : FS10[k](), dot);
     b.addEventListener("click", () => { if (isLocked()) return; if (pick?.label != null) return link(key, pick.label); pick = { pic: key }; clearOn(); b.classList.add("fs-m3--on"); });
     addBlank({ node: b, get: () => links[key] ?? null, ans, pts: sec.pts, show: ok => { status[key] = ok ? "ok" : "bad"; if (!ok) links[key] = ans; draw(); } });
     return b;

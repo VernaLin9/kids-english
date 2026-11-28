@@ -3169,3 +3169,39 @@ body { background: var(--bg); background-attachment: scroll; color: var(--ink); 
 .fs-strike__i { position: relative; display: inline-block; line-height: 1.1; }
 .fs-strike__i--x::after { content: ""; position: absolute; left: -2px; right: -2px; top: 50%; border-top: 4px solid var(--accent); transform: rotate(-45deg); }
 .fs-draw__slot--x::before { content: ""; position: absolute; left: 0; top: 21px; width: 30px; border-top: 3px solid var(--accent); transform: rotate(-45deg); z-index: 1; }
+
+/* 二年級第7、8單元：時鐘、乘法的圖 */
+.ck { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.ck-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+.ck-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ck-label { font-weight: 800; font-size: 16px; }
+.ck-arrow { font-size: 26px; font-weight: 900; color: var(--muted, #6b6258); }
+.mul-groups { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.mul-groups__g { padding: 4px 8px; border: 2px dashed #b9b0a3; border-radius: 12px; background: #fff; font-size: 26px; }
+@media (min-width: 700px) { .ck-row .ck { width: 150px; height: 150px; } }
+
+/* 📄 二年級隨堂演練原題卷（版面照書） */
+.fs-g2__body { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.fs-g2__body--side { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
+.fs-g2__pic { flex: 0 0 auto; text-align: center; font-size: 26px; }
+.fs-g2__lines { display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%; }
+.fs-g2__body--side .fs-g2__lines { flex: 1 1 220px; width: auto; }
+.fs-g2 .fs-line { flex-wrap: wrap; row-gap: 6px; font-size: calc(19px * var(--font-scale)); }
+.fs-dial { position: relative; width: min(300px, 86vw); aspect-ratio: 1; margin: 6px auto; }
+.fs-dial .ck { position: absolute; inset: 14%; width: 72% !important; height: 72% !important; }
+.fs-dial__box { position: absolute; transform: translate(-50%, -50%); min-width: 50px; }
+.fs-pick { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.fs-pick__item { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 6px; background: #fff; }
+.fs-pick__top { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 22px; font-weight: 800; }
+.fs-pick__box { width: 44px; height: 44px; border: 2px solid #4a443e; background: #fff; font-size: 28px; font-weight: 900; color: var(--primary); padding: 0; }
+.fs-pick__box--paren { border: 0; width: 52px; }
+.fs-pick__paren { font-size: 26px; display: flex; align-items: center; }
+.fs-pick__box--ans { background: #eaf6f0; color: var(--success); }
+.fs-pick__box--ans:empty::after { content: "✓"; }
+.fs-pick__box--bad { background: #fde8e8; color: var(--danger); }
+.fs-op .fs-blank__v { font-size: 24px; font-weight: 900; }
+.fs-pad--big .fs-pad__keys { grid-template-columns: repeat(5, 1fr); }
+.fs-pad__top { display: flex; justify-content: center; padding: 4px; }
+.fs-pad__disp { min-width: 90px; min-height: 44px; padding: 2px 12px; border: 2px solid var(--primary); border-radius: 10px; background: #fff; font-size: 28px; font-weight: 900; text-align: center; }
+.fs-pad__key--ok { background: var(--success); color: #fff; }
+.fs-m3__expr { white-space: normal; overflow-wrap: anywhere; } .fs-g2 ~ .fs-m3 .fs-m3__expr, .fs-m3 .fs-m3__expr { font-size: clamp(16px, 4.2vw, 22px); }

@@ -337,7 +337,9 @@ function rubyEl(text, bopo, tag = "span", attrs = {}) {
     node.textContent = text;
     return node;
   }
-  const explicit = bopo ? bopo.split(/\s+/).filter(Boolean) : null;
+  let explicit = bopo ? bopo.split(/\s+/).filter(Boolean) : null;
+  // 注音數量跟國字數量對不上（例：標題「第6單元」把數字也標了注音）→ 改用自動注音，免得整串往後錯開
+  if (explicit && explicit.length !== [...text].filter(c => /[一-鿿]/.test(c)).length) explicit = null;
   const auto = explicit ? null : autoReadings(text);
   let bi = 0, ci = -1;
   const TONE_RE = /[ˊˇˋ˙]/;

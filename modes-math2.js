@@ -511,13 +511,17 @@ function renderMath2Unit(u) {
   app.appendChild(questEntryBtn("math", u.id));
   if (u.timesTable && typeof timesUnitTop === "function") app.appendChild(timesUnitTop(u)); // ✖️ 九九乘法表
   const top = el("section", { class: "section" });
+  const fsheet = typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id];
+  if (fsheet) top.append(
+    el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/sheet?u=${u.id}`) }, t(u.sheetLabel || "📄 原題卷")),
+    el("div", { class: "progress-note", style: "text-align: center;" }, t(u.sheetNote || "跟書上一樣的題目和寫法")));
   if (u.book) top.append(
     el("button", { class: "btn btn--accent btn--full btn--xl", onclick: () => navigate(`#/mathplay/book?u=${u.id}`) }, t(`📗 ${u.bookName || "課本"}原題（第${u.pages}頁）`)),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(`${u.bookName || "課本"}上的題目、數字和順序`)));
   top.append(
-    el("button", { class: "btn btn--full btn--xl", style: u.book ? "margin-top: 10px;" : "", onclick: () => navigate(`#/mathplay/exam?u=${u.id}`) }, t("📝 模擬小考（20題・寫完才看分數）")),
+    el("button", { class: "btn btn--full btn--xl", style: u.book || fsheet ? "margin-top: 10px;" : "", onclick: () => navigate(`#/mathplay/exam?u=${u.id}`) }, t(fsheet ? "📝 模擬小考（整張卷子・寫完才看分數）" : "📝 模擬小考（20題・寫完才看分數）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t(mockSummary(mockKey(u)))),
-    el("button", { class: `btn btn--full btn--xl ${u.book ? "" : "btn--accent"}`, style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
+    el("button", { class: `btn btn--full btn--xl ${u.book || fsheet ? "" : "btn--accent"}`, style: "margin-top: 10px;", onclick: () => navigate(`#/mathplay/mix?u=${u.id}`) }, t("📝 小考（隨機 12 題）")),
     el("div", { class: "progress-note", style: "text-align: center;" }, t("每次都不一樣的數字，練熟方法")));
   if (u.note) top.append(el("div", { class: "b2-note" }, t(u.note)));
   app.appendChild(top);
@@ -585,6 +589,7 @@ function renderMath2Exam(u) {
 }
 
 function renderMath2Play(topic, u) {
+  if ((topic === "sheet" || topic === "exam") && typeof FILL_SHEETS !== "undefined" && FILL_SHEETS[u.id]) return renderFillSheet(u, topic === "exam"); // 二年級隨堂演練原題卷（版面照書）
   if (topic === "exam") return renderMath2Exam(u);
   if (topic === "book" && u.book) return renderMath2Run(u, `📗 ${u.bookName || "課本"}原題`, `#/math/${u.id}`, `#/mathplay/book?u=${u.id}`, u.book.map(b => () => ({ ...b, visual: b.visual ? b.visual() : null })));
   if (topic === "mix") return renderMath2Run(u, "📝 小考", `#/math/${u.id}`, `#/mathplay/mix?u=${u.id}`, Array.from({ length: 12 }, (_, k) => () => MATH2_TOPICS[u.topics[k % u.topics.length]].gen()));
